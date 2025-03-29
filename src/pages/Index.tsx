@@ -5,6 +5,7 @@ import HeroSection from '@/components/HeroSection';
 import StartupIndex from '@/components/StartupIndex';
 import StartupMatcher from '@/components/StartupMatcher';
 import StartupCoFounder from '@/components/StartupCoFounder';
+import InvestmentSection from '@/components/InvestmentSection';
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
 
@@ -20,6 +21,7 @@ const Index = () => {
       <StartupIndex />
       <StartupMatcher />
       <StartupCoFounder />
+      <InvestmentSection />
       <Newsletter />
       <Footer />
     </div>

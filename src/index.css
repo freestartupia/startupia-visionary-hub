@@ -91,5 +91,35 @@
   .hover-scale:hover {
     @apply transform scale-105;
   }
-}
 
+  /* Animation for gradient background */
+  @keyframes pulse-gradient {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.5; }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-gradient 4s infinite;
+  }
+
+  /* Animation with delayed start */
+  .animate-pulse-delayed {
+    animation: pulse-gradient 4s infinite 2s;
+  }
+
+  /* Common section style with background elements */
+  .section-with-bg {
+    @apply relative;
+  }
+
+  .section-with-bg::before {
+    content: "";
+    @apply absolute top-1/4 -left-40 w-96 h-96 bg-startupia-purple/30 rounded-full blur-3xl animate-pulse-slow;
+  }
+
+  .section-with-bg::after {
+    content: "";
+    @apply absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-purple/20 rounded-full blur-3xl animate-pulse-slow;
+    animation-delay: 2s;
+  }
+}

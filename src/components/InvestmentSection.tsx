@@ -15,12 +15,11 @@ const InvestmentSection = () => {
   };
 
   return (
-    <section className="py-20 relative">
+    <section className="py-20 relative section-with-bg">
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
-      <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-purple/20 rounded-full blur-3xl animate-pulse-slow"></div>
       
-      <div className="container mx-auto px-4 z-10">
+      <div className="container mx-auto px-4 z-10 relative">
         <div className="text-center max-w-4xl mx-auto mb-16">
           {/* Section Title */}
           <div className="flex items-center justify-center mb-2">

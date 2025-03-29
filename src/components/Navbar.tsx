@@ -30,7 +30,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 flex justify-between items-center">
         <div className="flex items-center">
           <a href="/" className="text-white font-display text-2xl font-bold tracking-tight">
-            Startupia<span className="text-startupia-purple">.fr</span>
+            Startupia<span className="text-startupia-turquoise">.fr</span>
           </a>
         </div>
 
@@ -39,10 +39,10 @@ const Navbar = () => {
           <a href="#startup-index" className="text-white/80 hover:text-white transition-colors">Index</a>
           <a href="#startup-matcher" className="text-white/80 hover:text-white transition-colors">Matcher</a>
           <a href="#startup-cofounder" className="text-white/80 hover:text-white transition-colors">Co-Founder</a>
-          <Button variant="outline" className="border-startupia-purple text-white hover:bg-startupia-purple/20">
+          <Button variant="outline" className="border-startupia-turquoise text-white hover:bg-startupia-turquoise/20">
             Se connecter
           </Button>
-          <Button className="bg-startupia-purple hover:bg-startupia-purple/90 button-glow">
+          <Button className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 button-glow">
             S'inscrire
           </Button>
         </div>
@@ -65,29 +65,29 @@ const Navbar = () => {
             <a 
               href="#startup-index" 
               onClick={toggleMobileMenu}
-              className="text-white hover:text-startupia-purple px-4 py-2 rounded-md hover:bg-white/5"
+              className="text-white hover:text-startupia-turquoise px-4 py-2 rounded-md hover:bg-white/5"
             >
               Index
             </a>
             <a 
               href="#startup-matcher" 
               onClick={toggleMobileMenu}
-              className="text-white hover:text-startupia-purple px-4 py-2 rounded-md hover:bg-white/5"
+              className="text-white hover:text-startupia-turquoise px-4 py-2 rounded-md hover:bg-white/5"
             >
               Matcher
             </a>
             <a 
               href="#startup-cofounder" 
               onClick={toggleMobileMenu}
-              className="text-white hover:text-startupia-purple px-4 py-2 rounded-md hover:bg-white/5"
+              className="text-white hover:text-startupia-turquoise px-4 py-2 rounded-md hover:bg-white/5"
             >
               Co-Founder
             </a>
             <div className="pt-4 flex flex-col space-y-3">
-              <Button variant="outline" className="border-startupia-purple text-white hover:bg-startupia-purple/20 w-full">
+              <Button variant="outline" className="border-startupia-turquoise text-white hover:bg-startupia-turquoise/20 w-full">
                 Se connecter
               </Button>
-              <Button className="bg-startupia-purple hover:bg-startupia-purple/90 w-full button-glow">
+              <Button className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 w-full button-glow">
                 S'inscrire
               </Button>
             </div>

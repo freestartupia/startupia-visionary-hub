@@ -8,12 +8,12 @@ const HeroSection = () => {
     <section className="min-h-screen relative flex flex-col items-center justify-center pt-16 overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-20 z-0"></div>
-      <div className="absolute top-1/3 -left-40 w-96 h-96 bg-startupia-purple/30 rounded-full blur-3xl animate-pulse-slow"></div>
-      <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-purple/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-1/3 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
+      <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
       
       <div className="container mx-auto px-4 z-10 text-center">
         {/* Small badge */}
-        <div className="inline-block mb-6 px-4 py-2 rounded-full bg-startupia-purple/20 border border-startupia-purple/30 text-sm">
+        <div className="inline-block mb-6 px-4 py-2 rounded-full bg-startupia-turquoise/20 border border-startupia-turquoise/30 text-sm">
           <span className="gradient-text">L'écosystème IA français</span>
         </div>
 
@@ -37,11 +37,11 @@ const HeroSection = () => {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-          <Button size="lg" className="bg-startupia-purple hover:bg-startupia-purple/90 button-glow text-lg py-6 px-8">
+          <Button size="lg" className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 button-glow text-lg py-6 px-8">
             <Search size={20} className="mr-2" />
             Explorer les startups
           </Button>
-          <Button size="lg" variant="outline" className="border-startupia-purple hover:bg-startupia-purple/20 text-white text-lg py-6 px-8">
+          <Button size="lg" variant="outline" className="border-startupia-turquoise hover:bg-startupia-turquoise/20 text-white text-lg py-6 px-8">
             <Rocket size={20} className="mr-2" />
             Proposer une startup
           </Button>

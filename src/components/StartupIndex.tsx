@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Book, BadgeCheck, Lightbulb, TrendingUp } from 'lucide-react';
+import { Book, BadgeCheck, Lightbulb, TrendingUp, Rocket } from 'lucide-react';
 
 const StartupIndex = () => {
   return (

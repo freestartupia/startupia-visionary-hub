@@ -39,7 +39,7 @@ const CommunitySummary = () => {
             <p className="text-white/70 mb-4">
               Posez vos questions techniques, partagez vos expériences et discutez des dernières tendances IA.
             </p>
-            <Button variant="link" className="text-startupia-turquoise p-0 h-auto" asChild>
+            <Button variant="link" className="text-startupia-gold p-0 h-auto" asChild>
               <Link to="/community">Accéder au forum →</Link>
             </Button>
           </div>
@@ -53,7 +53,7 @@ const CommunitySummary = () => {
             <p className="text-white/70 mb-4">
               Proposez vos compétences en IA ou trouvez un expert pour vous accompagner dans vos projets.
             </p>
-            <Button variant="link" className="text-startupia-turquoise p-0 h-auto" asChild>
+            <Button variant="link" className="text-startupia-gold p-0 h-auto" asChild>
               <Link to="/community?tab=services">Voir les services →</Link>
             </Button>
           </div>
@@ -67,7 +67,7 @@ const CommunitySummary = () => {
             <p className="text-white/70 mb-4">
               Accédez à des formations de qualité et partagez vos connaissances avec la communauté IA.
             </p>
-            <Button variant="link" className="text-startupia-turquoise p-0 h-auto" asChild>
+            <Button variant="link" className="text-startupia-gold p-0 h-auto" asChild>
               <Link to="/community?tab=resources">Découvrir les formations →</Link>
             </Button>
           </div>
@@ -95,7 +95,7 @@ const CommunitySummary = () => {
                 <span>Partagez vos retours avec les entrepreneurs</span>
               </li>
             </ul>
-            <Button className="bg-startupia-turquoise hover:bg-startupia-turquoise/90" asChild>
+            <Button className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold button-glow-gold" asChild>
               <Link to="/startups">Découvrir les startups innovantes</Link>
             </Button>
           </div>

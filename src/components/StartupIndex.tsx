@@ -30,7 +30,7 @@ const StartupIndex = () => {
             </p>
             
             <div className="pt-6">
-              <Button size="lg" className="bg-startupia-purple hover:bg-startupia-purple/90 button-glow text-lg py-6 px-8">
+              <Button size="lg" className="bg-startupia-gold hover:bg-startupia-light-gold button-glow-gold text-black font-semibold text-lg py-6 px-8">
                 <Book size={20} className="mr-2" />
                 Voir les fiches Startup Index
               </Button>

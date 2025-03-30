@@ -77,7 +77,7 @@ const HeroSection = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-16">
           <Button 
             size="lg" 
-            className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 button-glow text-lg py-6 px-8 w-full sm:w-auto"
+            className="bg-startupia-gold hover:bg-startupia-light-gold button-glow-gold text-black font-semibold text-lg py-6 px-8 w-full sm:w-auto"
             asChild
           >
             <Link to="/startups">
@@ -88,7 +88,7 @@ const HeroSection = () => {
           <Button 
             size="lg" 
             variant="outline" 
-            className="border-startupia-turquoise hover:bg-startupia-turquoise/20 text-white text-lg py-6 px-8 w-full sm:w-auto"
+            className="border-startupia-gold text-startupia-gold hover:bg-startupia-gold/20 text-lg py-6 px-8 w-full sm:w-auto"
             asChild
           >
             <Link to="/community">
@@ -99,7 +99,7 @@ const HeroSection = () => {
           <Button 
             size="lg" 
             variant="outline" 
-            className="border-startupia-turquoise hover:bg-startupia-turquoise/20 text-white text-lg py-6 px-8 w-full sm:w-auto"
+            className="border-startupia-turquoise text-startupia-turquoise hover:bg-startupia-turquoise/20 text-lg py-6 px-8 w-full sm:w-auto"
             asChild
           >
             <Link to="/cofounder">
@@ -112,7 +112,7 @@ const HeroSection = () => {
         {/* Down arrow indicator */}
         <a 
           href="#startup-index" 
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center hover:text-startupia-turquoise transition-colors"
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center hover:text-startupia-gold transition-colors"
         >
           <span className="text-sm mb-2 opacity-80">Découvrir</span>
           <ArrowRight size={24} className="rotate-90" />

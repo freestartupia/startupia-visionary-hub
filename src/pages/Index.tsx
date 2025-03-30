@@ -50,7 +50,7 @@ const Index = () => {
       {/* Background gradient elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-64 sm:w-96 h-64 sm:h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
-      <div className="absolute bottom-1/3 -right-40 w-64 sm:w-96 h-64 sm:h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute bottom-1/3 -right-40 w-64 sm:w-96 h-64 sm:h-96 bg-startupia-gold/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
 
       <Navbar />
       

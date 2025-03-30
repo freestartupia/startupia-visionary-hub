@@ -1,5 +1,5 @@
-
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import StartupIndex from '@/components/StartupIndex';
@@ -10,7 +10,12 @@ import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
 
 const Index = () => {
-  const sectionsRef = useRef<(HTMLElement | null)[]>([]);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Redirect to startup index page
+    navigate('/startups');
+  }, [navigate]);
 
   useEffect(() => {
     document.title = "Startupia.fr – L'intelligence derrière les startups IA françaises";
@@ -50,33 +55,6 @@ const Index = () => {
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
       <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
-      
-      <div className="relative z-10">
-        <Navbar />
-        <HeroSection />
-        
-        <div className="timeline-section">
-          <StartupIndex />
-        </div>
-        
-        <div className="timeline-section">
-          <StartupMatcher />
-        </div>
-        
-        <div className="timeline-section">
-          <StartupCoFounder />
-        </div>
-        
-        <div className="timeline-section">
-          <InvestmentSection />
-        </div>
-        
-        <div className="timeline-section">
-          <Newsletter />
-        </div>
-        
-        <Footer />
-      </div>
     </div>
   );
 };

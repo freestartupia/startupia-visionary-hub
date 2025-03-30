@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Search, Rocket } from 'lucide-react';
 
@@ -37,9 +38,15 @@ const HeroSection = () => {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-          <Button size="lg" className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 button-glow text-lg py-6 px-8">
-            <Search size={20} className="mr-2" />
-            Explorer les startups
+          <Button 
+            size="lg" 
+            className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 button-glow text-lg py-6 px-8"
+            asChild
+          >
+            <Link to="/startups">
+              <Search size={20} className="mr-2" />
+              Explorer les startups
+            </Link>
           </Button>
           <Button size="lg" variant="outline" className="border-startupia-turquoise hover:bg-startupia-turquoise/20 text-white text-lg py-6 px-8">
             <Rocket size={20} className="mr-2" />

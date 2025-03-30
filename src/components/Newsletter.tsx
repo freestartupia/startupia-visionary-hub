@@ -1,92 +1,85 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mail, ArrowRight, Check, AlertCircle } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/use-toast';
 
 const Newsletter = () => {
   const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    setLoading(true);
     
-    setIsSubmitting(true);
-    
-    // Simulate API call
+    // Simulation d'une souscription
     setTimeout(() => {
       toast({
-        title: "Inscription réussie !",
-        description: "Vous recevrez bientôt notre newsletter hebdomadaire.",
-        action: (
-          <div className="h-8 w-8 bg-green-500/20 rounded-full flex items-center justify-center">
-            <Check className="h-5 w-5 text-green-500" />
-          </div>
-        ),
+        title: "Inscription réussie!",
+        description: "Vous recevrez bientôt notre newsletter sur l'écosystème IA français.",
       });
-      setIsSubmitting(false);
       setEmail('');
+      setLoading(false);
     }, 1000);
   };
 
   return (
-    <section className="py-20 relative">
+    <section id="newsletter" className="py-20 relative timeline-section">
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-3xl h-1/2 bg-startupia-purple/20 blur-3xl rounded-full"></div>
+      <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-purple/20 rounded-full blur-3xl animate-pulse-slow"></div>
       
       <div className="container mx-auto px-4 z-10">
-        <div className="glass-card border border-startupia-purple/30 p-10 md:p-16 max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-startupia-purple/20 mb-6">
-            <Mail size={28} className="text-startupia-purple" />
-          </div>
-          
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6">
-            📬 Chaque semaine, 3 startups IA et 1 idée de business à lancer
-          </h2>
-          
-          <p className="text-lg text-white/70 mb-8">
-            Reçois chaque jeudi une sélection de startups inspirantes, un modèle à suivre et une idée concrète à reproduire.
-          </p>
-          
-          <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 max-w-xl mx-auto">
-            <div className="flex-1 relative">
-              <input 
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Entrez votre adresse email"
-                className="w-full bg-white/10 border border-white/20 rounded-lg py-3 px-4 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-startupia-purple/50"
-                required
-              />
+        <div className="max-w-5xl mx-auto glass-card p-8 md:p-12 border border-startupia-purple/30">
+          <div className="flex flex-col lg:flex-row items-center gap-8">
+            <div className="lg:w-2/3">
+              <div className="flex items-center mb-2">
+                <span className="text-3xl mr-3">📮</span>
+                <p className="text-lg text-startupia-purple font-semibold">Newsletter hebdomadaire</p>
+              </div>
+              
+              <h2 className="text-3xl font-bold mb-4">Restez informé de l'actualité IA française</h2>
+              <p className="text-lg text-white/70 mb-6">
+                Recevez les dernières actualités sur les startups IA françaises, les levées de fonds, les offres d'emploi et les événements à ne pas manquer.
+              </p>
+              <div className="flex flex-wrap gap-3 mb-4">
+                <span className="px-3 py-1 text-sm bg-startupia-purple/20 rounded-full border border-startupia-purple/30">🚀 Startups émergentes</span>
+                <span className="px-3 py-1 text-sm bg-white/5 border border-white/10 rounded-full">💰 Levées de fonds</span>
+                <span className="px-3 py-1 text-sm bg-white/5 border border-white/10 rounded-full">🔍 Analyse du marché</span>
+                <span className="px-3 py-1 text-sm bg-white/5 border border-white/10 rounded-full">👥 Opportunités</span>
+              </div>
             </div>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="bg-startupia-purple hover:bg-startupia-purple/90 button-glow text-white py-3 px-6"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Inscription...
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  Je m'abonne
-                  <ArrowRight size={18} className="ml-2" />
-                </span>
-              )}
-            </Button>
-          </form>
-          
-          <p className="text-xs text-white/40 mt-4">
-            Nous respectons votre vie privée. Désinscription possible à tout moment.
-          </p>
+            
+            <div className="lg:w-1/3 w-full">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block mb-2 text-sm font-medium">
+                    Votre adresse e-mail
+                  </label>
+                  <Input 
+                    type="email" 
+                    id="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="nom@exemple.com" 
+                    className="bg-white/5 border-white/20 placeholder:text-white/40 focus:border-startupia-purple/50"
+                    required
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-startupia-purple hover:bg-startupia-purple/90 button-glow"
+                  disabled={loading}
+                >
+                  {loading ? 'Inscription...' : 'Rejoindre la communauté'}
+                </Button>
+                <p className="text-xs text-white/50 text-center">
+                  Nous respectons votre vie privée. Désabonnez-vous à tout moment.
+                </p>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </section>

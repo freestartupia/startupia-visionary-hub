@@ -8,6 +8,8 @@ import StartupCoFounder from '@/components/StartupCoFounder';
 import InvestmentSection from '@/components/InvestmentSection';
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
+import Testimonials from '@/components/Testimonials';
+import TrustSignals from '@/components/TrustSignals';
 
 const Index = () => {
   useEffect(() => {
@@ -53,8 +55,10 @@ const Index = () => {
       
       <main className="pt-16">
         <HeroSection />
+        <TrustSignals />
         <StartupIndex />
         <StartupMatcher />
+        <Testimonials />
         <StartupCoFounder />
         <InvestmentSection />
         <Newsletter />

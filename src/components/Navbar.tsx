@@ -54,6 +54,12 @@ const Navbar = () => {
           >
             Radar IA
           </Link>
+          <Link 
+            to="/cofounder" 
+            className={`transition-colors ${isActive('/cofounder') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+          >
+            Co-Founder
+          </Link>
           <Button variant="outline" className="border-startupia-turquoise text-white hover:bg-startupia-turquoise/20">
             Se connecter
           </Button>
@@ -90,6 +96,13 @@ const Navbar = () => {
               className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
             >
               Radar IA
+            </Link>
+            <Link
+              to="/cofounder"
+              onClick={toggleMobileMenu}
+              className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/cofounder') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+            >
+              Co-Founder
             </Link>
             <div className="pt-4 flex flex-col space-y-3">
               <Button variant="outline" className="border-startupia-turquoise text-white hover:bg-startupia-turquoise/20 w-full">

@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import StartupIndex from "./pages/StartupIndex";
 import StartupDetails from "./pages/StartupDetails";
 import RadarIA from "./pages/RadarIA";
+import CoFounder from "./pages/CoFounder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/startups" element={<StartupIndex />} />
           <Route path="/startup/:id" element={<StartupDetails />} />
           <Route path="/radar" element={<RadarIA />} />
+          <Route path="/cofounder" element={<CoFounder />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </TooltipProvider>

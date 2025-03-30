@@ -67,11 +67,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom colors for our web3 theme - changed purple to turquoise
+				// Custom colors for our web3 theme - changed turquoise to dark green
 				startupia: {
-					turquoise: '#14B8A6',
-					'deep-turquoise': '#0B7285',
-					'light-turquoise': '#5EEAD4',
+					turquoise: '#1D3A34',
+					'deep-turquoise': '#152B26',
+					'light-turquoise': '#2D5951',
 					black: '#000000',
 					'dark-gray': '#121212',
 				},
@@ -124,9 +124,9 @@ export default {
 				'glow': 'glow 2s ease-in-out infinite',
 			},
 			backgroundImage: {
-				'hero-pattern': 'linear-gradient(to bottom, #000000, #0B2D40)',
-				'purple-gradient': 'linear-gradient(135deg, #0B7285 0%, #14B8A6 100%)',
-				'grid-pattern': 'radial-gradient(circle, rgba(20, 184, 166, 0.1) 1px, transparent 1px)',
+				'hero-pattern': 'linear-gradient(to bottom, #000000, #0D1F1B)',
+				'purple-gradient': 'linear-gradient(135deg, #152B26 0%, #1D3A34 100%)',
+				'grid-pattern': 'radial-gradient(circle, rgba(29, 58, 52, 0.1) 1px, transparent 1px)',
 			},
 			backdropFilter: {
 				'none': 'none',

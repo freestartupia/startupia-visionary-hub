@@ -69,4 +69,18 @@ export type Startup = {
   pitchDeckUrl?: string;
   crunchbaseUrl?: string;
   notionUrl?: string;
+  // New fields for Radar IA
+  dateAdded?: string; // ISO date string
+  viewCount?: number;
+  isFeatured?: boolean;
+  fundingRounds?: FundingRound[];
+};
+
+export type FundingRound = {
+  id: string;
+  amount: number; // Amount in euros
+  date: string; // ISO date string
+  mainInvestor: string;
+  round: "Pré-seed" | "Seed" | "Série A" | "Série B" | "Série C" | "Série D+" | "Growth";
+  sourceUrl?: string;
 };

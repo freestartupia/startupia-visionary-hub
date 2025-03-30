@@ -1,12 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true); // For demo purposes, set to true
   const location = useLocation();
 
   useEffect(() => {
@@ -42,30 +51,69 @@ const Navbar = () => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-8 items-center">
-          <Link 
-            to="/startups" 
-            className={`transition-colors ${isActive('/startups') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
-          >
-            Index
-          </Link>
-          <Link 
-            to="/radar" 
-            className={`transition-colors ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
-          >
-            Radar IA
-          </Link>
-          <Link 
-            to="/cofounder" 
-            className={`transition-colors ${isActive('/cofounder') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
-          >
-            Co-Founder
-          </Link>
-          <Button variant="outline" className="border-startupia-turquoise text-white hover:bg-startupia-turquoise/20">
-            Se connecter
-          </Button>
-          <Button className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 button-glow">
-            S'inscrire
-          </Button>
+          {isLoggedIn ? (
+            <>
+              <Link 
+                to="/startups" 
+                className={`transition-colors ${isActive('/startups') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+              >
+                Découvrir les startups
+              </Link>
+              <Link 
+                to="/radar" 
+                className={`transition-colors ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+              >
+                Explorer le radar IA
+              </Link>
+              <Link 
+                to="/cofounder" 
+                className={`transition-colors ${isActive('/cofounder') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+              >
+                Trouver un cofondateur
+              </Link>
+              <Link 
+                to="/community" 
+                className={`transition-colors ${isActive('/community') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+              >
+                Communauté
+              </Link>
+              <div className="flex items-center gap-4 ml-4">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                  <Bell size={20} />
+                </Button>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                  <User size={20} />
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Link 
+                to="/startups" 
+                className={`transition-colors ${isActive('/startups') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+              >
+                Index
+              </Link>
+              <Link 
+                to="/radar" 
+                className={`transition-colors ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+              >
+                Radar IA
+              </Link>
+              <Link 
+                to="/cofounder" 
+                className={`transition-colors ${isActive('/cofounder') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+              >
+                Co-Founder
+              </Link>
+              <Button variant="outline" className="border-startupia-turquoise text-white hover:bg-startupia-turquoise/20">
+                Se connecter
+              </Button>
+              <Button className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 button-glow">
+                S'inscrire
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -83,35 +131,78 @@ const Navbar = () => {
       {mobileMenuOpen && (
         <div className="md:hidden glass-card mt-2 mx-4 p-4 animate-fade-in">
           <div className="flex flex-col space-y-4 py-2">
-            <Link
-              to="/startups"
-              onClick={toggleMobileMenu}
-              className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/startups') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
-            >
-              Index
-            </Link>
-            <Link
-              to="/radar"
-              onClick={toggleMobileMenu}
-              className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
-            >
-              Radar IA
-            </Link>
-            <Link
-              to="/cofounder"
-              onClick={toggleMobileMenu}
-              className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/cofounder') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
-            >
-              Co-Founder
-            </Link>
-            <div className="pt-4 flex flex-col space-y-3">
-              <Button variant="outline" className="border-startupia-turquoise text-white hover:bg-startupia-turquoise/20 w-full">
-                Se connecter
-              </Button>
-              <Button className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 w-full button-glow">
-                S'inscrire
-              </Button>
-            </div>
+            {isLoggedIn ? (
+              <>
+                <Link
+                  to="/startups"
+                  onClick={toggleMobileMenu}
+                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/startups') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+                >
+                  Découvrir les startups
+                </Link>
+                <Link
+                  to="/radar"
+                  onClick={toggleMobileMenu}
+                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+                >
+                  Explorer le radar IA
+                </Link>
+                <Link
+                  to="/cofounder"
+                  onClick={toggleMobileMenu}
+                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/cofounder') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+                >
+                  Trouver un cofondateur
+                </Link>
+                <Link
+                  to="/community"
+                  onClick={toggleMobileMenu}
+                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/community') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+                >
+                  Communauté
+                </Link>
+                <div className="flex space-x-4 px-4 py-2">
+                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                    <Bell size={20} />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                    <User size={20} />
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/startups"
+                  onClick={toggleMobileMenu}
+                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/startups') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+                >
+                  Index
+                </Link>
+                <Link
+                  to="/radar"
+                  onClick={toggleMobileMenu}
+                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+                >
+                  Radar IA
+                </Link>
+                <Link
+                  to="/cofounder"
+                  onClick={toggleMobileMenu}
+                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/cofounder') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+                >
+                  Co-Founder
+                </Link>
+                <div className="pt-4 flex flex-col space-y-3">
+                  <Button variant="outline" className="border-startupia-turquoise text-white hover:bg-startupia-turquoise/20 w-full">
+                    Se connecter
+                  </Button>
+                  <Button className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 w-full button-glow">
+                    S'inscrire
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

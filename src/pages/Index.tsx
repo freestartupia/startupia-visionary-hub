@@ -10,6 +10,7 @@ import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
 import Testimonials from '@/components/Testimonials';
 import TrustSignals from '@/components/TrustSignals';
+import CommunitySummary from '@/components/CommunitySummary';
 
 const Index = () => {
   useEffect(() => {
@@ -58,6 +59,7 @@ const Index = () => {
         <TrustSignals />
         <StartupIndex />
         <StartupMatcher />
+        <CommunitySummary />
         <Testimonials />
         <StartupCoFounder />
         <InvestmentSection />

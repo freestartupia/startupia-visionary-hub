@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Search, Rocket, ArrowRight } from 'lucide-react';
+import { Search, Rocket, ArrowRight, Users, MessageSquare, Star } from 'lucide-react';
 
 const HeroSection = () => {
   return (
@@ -19,14 +19,14 @@ const HeroSection = () => {
         </div>
 
         {/* Main Title */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-8 max-w-5xl mx-auto leading-tight glow-effect">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 max-w-5xl mx-auto leading-tight glow-effect">
           Découvrez, rejoignez et investissez dans les startups IA françaises
         </h1>
 
         {/* Subtitle */}
-        <div className="max-w-3xl mx-auto mb-12">
+        <div className="max-w-3xl mx-auto mb-8">
           <p className="text-xl sm:text-2xl text-white/90 font-medium mb-6">
-            Startupia, la plateforme qui connecte entrepreneurs, talents et investisseurs dans l'écosystème IA français.
+            Startupia, la plateforme qui connecte entrepreneurs, talents, clients et investisseurs dans l'écosystème IA français.
           </p>
           <div className="flex flex-wrap justify-center gap-3 mb-8">
             <span className="px-3 py-1 bg-white/10 border border-white/20 rounded-full text-white/80">Intelligence artificielle</span>
@@ -35,6 +35,41 @@ const HeroSection = () => {
             <span className="px-3 py-1 bg-white/10 border border-white/20 rounded-full text-white/80">NLP</span>
             <span className="px-3 py-1 bg-white/10 border border-white/20 rounded-full text-white/80">B2B SaaS</span>
             <span className="px-3 py-1 bg-white/10 border border-white/20 rounded-full text-white/80">IA générative</span>
+          </div>
+        </div>
+
+        {/* Value Proposition Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          <div className="glass-card p-4 hover-scale flex flex-col items-center">
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-startupia-turquoise/20 text-startupia-turquoise mb-3">
+              <Search size={24} />
+            </div>
+            <h3 className="text-lg font-semibold mb-1">Trouvez l'inspiration</h3>
+            <p className="text-sm text-white/80">Découvrez des SaaS, concepts et agents IA innovants</p>
+          </div>
+          
+          <div className="glass-card p-4 hover-scale flex flex-col items-center">
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-startupia-turquoise/20 text-startupia-turquoise mb-3">
+              <Star size={24} />
+            </div>
+            <h3 className="text-lg font-semibold mb-1">Devenez client</h3>
+            <p className="text-sm text-white/80">Abonnez-vous aux services des startups listées</p>
+          </div>
+          
+          <div className="glass-card p-4 hover-scale flex flex-col items-center">
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-startupia-turquoise/20 text-startupia-turquoise mb-3">
+              <Users size={24} />
+            </div>
+            <h3 className="text-lg font-semibold mb-1">Rejoignez la communauté</h3>
+            <p className="text-sm text-white/80">Proposez vos services et collaborez sur des projets</p>
+          </div>
+          
+          <div className="glass-card p-4 hover-scale flex flex-col items-center">
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-startupia-turquoise/20 text-startupia-turquoise mb-3">
+              <MessageSquare size={24} />
+            </div>
+            <h3 className="text-lg font-semibold mb-1">Échangez sur le forum</h3>
+            <p className="text-sm text-white/80">Partagez vos connaissances et posez vos questions</p>
           </div>
         </div>
 
@@ -48,6 +83,17 @@ const HeroSection = () => {
             <Link to="/startups">
               <Search size={20} className="mr-2" />
               Explorer les startups
+            </Link>
+          </Button>
+          <Button 
+            size="lg" 
+            variant="outline" 
+            className="border-startupia-turquoise hover:bg-startupia-turquoise/20 text-white text-lg py-6 px-8 w-full sm:w-auto"
+            asChild
+          >
+            <Link to="/community">
+              <Users size={20} className="mr-2" />
+              Rejoindre la communauté
             </Link>
           </Button>
           <Button 

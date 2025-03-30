@@ -67,13 +67,18 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom colors for our web3 theme - changed to bright turquoise green
+				// Custom colors for Startupia using the new color palette
 				startupia: {
-					turquoise: '#2EDB8F', // Main turquoise green color
-					'deep-turquoise': '#25B476', // Darker turquoise green
-					'light-turquoise': '#64E9AB', // Lighter turquoise green
-					black: '#000000',
+					turquoise: '#2EDB8F', // Vert menthe tech (primary)
+					'deep-turquoise': '#25B476', // Darker mint green
+					'light-turquoise': '#64E9AB', // Lighter mint green
+					gold: '#F4C770', // Doré moderne (secondary accent)
+					'deep-gold': '#E5B55C', // Darker gold
+					'light-gold': '#F9D693', // Lighter gold
+					black: '#0E0E0E', // Noir absolu (background)
 					'dark-gray': '#121212',
+					gray: '#A8A8A8', // Gris moyen (neutral text)
+					white: '#F5F5F5', // Blanc cassé (main text)
 				},
 			},
 			borderRadius: {
@@ -124,8 +129,9 @@ export default {
 				'glow': 'glow 2s ease-in-out infinite',
 			},
 			backgroundImage: {
-				'hero-pattern': 'linear-gradient(to bottom, #000000, #0F3D2B)',
-				'purple-gradient': 'linear-gradient(135deg, #25B476 0%, #2EDB8F 100%)',
+				'hero-pattern': 'linear-gradient(to bottom, #0E0E0E, #0F3D2B)',
+				'green-gradient': 'linear-gradient(135deg, #25B476 0%, #2EDB8F 100%)',
+				'gold-gradient': 'linear-gradient(135deg, #E5B55C 0%, #F4C770 100%)',
 				'grid-pattern': 'radial-gradient(circle, rgba(46, 219, 143, 0.1) 1px, transparent 1px)',
 			},
 			backdropFilter: {

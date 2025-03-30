@@ -129,7 +129,7 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden glass-card mt-2 mx-4 p-4 animate-fade-in">
+        <div className="md:hidden fixed top-[60px] left-0 right-0 max-h-[calc(100vh-60px)] overflow-y-auto glass-card mt-2 mx-4 p-4 animate-fade-in backdrop-blur-lg">
           <div className="flex flex-col space-y-4 py-2">
             {isLoggedIn ? (
               <>

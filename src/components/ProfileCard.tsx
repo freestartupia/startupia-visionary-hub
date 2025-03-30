@@ -37,7 +37,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
     .substring(0, 2);
 
   return (
-    <Card className="glass-card overflow-hidden hover:shadow-lg transition-shadow hover:shadow-startupia-turquoise/10 border-startupia-turquoise/20">
+    <Card className="glass-card overflow-hidden hover:shadow-lg transition-shadow hover:shadow-startupia-turquoise/10 border-startupia-turquoise/20 h-full flex flex-col">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
@@ -68,7 +68,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
         </div>
       </CardHeader>
       
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 flex-grow">
         {projectName && (
           <div className="mb-3">
             <Badge variant="outline" className="border-startupia-turquoise/50 text-startupia-turquoise">
@@ -123,7 +123,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
         </div>
       </CardContent>
       
-      <CardFooter>
+      <CardFooter className="mt-auto">
         <Button 
           onClick={onMatch}
           className="w-full bg-startupia-turquoise hover:bg-startupia-turquoise/80 text-black"

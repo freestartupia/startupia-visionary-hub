@@ -137,7 +137,7 @@ const StartupCoFounder = () => {
         
         {/* CTA */}
         <div className="mt-12 text-center">
-          <Button size="lg" className="bg-startupia-purple hover:bg-startupia-purple/90 button-glow text-lg py-6 px-8">
+          <Button size="lg" className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold button-glow-gold text-lg py-6 px-8">
             <Users size={20} className="mr-2" />
             Accéder à la communauté
           </Button>

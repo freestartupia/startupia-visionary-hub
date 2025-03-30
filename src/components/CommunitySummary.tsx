@@ -27,6 +27,13 @@ const CommunitySummary = () => {
             Rejoignez l'écosystème IA français et accédez à un espace d'échanges entre entrepreneurs,
             développeurs, designers et clients potentiels.
           </p>
+
+          <div className="mt-8">
+            <Button size="lg" className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold button-glow-gold text-lg py-6 px-8">
+              <Users size={20} className="mr-2" />
+              Rejoindre la communauté
+            </Button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -39,7 +46,7 @@ const CommunitySummary = () => {
             <p className="text-white/70 mb-4">
               Posez vos questions techniques, partagez vos expériences et discutez des dernières tendances IA.
             </p>
-            <Button variant="link" className="text-startupia-gold p-0 h-auto" asChild>
+            <Button variant="outline" className="text-startupia-gold hover:bg-startupia-gold/20 hover:text-white border-startupia-gold w-full" asChild>
               <Link to="/community">Accéder au forum →</Link>
             </Button>
           </div>
@@ -53,7 +60,7 @@ const CommunitySummary = () => {
             <p className="text-white/70 mb-4">
               Proposez vos compétences en IA ou trouvez un expert pour vous accompagner dans vos projets.
             </p>
-            <Button variant="link" className="text-startupia-gold p-0 h-auto" asChild>
+            <Button variant="outline" className="text-startupia-gold hover:bg-startupia-gold/20 hover:text-white border-startupia-gold w-full" asChild>
               <Link to="/community?tab=services">Voir les services →</Link>
             </Button>
           </div>
@@ -67,7 +74,7 @@ const CommunitySummary = () => {
             <p className="text-white/70 mb-4">
               Accédez à des formations de qualité et partagez vos connaissances avec la communauté IA.
             </p>
-            <Button variant="link" className="text-startupia-gold p-0 h-auto" asChild>
+            <Button variant="outline" className="text-startupia-gold hover:bg-startupia-gold/20 hover:text-white border-startupia-gold w-full" asChild>
               <Link to="/community?tab=resources">Découvrir les formations →</Link>
             </Button>
           </div>

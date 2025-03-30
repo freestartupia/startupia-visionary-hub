@@ -7,6 +7,8 @@ import StartupCard from "@/components/StartupCard";
 import StartupFilters from "@/components/StartupFilters";
 import { mockStartups } from "@/data/mockStartups";
 import { Startup } from "@/types/startup";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const StartupIndex = () => {
   const [startups, setStartups] = useState<Startup[]>(mockStartups);
@@ -33,8 +35,10 @@ const StartupIndex = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <Navbar />
+      
       {/* Hero section */}
-      <section className="py-12 md:py-20 relative">
+      <section className="py-12 md:py-20 pt-28 relative">
         <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
         <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
         <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
@@ -103,6 +107,8 @@ const StartupIndex = () => {
           )}
         </div>
       </section>
+      
+      <Footer />
     </div>
   );
 };

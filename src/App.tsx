@@ -7,26 +7,26 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import StartupIndex from "./pages/StartupIndex";
 import StartupDetails from "./pages/StartupDetails";
-import RadarIA from "./pages/RadarIA"; // Add import for new page
+import RadarIA from "./pages/RadarIA";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+    <BrowserRouter>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/startups" element={<StartupIndex />} />
           <Route path="/startup/:id" element={<StartupDetails />} />
-          <Route path="/radar" element={<RadarIA />} /> {/* Add new route */}
+          <Route path="/radar" element={<RadarIA />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+      </TooltipProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

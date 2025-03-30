@@ -67,11 +67,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom colors for our web3 theme - changed turquoise to dark green
+				// Custom colors for our web3 theme - changed to warm gold
 				startupia: {
-					turquoise: '#1D3A34',
-					'deep-turquoise': '#152B26',
-					'light-turquoise': '#2D5951',
+					turquoise: '#E6B752', // Main gold color
+					'deep-turquoise': '#D4A439', // Darker gold
+					'light-turquoise': '#F4CC7F', // Lighter gold
 					black: '#000000',
 					'dark-gray': '#121212',
 				},
@@ -111,8 +111,8 @@ export default {
 					'50%': { transform: 'translateY(-10px)' }
 				},
 				glow: {
-					'0%, 100%': { boxShadow: '0 0 10px #14B8A6' },
-					'50%': { boxShadow: '0 0 20px #14B8A6' }
+					'0%, 100%': { boxShadow: '0 0 10px #E6B752' },
+					'50%': { boxShadow: '0 0 20px #E6B752' }
 				}
 			},
 			animation: {
@@ -124,9 +124,9 @@ export default {
 				'glow': 'glow 2s ease-in-out infinite',
 			},
 			backgroundImage: {
-				'hero-pattern': 'linear-gradient(to bottom, #000000, #0D1F1B)',
-				'purple-gradient': 'linear-gradient(135deg, #152B26 0%, #1D3A34 100%)',
-				'grid-pattern': 'radial-gradient(circle, rgba(29, 58, 52, 0.1) 1px, transparent 1px)',
+				'hero-pattern': 'linear-gradient(to bottom, #000000, #3D2D0F)',
+				'purple-gradient': 'linear-gradient(135deg, #D4A439 0%, #E6B752 100%)',
+				'grid-pattern': 'radial-gradient(circle, rgba(230, 183, 82, 0.1) 1px, transparent 1px)',
 			},
 			backdropFilter: {
 				'none': 'none',

@@ -38,7 +38,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
 
   return (
     <Card className="glass-card overflow-hidden hover:shadow-lg transition-shadow hover:shadow-startupia-turquoise/10 border-startupia-turquoise/20 h-full flex flex-col">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 h-[80px]">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12 border-2 border-startupia-turquoise/30">
@@ -68,41 +68,45 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
         </div>
       </CardHeader>
       
-      <CardContent className="pt-0 flex-grow">
-        {projectName && (
-          <div className="mb-3">
-            <Badge variant="outline" className="border-startupia-turquoise/50 text-startupia-turquoise">
-              {projectName}
-              {projectStage && ` • ${projectStage}`}
-            </Badge>
-          </div>
-        )}
+      <CardContent className="pt-0 flex-grow flex flex-col">
+        <div className="h-[40px]">
+          {projectName && (
+            <div className="mb-3">
+              <Badge variant="outline" className="border-startupia-turquoise/50 text-startupia-turquoise">
+                {projectName}
+                {projectStage && ` • ${projectStage}`}
+              </Badge>
+            </div>
+          )}
+        </div>
         
-        <p className="text-white/80 text-sm mb-4 line-clamp-3">{pitch}</p>
+        <div className="h-[72px] mb-4">
+          <p className="text-white/80 text-sm line-clamp-3">{pitch}</p>
+        </div>
         
-        <div className="grid grid-cols-2 gap-2 text-sm text-white/70">
+        <div className="grid grid-cols-2 gap-2 text-sm text-white/70 h-[80px]">
           <div className="flex items-center gap-2">
             <Briefcase className="h-3.5 w-3.5 text-startupia-turquoise" />
-            <span>{sector}</span>
+            <span className="truncate">{sector}</span>
           </div>
           
           <div className="flex items-center gap-2">
             <MapPin className="h-3.5 w-3.5 text-startupia-turquoise" />
-            <span>{region}</span>
+            <span className="truncate">{region}</span>
           </div>
           
           <div className="flex items-center gap-2">
             <Rocket className="h-3.5 w-3.5 text-startupia-turquoise" />
-            <span>{objective}</span>
+            <span className="truncate">{objective}</span>
           </div>
           
           <div className="flex items-center gap-2">
             <Clock className="h-3.5 w-3.5 text-startupia-turquoise" />
-            <span>{availability}</span>
+            <span className="truncate">{availability}</span>
           </div>
         </div>
         
-        <div className="mt-4">
+        <div className="mt-auto h-[70px]">
           <h4 className="text-xs font-medium text-white/50 mb-1.5">Outils IA</h4>
           <div className="flex flex-wrap gap-1.5">
             {profile.aiTools.slice(0, 3).map((tool, index) => (

@@ -67,11 +67,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom colors for our web3 theme - changed to peachy orange
+				// Custom colors for our web3 theme - changed to bright turquoise green
 				startupia: {
-					turquoise: '#FFA65C', // Main peachy orange color
-					'deep-turquoise': '#FF8B38', // Darker peachy orange
-					'light-turquoise': '#FFBE80', // Lighter peachy orange
+					turquoise: '#2EDB8F', // Main turquoise green color
+					'deep-turquoise': '#25B476', // Darker turquoise green
+					'light-turquoise': '#64E9AB', // Lighter turquoise green
 					black: '#000000',
 					'dark-gray': '#121212',
 				},
@@ -111,8 +111,8 @@ export default {
 					'50%': { transform: 'translateY(-10px)' }
 				},
 				glow: {
-					'0%, 100%': { boxShadow: '0 0 10px #FFA65C' },
-					'50%': { boxShadow: '0 0 20px #FFA65C' }
+					'0%, 100%': { boxShadow: '0 0 10px #2EDB8F' },
+					'50%': { boxShadow: '0 0 20px #2EDB8F' }
 				}
 			},
 			animation: {
@@ -124,9 +124,9 @@ export default {
 				'glow': 'glow 2s ease-in-out infinite',
 			},
 			backgroundImage: {
-				'hero-pattern': 'linear-gradient(to bottom, #000000, #3D2211)',
-				'purple-gradient': 'linear-gradient(135deg, #FF8B38 0%, #FFA65C 100%)',
-				'grid-pattern': 'radial-gradient(circle, rgba(255, 166, 92, 0.1) 1px, transparent 1px)',
+				'hero-pattern': 'linear-gradient(to bottom, #000000, #0F3D2B)',
+				'purple-gradient': 'linear-gradient(135deg, #25B476 0%, #2EDB8F 100%)',
+				'grid-pattern': 'radial-gradient(circle, rgba(46, 219, 143, 0.1) 1px, transparent 1px)',
 			},
 			backdropFilter: {
 				'none': 'none',

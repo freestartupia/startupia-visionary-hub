@@ -12,6 +12,7 @@ import CoFounder from "./pages/CoFounder";
 import Community from "./pages/Community";
 import ProductLaunchPage from "./pages/ProductLaunch";
 import ProductDetails from "./pages/ProductDetails";
+import ProductForm from "./pages/ProductForm";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/products" element={<ProductLaunchPage />} />
           <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/product/new" element={<ProductForm />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </TooltipProvider>

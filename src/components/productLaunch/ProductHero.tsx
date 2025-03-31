@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface ProductHeroProps {
   searchTerm: string;
@@ -36,9 +37,11 @@ const ProductHero = ({ searchTerm, setSearchTerm }: ProductHeroProps) => {
           />
         </div>
         
-        <Button className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold">
-          <Plus size={16} className="mr-2" />
-          Lancer votre produit
+        <Button className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold" asChild>
+          <Link to="/product/new">
+            <Plus size={16} className="mr-2" />
+            Lancer votre produit
+          </Link>
         </Button>
       </div>
       

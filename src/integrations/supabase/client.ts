@@ -12,15 +12,9 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 // Create a custom function for incrementing values
-// Usage: supabase.rpc('increment', { inc: 1 })
-if (!supabase.rpc) {
-  (supabase as any).rpc = () => {};
-}
-
-(supabase as any).rpc = function(functionName: string, params: any) {
-  if (functionName === 'increment') {
-    // For local increment simulation - in a real application this would call a Postgres function
-    return { inc: params.inc || 1 };
-  }
-  return {};
+// In real cases, you should create a Postgres function in Supabase
+// This is just a client-side simulation for upvoting
+// Actual implementation should use a proper RPC call or direct update
+export const incrementValue = (currentValue: number = 0, increment: number = 1): number => {
+  return currentValue + increment;
 };

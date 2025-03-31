@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { ProductLaunch, ProductComment } from '@/types/productLaunch';
+import { Database } from '@/integrations/supabase/types';
 
 export async function fetchProductLaunches(): Promise<ProductLaunch[]> {
   try {
@@ -10,12 +11,14 @@ export async function fetchProductLaunches(): Promise<ProductLaunch[]> {
         *,
         comments:product_comments(*)
       `)
-      .order('featured_order', { ascending: true, nullsLast: true });
+      .order('featured_order', { ascending: true });
     
     if (error) {
       console.error('Error fetching product launches:', error);
       throw error;
     }
+    
+    if (!data) return [];
     
     // Transform data to match ProductLaunch type
     return data.map((item: any) => ({
@@ -60,6 +63,8 @@ export async function fetchProductById(id: string): Promise<ProductLaunch | null
       console.error('Error fetching product:', error);
       return null;
     }
+    
+    if (!data) return null;
     
     // Transform to ProductLaunch type
     return {
@@ -116,6 +121,8 @@ export async function addComment(
       return null;
     }
     
+    if (!data) return null;
+    
     return {
       id: data.id,
       userId: data.user_id,
@@ -148,6 +155,69 @@ export async function upvoteProduct(productId: string): Promise<boolean> {
   } catch (error) {
     console.error('Failed to upvote product:', error);
     return false;
+  }
+}
+
+export async function createProduct(product: Omit<ProductLaunch, 'id' | 'upvotes' | 'comments'>): Promise<ProductLaunch | null> {
+  try {
+    // Prepare data for insertion
+    const productData = {
+      name: product.name,
+      logo_url: product.logoUrl,
+      tagline: product.tagline,
+      description: product.description,
+      launch_date: product.launchDate,
+      created_by: product.createdBy,
+      creator_avatar_url: product.creatorAvatarUrl,
+      website_url: product.websiteUrl,
+      demo_url: product.demoUrl,
+      category: product.category,
+      status: product.status,
+      startup_id: product.startupId,
+      media_urls: product.mediaUrls,
+      beta_signup_url: product.betaSignupUrl,
+      featured_order: product.featuredOrder,
+      badge_code: product.badgeCode
+    };
+
+    const { data, error } = await supabase
+      .from('product_launches')
+      .insert(productData)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+    
+    if (!data) return null;
+
+    // Return the created product
+    return {
+      id: data.id,
+      name: data.name,
+      logoUrl: data.logo_url || '',
+      tagline: data.tagline,
+      description: data.description,
+      launchDate: data.launch_date,
+      createdBy: data.created_by,
+      creatorAvatarUrl: data.creator_avatar_url,
+      websiteUrl: data.website_url,
+      demoUrl: data.demo_url || undefined,
+      category: data.category,
+      upvotes: data.upvotes || 0,
+      comments: [],
+      status: data.status,
+      startupId: data.startup_id || undefined,
+      mediaUrls: data.media_urls || [],
+      betaSignupUrl: data.beta_signup_url || undefined,
+      featuredOrder: data.featured_order,
+      badgeCode: data.badge_code || undefined
+    };
+  } catch (error) {
+    console.error('Failed to create product:', error);
+    return null;
   }
 }
 

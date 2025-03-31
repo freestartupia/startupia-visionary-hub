@@ -4,6 +4,12 @@ export type ProductLaunchStatus =
   | "launching_today"
   | "launched";
 
+export type BadgeStyle =
+  | "default"
+  | "minimal"
+  | "dark"
+  | "light";
+
 export type ProductLaunch = {
   id: string;
   name: string;
@@ -23,6 +29,7 @@ export type ProductLaunch = {
   mediaUrls: string[]; // URLs for screenshots or demo videos
   betaSignupUrl?: string; // URL for beta signup
   featuredOrder?: number; // If featured, what order to show it in
+  badgeCode?: string; // Generated badge code for embedding
 };
 
 export type ProductComment = {

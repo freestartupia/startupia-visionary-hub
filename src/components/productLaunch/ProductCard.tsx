@@ -1,19 +1,24 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ThumbsUp, MessageSquare, Calendar, ExternalLink } from 'lucide-react';
+import { ThumbsUp, MessageSquare, Calendar, ExternalLink, Code, Copy, Check } from 'lucide-react';
 import { ProductLaunch } from '@/types/productLaunch';
 import { format, isToday, isYesterday, isTomorrow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   product: ProductLaunch;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+  const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
+  const [showBadgeCode, setShowBadgeCode] = useState(false);
+  
   const formatLaunchDate = (dateString: string) => {
     const date = new Date(dateString);
     
@@ -26,6 +31,24 @@ const ProductCard = ({ product }: ProductCardProps) => {
     } else {
       return format(date, 'd MMMM', { locale: fr });
     }
+  };
+  
+  const getBadgeCode = () => {
+    const baseUrl = window.location.origin;
+    return `<iframe src="${baseUrl}/embed/badge/${product.id}" width="180" height="40" style="border:none;overflow:hidden" scrolling="no" frameBorder="0" allowTransparency="true"></iframe>`;
+  };
+  
+  const handleCopyBadgeCode = () => {
+    navigator.clipboard.writeText(getBadgeCode());
+    setCopied(true);
+    toast({
+      title: "Code du badge copié !",
+      description: "Collez-le dans le HTML de votre site pour afficher le badge."
+    });
+    
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   };
   
   return (
@@ -68,8 +91,39 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     À venir
                   </Badge>
                 )}
+                {product.status === 'launched' && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-xs border-startupia-turquoise text-startupia-turquoise"
+                    onClick={() => setShowBadgeCode(!showBadgeCode)}
+                  >
+                    <Code size={12} className="mr-1" />
+                    Badge
+                  </Button>
+                )}
               </div>
             </div>
+            
+            {showBadgeCode && product.status === 'launched' && (
+              <div className="mt-3 p-2 bg-black/50 border border-startupia-turquoise/30 rounded-md">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs text-white/70">Badge pour votre site :</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 px-2 text-xs"
+                    onClick={handleCopyBadgeCode}
+                  >
+                    {copied ? <Check size={12} /> : <Copy size={12} />}
+                    {copied ? 'Copié' : 'Copier'}
+                  </Button>
+                </div>
+                <div className="bg-gray-900 p-1 rounded text-xs font-mono text-startupia-turquoise/80 overflow-x-auto whitespace-nowrap">
+                  {getBadgeCode()}
+                </div>
+              </div>
+            )}
             
             <div className="mt-3 flex flex-wrap gap-1">
               {product.category.slice(0, 3).map((tag, i) => (

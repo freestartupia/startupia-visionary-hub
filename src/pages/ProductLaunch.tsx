@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -20,13 +19,15 @@ const ProductLaunchPage = () => {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['productLaunches'],
     queryFn: fetchProductLaunches,
-    onError: (error) => {
-      console.error('Failed to load products:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les produits. Veuillez réessayer plus tard.",
-        variant: "destructive"
-      });
+    onSettled: (data, error) => {
+      if (error) {
+        console.error('Failed to load products:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les produits. Veuillez réessayer plus tard.",
+          variant: "destructive"
+        });
+      }
     }
   });
   

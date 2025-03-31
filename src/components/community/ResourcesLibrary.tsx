@@ -8,10 +8,19 @@ import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ResourceFormat, ResourceListing } from '@/types/community';
 import { mockResources } from '@/data/mockCommunityData';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
-const ResourcesLibrary = () => {
+interface ResourcesLibraryProps {
+  requireAuth?: boolean;
+}
+
+const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false }) => {
   const [resources, setResources] = useState<ResourceListing[]>(mockResources);
   const [selectedFormat, setSelectedFormat] = useState<ResourceFormat | 'all'>('all');
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   const formats: (ResourceFormat | 'all')[] = [
     'all', 'Vidéo', 'Article', 'E-book', 'Webinaire', 
@@ -38,6 +47,16 @@ const ResourcesLibrary = () => {
     });
   };
 
+  const handleShareResource = () => {
+    if (requireAuth && !user) {
+      toast.error("Vous devez être connecté pour partager une ressource");
+      navigate('/auth');
+      return;
+    }
+    
+    toast.success("Fonctionnalité en développement");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4 justify-between">
@@ -48,7 +67,7 @@ const ResourcesLibrary = () => {
             className="pl-10"
           />
         </div>
-        <Button className="flex items-center gap-2">
+        <Button className="flex items-center gap-2" onClick={handleShareResource}>
           Partager une ressource
         </Button>
       </div>

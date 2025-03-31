@@ -8,10 +8,19 @@ import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { mockServiceListings } from '@/data/mockCommunityData';
 import { ServiceCategory, ServiceListing } from '@/types/community';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
-const ServicesMarketplace = () => {
+interface ServicesMarketplaceProps {
+  requireAuth?: boolean;
+}
+
+const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth = false }) => {
   const [services, setServices] = useState<ServiceListing[]>(mockServiceListings);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | 'all'>('all');
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const categories: (ServiceCategory | 'all')[] = [
     'all', 'Prompt Engineering', 'Développement', 'Design IA', 
@@ -38,6 +47,16 @@ const ServicesMarketplace = () => {
     });
   };
 
+  const handleProposeService = () => {
+    if (requireAuth && !user) {
+      toast.error("Vous devez être connecté pour proposer un service");
+      navigate('/auth');
+      return;
+    }
+    
+    toast.success("Fonctionnalité en développement");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4 justify-between">
@@ -48,7 +67,7 @@ const ServicesMarketplace = () => {
             className="pl-10"
           />
         </div>
-        <Button className="flex items-center gap-2">
+        <Button className="flex items-center gap-2" onClick={handleProposeService}>
           Proposer un service
         </Button>
       </div>

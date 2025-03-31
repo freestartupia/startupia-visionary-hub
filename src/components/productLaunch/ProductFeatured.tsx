@@ -1,173 +1,111 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ThumbsUp, MessageSquare, ExternalLink } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { ProductLaunch } from '@/types/productLaunch';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useQueryClient } from '@tanstack/react-query';
-import { upvoteProduct } from '@/services/productService';
-import { useToast } from '@/hooks/use-toast';
+import StartupiaLaunchBadge from './StartupiaLaunchBadge';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
-interface ProductFeaturedProps {
+export interface ProductFeaturedProps {
   products: ProductLaunch[];
   isLoading?: boolean;
+  requireAuth?: boolean;
 }
 
-const ProductFeatured = ({ products, isLoading = false }: ProductFeaturedProps) => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  const handleUpvote = async (productId: string, productName: string) => {
-    try {
-      const success = await upvoteProduct(productId);
-      if (success) {
-        toast({
-          title: "Vote enregistré !",
-          description: `Vous avez soutenu ${productName}`
-        });
-        // Invalider le cache pour forcer une nouvelle récupération des données
-        queryClient.invalidateQueries({ queryKey: ['productLaunches'] });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de voter pour ce produit pour le moment."
-        });
-      }
-    } catch (error) {
-      console.error('Error upvoting product:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur s'est produite lors de l'envoi de votre vote."
-      });
+const ProductFeatured: React.FC<ProductFeaturedProps> = ({ 
+  products, 
+  isLoading = false,
+  requireAuth = false
+}) => {
+  const featuredProduct = products[0];
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleVote = () => {
+    if (requireAuth && !user) {
+      toast.error("Vous devez être connecté pour voter");
+      navigate('/auth');
+      return;
     }
+    
+    toast.success("Vote enregistré !");
   };
-
+  
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {[1, 2].map((item) => (
-          <Card key={item} className="glass-card overflow-hidden border border-startupia-gold/30 bg-gradient-to-br from-black/40 to-startupia-gold/10">
-            <CardContent className="p-0">
-              <div className="p-4">
-                <div className="flex items-center gap-4">
-                  <Skeleton className="h-16 w-16 rounded-lg" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-5 w-24" />
-                    <Skeleton className="h-6 w-40" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                </div>
-                <Skeleton className="h-4 w-full mt-4" />
-                <Skeleton className="h-40 w-full mt-4 rounded-md" />
-                <div className="flex gap-2 mt-4">
-                  <Skeleton className="h-6 w-16 rounded-full" />
-                  <Skeleton className="h-6 w-16 rounded-full" />
-                  <Skeleton className="h-6 w-16 rounded-full" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 rounded-xl overflow-hidden">
+        <Skeleton className="h-96 w-full" />
+        <div className="space-y-4 p-4">
+          <Skeleton className="h-10 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-24 w-full" />
+          <div className="flex gap-3">
+            <Skeleton className="h-10 w-28" />
+            <Skeleton className="h-10 w-28" />
+          </div>
+        </div>
       </div>
     );
   }
-
-  if (products.length === 0) {
+  
+  if (!featuredProduct) {
     return null;
   }
-  
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {products.map((product) => (
-        <Card key={product.id} className="glass-card hover-scale overflow-hidden border border-startupia-gold/30 bg-gradient-to-br from-black/40 to-startupia-gold/10">
-          <CardContent className="p-0">
-            <div className="p-4">
-              <div className="flex items-start gap-4">
-                {/* Logo */}
-                <div className="w-16 h-16 rounded-lg overflow-hidden bg-startupia-turquoise/5 flex-shrink-0">
-                  {product.logoUrl ? (
-                    <img
-                      src={product.logoUrl}
-                      alt={`${product.name} logo`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-startupia-turquoise/20 text-startupia-turquoise font-bold text-xl">
-                      {product.name.charAt(0)}
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <Badge className="mb-2 bg-startupia-gold text-black">En vedette</Badge>
-                  <Link to={`/product/${product.id}`}>
-                    <h3 className="font-bold text-xl hover:text-startupia-gold transition-colors">
-                      {product.name}
-                    </h3>
-                  </Link>
-                  <p className="text-white/80">{product.tagline}</p>
-                </div>
-              </div>
-              
-              <p className="mt-4 text-white/70 line-clamp-2">{product.description}</p>
-              
-              {/* First screenshot */}
-              {product.mediaUrls && product.mediaUrls.length > 0 && (
-                <div className="mt-4 rounded-md overflow-hidden">
-                  <img 
-                    src={product.mediaUrls[0]} 
-                    alt={`${product.name} screenshot`} 
-                    className="w-full h-auto object-cover"
-                  />
-                </div>
-              )}
-              
-              <div className="mt-4 flex flex-wrap gap-1">
-                {product.category.map((tag, i) => (
-                  <Badge key={i} variant="outline" className="text-xs border-startupia-gold/30 text-white/80">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+    <div className="glass-card rounded-xl overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Image section */}
+        <div className="relative h-[300px] lg:h-auto overflow-hidden">
+          <img 
+            src={featuredProduct.imageUrl} 
+            alt={featuredProduct.name} 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute top-4 left-4">
+            <StartupiaLaunchBadge featured />
+          </div>
+        </div>
+        
+        {/* Content section */}
+        <div className="p-6 flex flex-col">
+          <div className="mb-2">
+            <span className="text-xs font-medium bg-white/10 text-white/80 py-1 px-2 rounded">
+              {featuredProduct.category}
+            </span>
+          </div>
+          
+          <h2 className="text-2xl md:text-3xl font-bold mb-1">{featuredProduct.name}</h2>
+          
+          <p className="text-white/70 text-sm mb-2">
+            Lancé par <span className="font-medium text-white">{featuredProduct.creatorName}</span>
+          </p>
+          
+          <p className="text-white/80 my-4 line-clamp-3">{featuredProduct.description}</p>
+          
+          <div className="mt-auto flex flex-wrap gap-3">
+            <Button 
+              onClick={handleVote}
+              variant="outline" 
+              size="sm"
+              className="flex gap-1 items-center"
+            >
+              👍 {featuredProduct.upvotes}
+            </Button>
             
-            <div className="border-t border-white/10 p-3 flex justify-between items-center bg-white/5">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <ThumbsUp size={16} className="text-startupia-gold" />
-                  <span className="font-semibold">{product.upvotes}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <MessageSquare size={16} />
-                  <span>{product.comments.length} commentaires</span>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <a href={product.websiteUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink size={14} className="mr-1" />
-                    Visiter
-                  </a>
-                </Button>
-                <Button 
-                  size="sm" 
-                  className="bg-startupia-gold hover:bg-startupia-light-gold text-black"
-                  onClick={() => handleUpvote(product.id, product.name)}
-                >
-                  <ThumbsUp size={14} className="mr-1" />
-                  Soutenir
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            <Button asChild size="sm">
+              <Link to={`/product/${featuredProduct.id}`}>
+                Découvrir
+                <ArrowUpRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

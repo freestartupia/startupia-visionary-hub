@@ -8,10 +8,19 @@ import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CollaborativeProject, ProjectStatus } from '@/types/community';
 import { mockProjects } from '@/data/mockCommunityData';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
-const CollaborativeProjects = () => {
+interface CollaborativeProjectsProps {
+  requireAuth?: boolean;
+}
+
+const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAuth = false }) => {
   const [projects, setProjects] = useState<CollaborativeProject[]>(mockProjects);
   const [selectedStatus, setSelectedStatus] = useState<ProjectStatus | 'all'>('all');
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   const statuses: (ProjectStatus | 'all')[] = [
     'all', 'Idée', 'En cours', 'Recherche de collaborateurs', 'MVP', 'Lancé'
@@ -48,6 +57,16 @@ const CollaborativeProjects = () => {
     }
   };
 
+  const handleProposeProject = () => {
+    if (requireAuth && !user) {
+      toast.error("Vous devez être connecté pour proposer un projet");
+      navigate('/auth');
+      return;
+    }
+    
+    toast.success("Fonctionnalité en développement");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4 justify-between">
@@ -58,7 +77,7 @@ const CollaborativeProjects = () => {
             className="pl-10"
           />
         </div>
-        <Button className="flex items-center gap-2">
+        <Button className="flex items-center gap-2" onClick={handleProposeProject}>
           Proposer un projet
         </Button>
       </div>

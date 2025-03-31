@@ -7,9 +7,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CommunityActivity } from '@/types/community';
 import { mockActivityFeed } from '@/data/mockCommunityData';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
-const CommunityFeed = () => {
+interface CommunityFeedProps {
+  requireAuth?: boolean;
+}
+
+const CommunityFeed: React.FC<CommunityFeedProps> = ({ requireAuth = false }) => {
   const activities = mockActivityFeed;
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   const getInitials = (name: string) => {
     return name
@@ -66,11 +75,21 @@ const CommunityFeed = () => {
     }
   };
 
+  const handleRefresh = () => {
+    if (requireAuth && !user) {
+      toast.error("Vous devez être connecté pour actualiser le fil d'activité");
+      navigate('/auth');
+      return;
+    }
+    
+    toast.success("Actualisation en cours...");
+  };
+
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-bold">Activité récente</h3>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleRefresh}>
           Actualiser
         </Button>
       </div>

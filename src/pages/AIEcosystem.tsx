@@ -73,11 +73,11 @@ const AIEcosystem = () => {
           </TabsContent>
           
           <TabsContent value="radar" className="mt-0">
-            <RadarView />
+            <RadarView searchQuery={searchQuery} showFilters={showFilters} />
           </TabsContent>
           
           <TabsContent value="map" className="mt-0">
-            <MapView />
+            <MapView searchQuery={searchQuery} />
           </TabsContent>
         </Tabs>
       </main>

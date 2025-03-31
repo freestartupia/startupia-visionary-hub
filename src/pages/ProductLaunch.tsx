@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getAllProducts } from '@/services/productService';
+import { fetchProductLaunches } from '@/services/productService';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductHero from '@/components/productLaunch/ProductHero';
@@ -12,11 +12,12 @@ import { toast } from 'sonner';
 
 const ProductLaunchPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch all products from the API
   const { data: products, isLoading, error } = useQuery({
     queryKey: ['products'],
-    queryFn: getAllProducts,
+    queryFn: fetchProductLaunches,
     meta: {
       onError: (err: Error) => {
         console.error("Failed to load products:", err);
@@ -25,14 +26,24 @@ const ProductLaunchPage = () => {
     }
   });
 
-  // Filter products based on selected category
-  const filteredProducts = selectedCategory 
-    ? products?.filter(product => product.category.includes(selectedCategory))
-    : products;
+  // Filter products based on selected category and search term
+  const filteredProducts = products?.filter(product => {
+    const matchesCategory = selectedCategory && selectedCategory !== 'all' 
+      ? product.category.includes(selectedCategory)
+      : true;
+    
+    const matchesSearch = searchTerm
+      ? product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        product.tagline.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+      : true;
+    
+    return matchesCategory && matchesSearch;
+  });
 
   // Featured products are the ones specifically marked as featured
-  const featuredProducts = products?.filter(product => product.featured_order !== null)
-    .sort((a, b) => (a.featured_order || 0) - (b.featured_order || 0))
+  const featuredProducts = products?.filter(product => product.featuredOrder !== null)
+    .sort((a, b) => (a.featuredOrder || 0) - (b.featuredOrder || 0))
     .slice(0, 3);
 
   return (
@@ -40,12 +51,15 @@ const ProductLaunchPage = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <ProductHero />
+      <ProductHero 
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+      />
       
       {/* Category Filter */}
       <ProductCategoryFilter 
-        selectedCategory={selectedCategory} 
-        onSelectCategory={setSelectedCategory}
+        activeCategory={selectedCategory || 'all'} 
+        setActiveCategory={setSelectedCategory}
       />
 
       {/* Featured Products Section */}

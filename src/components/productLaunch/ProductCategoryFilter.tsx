@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface ProductCategoryFilterProps {
   activeCategory: string;
-  setActiveCategory: (category: string) => void;
+  setActiveCategory: (category: string | null) => void;
 }
 
 const ProductCategoryFilter = ({ activeCategory, setActiveCategory }: ProductCategoryFilterProps) => {
@@ -35,7 +35,7 @@ const ProductCategoryFilter = ({ activeCategory, setActiveCategory }: ProductCat
                 ? 'bg-startupia-turquoise text-black' 
                 : 'hover:bg-startupia-turquoise/10 border-startupia-turquoise/30'
             }`}
-            onClick={() => setActiveCategory(category)}
+            onClick={() => setActiveCategory(category === 'all' ? null : category)}
           >
             {category === 'all' ? 'Toutes les catégories' : category}
           </Badge>

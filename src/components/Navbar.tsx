@@ -66,6 +66,12 @@ const Navbar = () => {
                 Explorer le radar IA
               </Link>
               <Link 
+                to="/products" 
+                className={`transition-colors ${isActive('/products') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+              >
+                Lancements de produits
+              </Link>
+              <Link 
                 to="/cofounder" 
                 className={`transition-colors ${isActive('/cofounder') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
               >
@@ -99,6 +105,12 @@ const Navbar = () => {
                 className={`transition-colors ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
               >
                 Radar IA
+              </Link>
+              <Link 
+                to="/products" 
+                className={`transition-colors ${isActive('/products') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+              >
+                Lancements
               </Link>
               <Link 
                 to="/cofounder" 
@@ -148,6 +160,13 @@ const Navbar = () => {
                   Explorer le radar IA
                 </Link>
                 <Link
+                  to="/products"
+                  onClick={toggleMobileMenu}
+                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/products') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+                >
+                  Lancements de produits
+                </Link>
+                <Link
                   to="/cofounder"
                   onClick={toggleMobileMenu}
                   className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/cofounder') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
@@ -185,6 +204,13 @@ const Navbar = () => {
                   className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
                 >
                   Radar IA
+                </Link>
+                <Link
+                  to="/products"
+                  onClick={toggleMobileMenu}
+                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/products') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+                >
+                  Lancements
                 </Link>
                 <Link
                   to="/cofounder"

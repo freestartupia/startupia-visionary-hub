@@ -27,15 +27,20 @@ import {
 } from "@/components/ui/collapsible";
 import { Badge } from '@/components/ui/badge';
 import { toast } from "sonner";
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface CoFounderSearchProps {
   profiles: CofounderProfile[];
+  requireAuth?: boolean;
 }
 
-const CoFounderSearch = ({ profiles }: CoFounderSearchProps) => {
+const CoFounderSearch = ({ profiles, requireAuth = false }: CoFounderSearchProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredProfiles, setFilteredProfiles] = useState<CofounderProfile[]>(profiles);
   const [showFilters, setShowFilters] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   // Filter states
   const [profileType, setProfileType] = useState<ProfileType | 'all'>('all');
@@ -114,6 +119,12 @@ const CoFounderSearch = ({ profiles }: CoFounderSearchProps) => {
   };
 
   const handleMatch = (profileId: string) => {
+    if (requireAuth && !user) {
+      toast.error("Vous devez être connecté pour contacter un profil");
+      navigate('/auth');
+      return;
+    }
+    
     toast.success("Demande de contact envoyée !");
     // In a real app, this would send a match request to the backend
   };

@@ -1,58 +1,51 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import { Search, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Search, Plus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 interface ProductHeroProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  onAddProduct?: () => void;
 }
 
-const ProductHero = ({ searchTerm, setSearchTerm }: ProductHeroProps) => {
+const ProductHero: React.FC<ProductHeroProps> = ({ searchTerm, setSearchTerm, onAddProduct }) => {
   return (
-    <section className="text-center mb-16">
-      <div className="inline-block mb-6 px-4 py-2 rounded-full bg-startupia-gold/20 border border-startupia-gold/30 text-sm">
-        <span className="font-medium text-startupia-gold">Nouvelle fonctionnalité Startupia</span>
-      </div>
-      
-      <h1 className="text-4xl md:text-5xl font-bold mb-6">
-        Découvrez et soutenez les <span className="gradient-text">lancements</span> des produits IA
-      </h1>
-      
-      <p className="text-xl text-white/70 mb-8 max-w-2xl mx-auto">
-        L'endroit où les startups françaises de l'IA lancent leurs nouveaux produits, obtiennent des retours et rencontrent leurs premiers utilisateurs.
-      </p>
-      
-      <div className="flex flex-col sm:flex-row items-center gap-4 justify-center mb-12">
-        <div className="relative flex-1 w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50" />
-          <Input
-            type="text"
-            placeholder="Rechercher un produit..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-black/30 text-white border-startupia-turquoise/30 focus:border-startupia-turquoise"
-          />
-        </div>
+    <div className="relative pt-28 pb-16 px-4 bg-gradient-to-b from-black/60 to-transparent">
+      <div className="container mx-auto text-center text-white">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          Lancez votre <span className="gradient-text">produit IA</span>
+        </h1>
+        <p className="text-xl text-white/80 max-w-2xl mx-auto mb-8">
+          Découvrez les derniers produits IA créés par la communauté Startupia
+          ou présentez votre propre lancement
+        </p>
         
-        <Button className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold" asChild>
-          <Link to="/product/new">
-            <Plus size={16} className="mr-2" />
-            Lancer votre produit
-          </Link>
-        </Button>
+        <div className="flex flex-col md:flex-row gap-4 max-w-md mx-auto">
+          <div className="relative flex-grow">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50" />
+            <Input
+              type="text"
+              placeholder="Rechercher par nom ou description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-black/20 border-startupia-turquoise/30 focus-visible:ring-startupia-turquoise/50"
+            />
+          </div>
+          
+          {onAddProduct && (
+            <Button
+              onClick={onAddProduct}
+              className="bg-startupia-gold hover:bg-startupia-gold/90 text-black button-glow"
+            >
+              <PlusCircle size={18} className="mr-2" />
+              Ajouter un produit
+            </Button>
+          )}
+        </div>
       </div>
-      
-      <div className="flex flex-wrap gap-4 justify-center text-sm">
-        <span className="text-white/50">Tendances :</span>
-        <a href="#" className="text-startupia-turquoise hover:underline">#GenerativeAI</a>
-        <a href="#" className="text-startupia-turquoise hover:underline">#NoCode</a>
-        <a href="#" className="text-startupia-turquoise hover:underline">#AIAssistant</a>
-        <a href="#" className="text-startupia-turquoise hover:underline">#ComputerVision</a>
-      </div>
-    </section>
+    </div>
   );
 };
 

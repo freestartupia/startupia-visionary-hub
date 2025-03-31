@@ -8,9 +8,19 @@ import ServicesMarketplace from '@/components/community/ServicesMarketplace';
 import ResourcesLibrary from '@/components/community/ResourcesLibrary';
 import CollaborativeProjects from '@/components/community/CollaborativeProjects';
 import CommunityFeed from '@/components/community/CommunityFeed';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const Community = () => {
   const [activeTab, setActiveTab] = useState('forum');
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
 
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
@@ -31,7 +41,7 @@ const Community = () => {
           </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-6xl mx-auto">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-6xl mx-auto">
           <TabsList className="grid grid-cols-5 mb-8">
             <TabsTrigger value="forum">Forum IA</TabsTrigger>
             <TabsTrigger value="services">Services</TabsTrigger>
@@ -41,23 +51,23 @@ const Community = () => {
           </TabsList>
           
           <TabsContent value="forum" className="mt-0">
-            <ForumSection />
+            <ForumSection requireAuth={true} />
           </TabsContent>
           
           <TabsContent value="services" className="mt-0">
-            <ServicesMarketplace />
+            <ServicesMarketplace requireAuth={true} />
           </TabsContent>
           
           <TabsContent value="resources" className="mt-0">
-            <ResourcesLibrary />
+            <ResourcesLibrary requireAuth={true} />
           </TabsContent>
           
           <TabsContent value="projects" className="mt-0">
-            <CollaborativeProjects />
+            <CollaborativeProjects requireAuth={true} />
           </TabsContent>
           
           <TabsContent value="feed" className="mt-0">
-            <CommunityFeed />
+            <CommunityFeed requireAuth={true} />
           </TabsContent>
         </Tabs>
       </main>

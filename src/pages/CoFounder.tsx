@@ -7,6 +7,10 @@ import CoFounderProfile from '@/components/CoFounderProfile';
 import ProjectsList from '@/components/ProjectsList';
 import Footer from '@/components/Footer';
 import { CofounderProfile } from '@/types/cofounders';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 // Mock data for development purposes
 import { mockCofounderProfiles } from '@/data/mockCofounderProfiles';
@@ -14,9 +18,25 @@ import { mockCofounderProfiles } from '@/data/mockCofounderProfiles';
 const CoFounder = () => {
   const [profiles] = useState<CofounderProfile[]>(mockCofounderProfiles);
   const [activeTab, setActiveTab] = useState<string>('search');
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Filter for project owners
   const projects = profiles.filter(profile => profile.profileType === 'project-owner');
+
+  const handleTabChange = (value: string) => {
+    if ((value === 'profile') && !user) {
+      toast({
+        title: "Connexion requise",
+        description: "Vous devez être connecté pour créer un profil",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
+    setActiveTab(value);
+  };
 
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
@@ -37,7 +57,7 @@ const CoFounder = () => {
           </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-6xl mx-auto">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-6xl mx-auto">
           <TabsList className="grid grid-cols-3 mb-8">
             <TabsTrigger value="search">Rechercher</TabsTrigger>
             <TabsTrigger value="profile">Créer un profil</TabsTrigger>
@@ -45,15 +65,30 @@ const CoFounder = () => {
           </TabsList>
           
           <TabsContent value="search" className="mt-0">
-            <CoFounderSearch profiles={profiles} />
+            <CoFounderSearch profiles={profiles} requireAuth={true} />
           </TabsContent>
           
           <TabsContent value="profile" className="mt-0">
-            <CoFounderProfile />
+            {user ? (
+              <CoFounderProfile />
+            ) : (
+              <div className="text-center py-12 glass-card">
+                <h3 className="text-2xl font-semibold mb-4">Connexion requise</h3>
+                <p className="text-white/70 mb-6">
+                  Vous devez être connecté pour créer ou modifier votre profil.
+                </p>
+                <Button 
+                  onClick={() => navigate('/auth')}
+                  className="bg-startupia-turquoise hover:bg-startupia-turquoise/90"
+                >
+                  Se connecter / S'inscrire
+                </Button>
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="projects" className="mt-0">
-            <ProjectsList projects={projects} />
+            <ProjectsList projects={projects} requireAuth={true} />
           </TabsContent>
         </Tabs>
       </main>

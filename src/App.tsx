@@ -18,7 +18,6 @@ import ProductForm from "./pages/ProductForm";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Navbar from "./components/navbar/Navbar";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +26,6 @@ const App = () => (
     <BrowserRouter>
       <AuthProvider>
         <TooltipProvider>
-          <Navbar />
           <Toaster />
           <Sonner />
           <Routes>

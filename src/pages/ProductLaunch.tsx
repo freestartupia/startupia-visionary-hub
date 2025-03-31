@@ -9,10 +9,14 @@ import ProductCategoryFilter from '@/components/productLaunch/ProductCategoryFil
 import ProductFeatured from '@/components/productLaunch/ProductFeatured';
 import ProductList from '@/components/productLaunch/ProductList';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const ProductLaunchPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch all products from the API
   const { data: products, isLoading, error } = useQuery({
@@ -46,6 +50,16 @@ const ProductLaunchPage = () => {
     .sort((a, b) => (a.featuredOrder || 0) - (b.featuredOrder || 0))
     .slice(0, 3);
 
+  const handleAddProduct = () => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour ajouter un produit");
+      navigate('/auth');
+      return;
+    }
+    
+    navigate('/product/new');
+  };
+
   return (
     <div className="min-h-screen bg-hero-pattern">
       <Navbar />
@@ -54,6 +68,7 @@ const ProductLaunchPage = () => {
       <ProductHero 
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        onAddProduct={handleAddProduct}
       />
       
       {/* Category Filter */}
@@ -64,11 +79,11 @@ const ProductLaunchPage = () => {
 
       {/* Featured Products Section */}
       {!selectedCategory && featuredProducts && featuredProducts.length > 0 && (
-        <ProductFeatured products={featuredProducts} isLoading={isLoading} />
+        <ProductFeatured products={featuredProducts} isLoading={isLoading} requireAuth={true} />
       )}
       
       {/* Product List */}
-      <ProductList products={filteredProducts || []} isLoading={isLoading} />
+      <ProductList products={filteredProducts || []} isLoading={isLoading} requireAuth={true} />
       
       <Footer />
     </div>

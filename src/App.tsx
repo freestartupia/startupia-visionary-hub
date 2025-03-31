@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import StartupIndex from "./pages/StartupIndex";
@@ -17,6 +17,8 @@ import ProductDetails from "./pages/ProductDetails";
 import ProductForm from "./pages/ProductForm";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Navbar from "./components/navbar/Navbar";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +27,7 @@ const App = () => (
     <BrowserRouter>
       <AuthProvider>
         <TooltipProvider>
+          <Navbar />
           <Toaster />
           <Sonner />
           <Routes>
@@ -37,7 +40,11 @@ const App = () => (
             <Route path="/community" element={<Community />} />
             <Route path="/products" element={<ProductLaunchPage />} />
             <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/product/new" element={<ProductForm />} />
+            <Route path="/product/new" element={
+              <ProtectedRoute>
+                <ProductForm />
+              </ProtectedRoute>
+            } />
             <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

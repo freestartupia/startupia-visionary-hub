@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/navbar/Navbar';
 import HeroSection from '@/components/HeroSection';
 import StartupIndex from '@/components/StartupIndex';
 import StartupMatcher from '@/components/StartupMatcher';

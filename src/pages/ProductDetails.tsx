@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -83,7 +82,6 @@ const ProductDetails = () => {
     setCommentSubmitting(true);
     
     try {
-      // Dans une vraie application nous utiliserions l'information utilisateur authentifié
       const tempUserName = "Utilisateur temporaire";
       const result = await addComment(id, newComment, tempUserName);
       
@@ -93,7 +91,6 @@ const ProductDetails = () => {
           description: "Votre commentaire a été publié avec succès"
         });
         
-        // Rafraîchir les données du produit
         const updatedProduct = await fetchProductById(id);
         if (updatedProduct) {
           setProduct(updatedProduct);
@@ -126,7 +123,6 @@ const ProductDetails = () => {
       const success = await upvoteProduct(id);
       
       if (success) {
-        // Optimistically update the UI
         setProduct(prev => ({
           ...prev,
           upvotes: (prev.upvotes || 0) + 1
@@ -262,7 +258,6 @@ const ProductDetails = () => {
   
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
-      {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
       <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-gold/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
@@ -282,7 +277,6 @@ const ProductDetails = () => {
         <Card className="glass-card border border-startupia-turquoise/20 bg-black/30 mb-8">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-6">
-              {/* Product logo and basic info */}
               <div className="md:w-2/5">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-lg overflow-hidden bg-startupia-turquoise/10">
@@ -305,7 +299,6 @@ const ProductDetails = () => {
                   </div>
                 </div>
                 
-                {/* First media */}
                 {product.mediaUrls && product.mediaUrls.length > 0 && (
                   <div className="rounded-md overflow-hidden mb-4">
                     <img 
@@ -373,7 +366,6 @@ const ProductDetails = () => {
                 </div>
               </div>
               
-              {/* Product details */}
               <div className="md:w-3/5">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid grid-cols-3 mb-6">

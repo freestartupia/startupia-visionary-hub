@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ForumSection from '@/components/community/ForumSection';

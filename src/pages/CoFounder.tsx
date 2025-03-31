@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/navbar/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CoFounderSearch from '@/components/CoFounderSearch';
 import CoFounderProfile from '@/components/CoFounderProfile';

@@ -7,7 +7,7 @@ import StartupCard from "@/components/StartupCard";
 import StartupFilters from "@/components/StartupFilters";
 import { mockStartups } from "@/data/mockStartups";
 import { Startup } from "@/types/startup";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/Footer";
 
 const StartupIndex = () => {

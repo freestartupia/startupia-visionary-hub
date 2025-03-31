@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 
 const loginSchema = z.object({

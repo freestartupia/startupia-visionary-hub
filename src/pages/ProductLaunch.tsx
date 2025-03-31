@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchProductLaunches } from '@/services/productService';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import ProductHero from '@/components/productLaunch/ProductHero';
 import ProductCategoryFilter from '@/components/productLaunch/ProductCategoryFilter';

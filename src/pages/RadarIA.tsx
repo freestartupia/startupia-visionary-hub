@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUpRight, Award, BarChart3, Bell, Clock, Rocket, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/navbar/Navbar';
 import StartupCard from '@/components/StartupCard';
 import { mockStartups } from '@/data/mockStartups';
 import { Startup, Sector } from '@/types/startup';

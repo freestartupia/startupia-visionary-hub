@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import StartupIndex from "./pages/StartupIndex";
 import StartupDetails from "./pages/StartupDetails";
 import RadarIA from "./pages/RadarIA";
+import AIEcosystem from "./pages/AIEcosystem";
 import CoFounder from "./pages/CoFounder";
 import Community from "./pages/Community";
 import ProductLaunchPage from "./pages/ProductLaunch";
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/startups" element={<StartupIndex />} />
           <Route path="/startup/:id" element={<StartupDetails />} />
           <Route path="/radar" element={<RadarIA />} />
+          <Route path="/ecosystem" element={<AIEcosystem />} />
           <Route path="/cofounder" element={<CoFounder />} />
           <Route path="/community" element={<Community />} />
           <Route path="/products" element={<ProductLaunchPage />} />

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Book, BadgeCheck, Lightbulb, TrendingUp, Rocket } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const StartupIndex = () => {
   return (
@@ -30,9 +31,11 @@ const StartupIndex = () => {
             </p>
             
             <div className="pt-6">
-              <Button size="lg" className="bg-startupia-gold hover:bg-startupia-light-gold button-glow-gold text-black font-semibold text-lg py-6 px-8">
-                <Book size={20} className="mr-2" />
-                Voir les fiches Startup Index
+              <Button size="lg" className="bg-startupia-gold hover:bg-startupia-light-gold button-glow-gold text-black font-semibold text-lg py-6 px-8" asChild>
+                <Link to="/ecosystem">
+                  <Book size={20} className="mr-2" />
+                  Explorer l'écosystème IA
+                </Link>
               </Button>
             </div>
           </div>

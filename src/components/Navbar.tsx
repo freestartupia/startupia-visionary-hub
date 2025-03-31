@@ -54,16 +54,10 @@ const Navbar = () => {
           {isLoggedIn ? (
             <>
               <Link 
-                to="/startups" 
-                className={`transition-colors ${isActive('/startups') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+                to="/ecosystem" 
+                className={`transition-colors ${isActive('/ecosystem') || isActive('/startups') || isActive('/radar') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
               >
-                Découvrir les startups
-              </Link>
-              <Link 
-                to="/radar" 
-                className={`transition-colors ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
-              >
-                Explorer le radar IA
+                Explorer l'écosystème IA
               </Link>
               <Link 
                 to="/products" 
@@ -95,16 +89,10 @@ const Navbar = () => {
           ) : (
             <>
               <Link 
-                to="/startups" 
-                className={`transition-colors ${isActive('/startups') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
+                to="/ecosystem" 
+                className={`transition-colors ${isActive('/ecosystem') || isActive('/startups') || isActive('/radar') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
               >
-                Index
-              </Link>
-              <Link 
-                to="/radar" 
-                className={`transition-colors ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white/80 hover:text-white'}`}
-              >
-                Radar IA
+                Écosystème IA
               </Link>
               <Link 
                 to="/products" 
@@ -146,18 +134,11 @@ const Navbar = () => {
             {isLoggedIn ? (
               <>
                 <Link
-                  to="/startups"
+                  to="/ecosystem"
                   onClick={toggleMobileMenu}
-                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/startups') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/ecosystem') || isActive('/startups') || isActive('/radar') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
                 >
-                  Découvrir les startups
-                </Link>
-                <Link
-                  to="/radar"
-                  onClick={toggleMobileMenu}
-                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
-                >
-                  Explorer le radar IA
+                  Explorer l'écosystème IA
                 </Link>
                 <Link
                   to="/products"
@@ -192,18 +173,11 @@ const Navbar = () => {
             ) : (
               <>
                 <Link
-                  to="/startups"
+                  to="/ecosystem"
                   onClick={toggleMobileMenu}
-                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/startups') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
+                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/ecosystem') || isActive('/startups') || isActive('/radar') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
                 >
-                  Index
-                </Link>
-                <Link
-                  to="/radar"
-                  onClick={toggleMobileMenu}
-                  className={`px-4 py-2 rounded-md hover:bg-white/5 ${isActive('/radar') ? 'text-startupia-turquoise' : 'text-white hover:text-startupia-turquoise'}`}
-                >
-                  Radar IA
+                  Écosystème IA
                 </Link>
                 <Link
                   to="/products"

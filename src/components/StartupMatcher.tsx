@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, Layers, Database } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const StartupMatcher = () => {
   return (
@@ -142,9 +143,11 @@ const StartupMatcher = () => {
             </div>
             
             <div className="pt-6">
-              <Button size="lg" className="bg-startupia-gold hover:bg-startupia-light-gold button-glow-gold text-black font-semibold text-lg py-6 px-8">
-                <Search size={20} className="mr-2" />
-                Essayer le Startup Matcher
+              <Button size="lg" className="bg-startupia-gold hover:bg-startupia-light-gold button-glow-gold text-black font-semibold text-lg py-6 px-8" asChild>
+                <Link to="/ecosystem">
+                  <Search size={20} className="mr-2" />
+                  Explorer l'écosystème IA
+                </Link>
               </Button>
             </div>
           </div>

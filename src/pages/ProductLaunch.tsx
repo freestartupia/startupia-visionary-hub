@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductHero from '@/components/productLaunch/ProductHero';
@@ -9,35 +9,26 @@ import ProductCategoryFilter from '@/components/productLaunch/ProductCategoryFil
 import { ProductLaunch } from '@/types/productLaunch';
 import { fetchProductLaunches } from '@/services/productService';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 
 const ProductLaunchPage = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [products, setProducts] = useState<ProductLaunch[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
   
-  // Fetch products from Supabase
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        setLoading(true);
-        const data = await fetchProductLaunches();
-        setProducts(data);
-      } catch (error) {
-        console.error('Failed to load products:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les produits. Veuillez réessayer plus tard.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
+  // Fetch products from Supabase using React Query
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['productLaunches'],
+    queryFn: fetchProductLaunches,
+    onError: (error) => {
+      console.error('Failed to load products:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les produits. Veuillez réessayer plus tard.",
+        variant: "destructive"
+      });
     }
-    
-    loadProducts();
-  }, [toast]);
+  });
   
   // Get today's launches
   const todayLaunches = products.filter(
@@ -95,23 +86,34 @@ const ProductLaunchPage = () => {
         {featuredProducts.length > 0 && (
           <section className="mb-16">
             <h2 className="text-2xl md:text-3xl font-bold mb-6">Produits en vedette</h2>
-            <ProductFeatured products={filterProducts(featuredProducts)} isLoading={loading} />
+            <ProductFeatured products={filterProducts(featuredProducts)} isLoading={isLoading} />
           </section>
         )}
 
         <section className="mb-16">
           <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements du jour</h2>
-          <ProductList products={filterProducts(todayLaunches)} isLoading={loading} />
+          <ProductList products={filterProducts(todayLaunches)} isLoading={isLoading} />
+        </section>
+        
+        <section className="mb-16">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">
+            Top produits
+            <span className="ml-2 text-sm text-white/50">(par nombre de votes)</span>
+          </h2>
+          <ProductList 
+            products={filterProducts([...pastLaunches].sort((a, b) => b.upvotes - a.upvotes).slice(0, 4))} 
+            isLoading={isLoading} 
+          />
         </section>
         
         <section className="mb-16">
           <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements à venir</h2>
-          <ProductList products={filterProducts(upcomingLaunches)} isLoading={loading} />
+          <ProductList products={filterProducts(upcomingLaunches)} isLoading={isLoading} />
         </section>
         
         <section>
           <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements précédents</h2>
-          <ProductList products={filterProducts(pastLaunches)} isLoading={loading} />
+          <ProductList products={filterProducts(pastLaunches)} isLoading={isLoading} />
         </section>
       </main>
 

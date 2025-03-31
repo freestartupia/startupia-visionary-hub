@@ -9,6 +9,8 @@ import { ProductLaunch } from '@/types/productLaunch';
 import { format, isToday, isYesterday, isTomorrow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { upvoteProduct } from '@/services/productService';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ProductCardProps {
   product: ProductLaunch;
@@ -18,6 +20,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [showBadgeCode, setShowBadgeCode] = useState(false);
+  const [isUpvoting, setIsUpvoting] = useState(false);
+  const queryClient = useQueryClient();
   
   const formatLaunchDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -49,6 +53,37 @@ const ProductCard = ({ product }: ProductCardProps) => {
     setTimeout(() => {
       setCopied(false);
     }, 2000);
+  };
+
+  const handleUpvote = async () => {
+    setIsUpvoting(true);
+    try {
+      const success = await upvoteProduct(product.id);
+      if (success) {
+        // Optimistic update
+        toast({
+          title: "Vote enregistré !",
+          description: `Vous avez soutenu ${product.name}`
+        });
+        // Invalider le cache pour forcer une nouvelle récupération des données
+        queryClient.invalidateQueries({ queryKey: ['productLaunches'] });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de voter pour ce produit pour le moment."
+        });
+      }
+    } catch (error) {
+      console.error('Error upvoting product:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de l'envoi de votre vote."
+      });
+    } finally {
+      setIsUpvoting(false);
+    }
   };
   
   return (
@@ -161,7 +196,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     Visiter
                   </a>
                 </Button>
-                <Button size="sm" className="text-xs bg-startupia-turquoise hover:bg-startupia-turquoise/90">
+                <Button 
+                  size="sm" 
+                  className="text-xs bg-startupia-turquoise hover:bg-startupia-turquoise/90"
+                  onClick={handleUpvote}
+                  disabled={isUpvoting}
+                >
                   <ThumbsUp size={12} className="mr-1" />
                   Soutenir
                 </Button>

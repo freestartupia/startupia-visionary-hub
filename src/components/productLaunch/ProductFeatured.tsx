@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { ThumbsUp, MessageSquare, ExternalLink } from 'lucide-react';
 import { ProductLaunch } from '@/types/productLaunch';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useQueryClient } from '@tanstack/react-query';
+import { upvoteProduct } from '@/services/productService';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductFeaturedProps {
   products: ProductLaunch[];
@@ -13,6 +17,36 @@ interface ProductFeaturedProps {
 }
 
 const ProductFeatured = ({ products, isLoading = false }: ProductFeaturedProps) => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const handleUpvote = async (productId: string, productName: string) => {
+    try {
+      const success = await upvoteProduct(productId);
+      if (success) {
+        toast({
+          title: "Vote enregistré !",
+          description: `Vous avez soutenu ${productName}`
+        });
+        // Invalider le cache pour forcer une nouvelle récupération des données
+        queryClient.invalidateQueries({ queryKey: ['productLaunches'] });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de voter pour ce produit pour le moment."
+        });
+      }
+    } catch (error) {
+      console.error('Error upvoting product:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de l'envoi de votre vote."
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -121,7 +155,11 @@ const ProductFeatured = ({ products, isLoading = false }: ProductFeaturedProps) 
                     Visiter
                   </a>
                 </Button>
-                <Button size="sm" className="bg-startupia-gold hover:bg-startupia-light-gold text-black">
+                <Button 
+                  size="sm" 
+                  className="bg-startupia-gold hover:bg-startupia-light-gold text-black"
+                  onClick={() => handleUpvote(product.id, product.name)}
+                >
                   <ThumbsUp size={14} className="mr-1" />
                   Soutenir
                 </Button>

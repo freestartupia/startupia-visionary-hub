@@ -1,6 +1,6 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { ProductLaunch, ProductComment } from '@/types/productLaunch';
+import { supabase, incrementValue } from '@/integrations/supabase/client';
+import { ProductLaunch, ProductComment, ProductLaunchStatus } from '@/types/productLaunch';
 import { Database } from '@/integrations/supabase/types';
 
 export async function fetchProductLaunches(): Promise<ProductLaunch[]> {
@@ -11,7 +11,7 @@ export async function fetchProductLaunches(): Promise<ProductLaunch[]> {
         *,
         comments:product_comments(*)
       `)
-      .order('featured_order', { ascending: true });
+      .order('upvotes', { ascending: false }); // Ordre décroissant par nombre de votes
     
     if (error) {
       console.error('Error fetching product launches:', error);
@@ -35,7 +35,7 @@ export async function fetchProductLaunches(): Promise<ProductLaunch[]> {
       category: item.category,
       upvotes: item.upvotes,
       comments: item.comments ? mapComments(item.comments) : [],
-      status: item.status,
+      status: item.status as ProductLaunchStatus,
       startupId: item.startup_id || undefined,
       mediaUrls: item.media_urls || [],
       betaSignupUrl: item.beta_signup_url || undefined,
@@ -81,7 +81,7 @@ export async function fetchProductById(id: string): Promise<ProductLaunch | null
       category: data.category,
       upvotes: data.upvotes,
       comments: data.comments ? mapComments(data.comments) : [],
-      status: data.status,
+      status: data.status as ProductLaunchStatus,
       startupId: data.startup_id || undefined,
       mediaUrls: data.media_urls || [],
       betaSignupUrl: data.beta_signup_url || undefined,
@@ -141,13 +141,27 @@ export async function addComment(
 
 export async function upvoteProduct(productId: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('product_launches')
-      .update({ upvotes: supabase.rpc('increment', { inc: 1 }) })
+      .select('upvotes')
+      .eq('id', productId)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching product upvotes:', error);
+      return false;
+    }
+    
+    const currentUpvotes = data?.upvotes || 0;
+    const newUpvotes = currentUpvotes + 1;
+    
+    const { error: updateError } = await supabase
+      .from('product_launches')
+      .update({ upvotes: newUpvotes })
       .eq('id', productId);
     
-    if (error) {
-      console.error('Error upvoting product:', error);
+    if (updateError) {
+      console.error('Error upvoting product:', updateError);
       return false;
     }
     
@@ -208,7 +222,7 @@ export async function createProduct(product: Omit<ProductLaunch, 'id' | 'upvotes
       category: data.category,
       upvotes: data.upvotes || 0,
       comments: [],
-      status: data.status,
+      status: data.status as ProductLaunchStatus,
       startupId: data.startup_id || undefined,
       mediaUrls: data.media_urls || [],
       betaSignupUrl: data.beta_signup_url || undefined,

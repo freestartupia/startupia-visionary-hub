@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 // Mock data for development purposes
 import { mockCofounderProfiles } from '@/data/mockCofounderProfiles';
@@ -20,14 +21,14 @@ const CoFounder = () => {
   const [activeTab, setActiveTab] = useState<string>('search');
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: toastUI } = useToast();
 
   // Filter for project owners
   const projects = profiles.filter(profile => profile.profileType === 'project-owner');
 
   const handleTabChange = (value: string) => {
     if ((value === 'profile') && !user) {
-      toast({
+      toastUI({
         title: "Connexion requise",
         description: "Vous devez être connecté pour créer un profil",
         variant: "destructive",
@@ -36,6 +37,25 @@ const CoFounder = () => {
       return;
     }
     setActiveTab(value);
+  };
+
+  const handleMatchRequest = (profileId: string) => {
+    if (!user) {
+      toast("Connexion requise", { 
+        description: "Vous devez être connecté pour contacter un profil",
+        action: {
+          label: "Se connecter",
+          onClick: () => navigate('/auth')
+        }
+      });
+      return;
+    }
+    
+    // In real app, this would trigger a backend call to send the match request
+    console.log(`Match request sent to profile ${profileId}`);
+    toast.success("Demande de contact envoyée !");
+    
+    // In a real app, we would update the UI to reflect the match request
   };
 
   return (
@@ -65,7 +85,11 @@ const CoFounder = () => {
           </TabsList>
           
           <TabsContent value="search" className="mt-0">
-            <CoFounderSearch profiles={profiles} requireAuth={true} />
+            <CoFounderSearch 
+              profiles={profiles} 
+              requireAuth={true} 
+              onMatchRequest={handleMatchRequest}
+            />
           </TabsContent>
           
           <TabsContent value="profile" className="mt-0">
@@ -88,7 +112,11 @@ const CoFounder = () => {
           </TabsContent>
           
           <TabsContent value="projects" className="mt-0">
-            <ProjectsList projects={projects} requireAuth={true} />
+            <ProjectsList 
+              projects={projects} 
+              requireAuth={true}
+              onMatchRequest={handleMatchRequest} 
+            />
           </TabsContent>
         </Tabs>
       </main>

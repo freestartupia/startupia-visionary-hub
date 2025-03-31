@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -26,16 +25,16 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Badge } from '@/components/ui/badge';
-import { toast } from "sonner";
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 interface CoFounderSearchProps {
   profiles: CofounderProfile[];
   requireAuth?: boolean;
+  onMatchRequest?: (profileId: string) => void;
 }
 
-const CoFounderSearch = ({ profiles, requireAuth = false }: CoFounderSearchProps) => {
+const CoFounderSearch = ({ profiles, requireAuth = false, onMatchRequest }: CoFounderSearchProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredProfiles, setFilteredProfiles] = useState<CofounderProfile[]>(profiles);
   const [showFilters, setShowFilters] = useState(false);
@@ -119,14 +118,9 @@ const CoFounderSearch = ({ profiles, requireAuth = false }: CoFounderSearchProps
   };
 
   const handleMatch = (profileId: string) => {
-    if (requireAuth && !user) {
-      toast.error("Vous devez être connecté pour contacter un profil");
-      navigate('/auth');
-      return;
+    if (onMatchRequest) {
+      onMatchRequest(profileId);
     }
-    
-    toast.success("Demande de contact envoyée !");
-    // In a real app, this would send a match request to the backend
   };
 
   const clearFilters = () => {

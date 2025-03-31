@@ -78,30 +78,24 @@
     @apply bg-grid-pattern;
   }
 
-  .glow-effect {
-    text-shadow: 0 0 10px rgba(46, 219, 143, 0.5), 0 0 20px rgba(46, 219, 143, 0.3);
-  }
-  
-  .glow-effect-gold {
-    text-shadow: 0 0 10px rgba(244, 199, 112, 0.5), 0 0 20px rgba(244, 199, 112, 0.3);
-  }
+  /* Removed text-shadow glow effects */
 
   .button-glow {
     @apply transition-all;
-    box-shadow: 0 0 10px rgba(46, 219, 143, 0.5), 0 0 20px rgba(46, 219, 143, 0.3);
+    box-shadow: 0 0 10px rgba(46, 219, 143, 0.3);
   }
 
   .button-glow:hover {
-    box-shadow: 0 0 20px rgba(46, 219, 143, 0.7), 0 0 40px rgba(46, 219, 143, 0.4);
+    box-shadow: 0 0 15px rgba(46, 219, 143, 0.4);
   }
   
   .button-glow-gold {
     @apply transition-all;
-    box-shadow: 0 0 10px rgba(244, 199, 112, 0.5), 0 0 20px rgba(244, 199, 112, 0.3);
+    box-shadow: 0 0 10px rgba(244, 199, 112, 0.3);
   }
 
   .button-glow-gold:hover {
-    box-shadow: 0 0 20px rgba(244, 199, 112, 0.7), 0 0 40px rgba(244, 199, 112, 0.4);
+    box-shadow: 0 0 15px rgba(244, 199, 112, 0.4);
   }
 
   .hover-scale {
@@ -132,19 +126,11 @@
     0% { 
       opacity: 0; 
       transform: translateY(40px);
-      filter: blur(10px);
     }
     100% { 
       opacity: 1; 
       transform: translateY(0);
-      filter: blur(0);
     }
-  }
-  
-  @keyframes timeline-glow {
-    0% { box-shadow: 0 0 0 rgba(46, 219, 143, 0); }
-    50% { box-shadow: 0 0 30px rgba(46, 219, 143, 0.5); }
-    100% { box-shadow: 0 0 0 rgba(46, 219, 143, 0); }
   }
   
   .timeline-section {
@@ -153,7 +139,7 @@
   }
   
   .timeline-section.animate {
-    animation: timeline-fade-up 0.8s ease forwards, timeline-glow 3s ease-in-out 0.8s;
+    animation: timeline-fade-up 0.8s ease forwards;
   }
 
   /* Common section style with background elements */

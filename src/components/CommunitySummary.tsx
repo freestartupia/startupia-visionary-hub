@@ -29,7 +29,7 @@ const CommunitySummary = () => {
           </p>
 
           <div className="mt-8">
-            <Button size="lg" className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold button-glow-gold text-lg py-6 px-8">
+            <Button size="lg" className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold text-lg py-6 px-8">
               <Users size={20} className="mr-2" />
               Rejoindre la communauté
             </Button>
@@ -102,7 +102,7 @@ const CommunitySummary = () => {
                 <span>Partagez vos retours avec les entrepreneurs</span>
               </li>
             </ul>
-            <Button className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold button-glow-gold" asChild>
+            <Button className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold" asChild>
               <Link to="/startups">Découvrir les startups innovantes</Link>
             </Button>
           </div>

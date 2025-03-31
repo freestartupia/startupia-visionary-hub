@@ -15,11 +15,11 @@ const HeroSection = () => {
       <div className="container mx-auto px-4 z-10 text-center">
         {/* Small badge */}
         <div className="inline-block mb-6 px-4 py-2 rounded-full bg-startupia-turquoise/20 border border-startupia-turquoise/30 text-sm">
-          <span className="gradient-text font-medium">Plus de 500 startups IA françaises répertoriées</span>
+          <span className="font-medium text-startupia-turquoise">Plus de 500 startups IA françaises répertoriées</span>
         </div>
 
         {/* Main Title */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 max-w-5xl mx-auto leading-tight glow-effect">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 max-w-5xl mx-auto leading-tight">
           Découvrez, rejoignez et investissez dans les startups IA françaises
         </h1>
 
@@ -77,7 +77,7 @@ const HeroSection = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-16">
           <Button 
             size="lg" 
-            className="bg-startupia-gold hover:bg-startupia-light-gold button-glow-gold text-black font-semibold text-lg py-6 px-8 w-full sm:w-auto"
+            className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold text-lg py-6 px-8 w-full sm:w-auto"
             asChild
           >
             <Link to="/startups">

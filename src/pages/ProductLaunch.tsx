@@ -1,123 +1,61 @@
+
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getAllProducts } from '@/services/productService';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductHero from '@/components/productLaunch/ProductHero';
-import ProductList from '@/components/productLaunch/ProductList';
-import ProductFeatured from '@/components/productLaunch/ProductFeatured';
 import ProductCategoryFilter from '@/components/productLaunch/ProductCategoryFilter';
-import { ProductLaunch } from '@/types/productLaunch';
-import { fetchProductLaunches } from '@/services/productService';
-import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
+import ProductFeatured from '@/components/productLaunch/ProductFeatured';
+import ProductList from '@/components/productLaunch/ProductList';
+import { toast } from 'sonner';
 
 const ProductLaunchPage = () => {
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const { toast } = useToast();
-  
-  // Fetch products from Supabase using React Query
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ['productLaunches'],
-    queryFn: fetchProductLaunches,
-    onSettled: (data, error) => {
-      if (error) {
-        console.error('Failed to load products:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les produits. Veuillez réessayer plus tard.",
-          variant: "destructive"
-        });
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Fetch all products from the API
+  const { data: products, isLoading, error } = useQuery({
+    queryKey: ['products'],
+    queryFn: getAllProducts,
+    meta: {
+      onError: (err: Error) => {
+        console.error("Failed to load products:", err);
+        toast.error("Impossible de charger les produits. Veuillez réessayer plus tard.");
       }
     }
   });
-  
-  // Get today's launches
-  const todayLaunches = products.filter(
-    product => product.status === 'launching_today'
-  );
-  
-  // Get upcoming launches
-  const upcomingLaunches = products.filter(
-    product => product.status === 'upcoming'
-  );
-  
-  // Get past launches
-  const pastLaunches = products.filter(
-    product => product.status === 'launched'
-  );
-  
-  // Get featured products
-  const featuredProducts = products
-    .filter(product => product.featuredOrder !== undefined)
-    .sort((a, b) => (a.featuredOrder || 0) - (b.featuredOrder || 0));
 
-  // Filter products based on category and search term
-  const filterProducts = (products: ProductLaunch[]) => {
-    return products.filter(product => {
-      const matchesCategory = activeCategory === 'all' || 
-        product.category.includes(activeCategory);
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        product.tagline.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  };
+  // Filter products based on selected category
+  const filteredProducts = selectedCategory 
+    ? products?.filter(product => product.category.includes(selectedCategory))
+    : products;
+
+  // Featured products are the ones specifically marked as featured
+  const featuredProducts = products?.filter(product => product.featured_order !== null)
+    .sort((a, b) => (a.featured_order || 0) - (b.featured_order || 0))
+    .slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-hero-pattern text-white">
-      {/* Background elements */}
-      <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
-      <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
-      <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-gold/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
-      
+    <div className="min-h-screen bg-hero-pattern">
       <Navbar />
       
-      <main className="relative container mx-auto pt-24 pb-16 px-4 z-10">
-        <ProductHero 
-          searchTerm={searchTerm} 
-          setSearchTerm={setSearchTerm} 
-        />
+      {/* Hero Section */}
+      <ProductHero />
+      
+      {/* Category Filter */}
+      <ProductCategoryFilter 
+        selectedCategory={selectedCategory} 
+        onSelectCategory={setSelectedCategory}
+      />
 
-        <div className="mb-12">
-          <ProductCategoryFilter 
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-          />
-        </div>
-
-        {featuredProducts.length > 0 && (
-          <section className="mb-16">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6">Produits en vedette</h2>
-            <ProductFeatured products={filterProducts(featuredProducts)} isLoading={isLoading} />
-          </section>
-        )}
-
-        <section className="mb-16">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements du jour</h2>
-          <ProductList products={filterProducts(todayLaunches)} isLoading={isLoading} />
-        </section>
-        
-        <section className="mb-16">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">
-            Top produits
-            <span className="ml-2 text-sm text-white/50">(par nombre de votes)</span>
-          </h2>
-          <ProductList 
-            products={filterProducts([...pastLaunches].sort((a, b) => b.upvotes - a.upvotes).slice(0, 4))} 
-            isLoading={isLoading} 
-          />
-        </section>
-        
-        <section className="mb-16">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements à venir</h2>
-          <ProductList products={filterProducts(upcomingLaunches)} isLoading={isLoading} />
-        </section>
-        
-        <section>
-          <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements précédents</h2>
-          <ProductList products={filterProducts(pastLaunches)} isLoading={isLoading} />
-        </section>
-      </main>
-
+      {/* Featured Products Section */}
+      {!selectedCategory && featuredProducts && featuredProducts.length > 0 && (
+        <ProductFeatured products={featuredProducts} isLoading={isLoading} />
+      )}
+      
+      {/* Product List */}
+      <ProductList products={filteredProducts || []} isLoading={isLoading} />
+      
       <Footer />
     </div>
   );

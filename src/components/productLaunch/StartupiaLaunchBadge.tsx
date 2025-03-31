@@ -1,45 +1,35 @@
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Rocket } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface StartupiaLaunchBadgeProps {
-  productId: string;
-  productName: string;
-  style?: 'default' | 'minimal' | 'dark' | 'light';
+  customText?: string;
+  isFeatured?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-const StartupiaLaunchBadge = ({ productId, productName, style = 'default' }: StartupiaLaunchBadgeProps) => {
-  const baseUrl = window.location.origin;
-  const productUrl = `${baseUrl}/product/${productId}`;
-  
-  const getBadgeClasses = () => {
-    switch (style) {
-      case 'minimal':
-        return 'bg-black text-white border border-startupia-turquoise/30';
-      case 'dark':
-        return 'bg-gray-900 text-white border border-startupia-turquoise';
-      case 'light':
-        return 'bg-white text-gray-900 border border-startupia-turquoise';
-      default:
-        return 'bg-gradient-to-r from-startupia-turquoise to-startupia-deep-turquoise text-black';
-    }
+const StartupiaLaunchBadge: React.FC<StartupiaLaunchBadgeProps> = ({
+  customText,
+  isFeatured = false,
+  size = 'md'
+}) => {
+  const sizeClasses = {
+    sm: 'text-xs px-2 py-0.5',
+    md: 'text-sm px-3 py-1',
+    lg: 'px-3 py-1.5'
   };
-  
+
   return (
-    <a 
-      href={productUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-block no-underline"
+    <div
+      className={cn(
+        'inline-flex items-center rounded-full font-medium',
+        isFeatured ? 'bg-startupia-gold text-black' : 'bg-startupia-turquoise/80 text-white',
+        sizeClasses[size]
+      )}
     >
-      <Badge className={`py-1 px-3 gap-1.5 text-sm hover:scale-105 transition-transform ${getBadgeClasses()}`}>
-        <Rocket size={14} />
-        <span className="font-medium">
-          Lancé sur Startupia
-        </span>
-      </Badge>
-    </a>
+      <span className="mr-1">🚀</span>
+      {customText || (isFeatured ? 'Featured' : 'Startupia Launch')}
+    </div>
   );
 };
 

@@ -1,65 +1,32 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import ProductHero from '@/components/productLaunch/ProductHero';
+import ProductList from '@/components/productLaunch/ProductList';
 import ProductFeatured from '@/components/productLaunch/ProductFeatured';
 import ProductCategoryFilter from '@/components/productLaunch/ProductCategoryFilter';
-import ProductList from '@/components/productLaunch/ProductList';
 import { ProductLaunch } from '@/types/productLaunch';
 import { mockProductLaunches } from '@/data/mockProductLaunches';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-const ProductLaunchPage = () => {
-  const [products, setProducts] = useState<ProductLaunch[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<ProductLaunch[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+const ProductLaunchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('Tous');
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Simulate loading data
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setProducts(mockProductLaunches);
-      setFilteredProducts(mockProductLaunches);
-      setIsLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Filter products when category or search changes
-  useEffect(() => {
-    let results = products;
-    
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      results = results.filter(product => product.category === selectedCategory);
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      // In a real implementation, fetch from API/Supabase
+      return mockProductLaunches;
     }
-    
-    // Filter by search term
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      results = results.filter(
-        product => 
-          product.name.toLowerCase().includes(searchLower) || 
-          product.description.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    setFilteredProducts(results);
-  }, [selectedCategory, searchTerm, products]);
+  });
 
-  // Get featured products
-  const featuredProducts = filteredProducts.filter(product => product.featured);
-  // Get non-featured products
-  const regularProducts = filteredProducts.filter(product => !product.featured);
-
-  // Function to navigate to the product form
   const handleAddProduct = () => {
     if (!user) {
       toast.error("Vous devez être connecté pour ajouter un produit");
@@ -68,7 +35,30 @@ const ProductLaunchPage = () => {
     }
     navigate('/product/new');
   };
+
+  const filteredProducts = products.filter(product => {
+    // Filter by search term
+    const matchesSearch = 
+      searchTerm === '' || 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filter by category
+    const matchesCategory = 
+      selectedCategory === 'Tous' || 
+      (Array.isArray(product.category) && 
+       product.category.includes(selectedCategory));
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  // Featured products at the top
+  const featuredProducts = filteredProducts.filter(product => product.featured_order !== null)
+    .sort((a, b) => (a.featured_order || 0) - (b.featured_order || 0));
   
+  // Regular products
+  const regularProducts = filteredProducts.filter(product => product.featured_order === null);
+
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
       {/* Background elements */}
@@ -81,27 +71,41 @@ const ProductLaunchPage = () => {
       <ProductHero 
         searchTerm={searchTerm} 
         setSearchTerm={setSearchTerm} 
-        onAddProduct={handleAddProduct}
+        onAddProduct={handleAddProduct} 
       />
       
-      <main className="container mx-auto pb-20 px-4 relative z-10">
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Featured</h2>
-          {featuredProducts.length > 0 && <ProductFeatured products={featuredProducts} isLoading={isLoading} requireAuth={true} />}
-        </div>
+      <main className="container mx-auto px-4 pb-16 relative z-10">
+        <ProductCategoryFilter 
+          selectedCategory={selectedCategory} 
+          onCategorySelect={setSelectedCategory} 
+        />
         
-        <div>
-          <div className="mb-6">
-            <ProductCategoryFilter 
-              selectedCategory={selectedCategory}
-              onCategorySelect={setSelectedCategory}
-            />
-          </div>
+        {featuredProducts.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">À la Une</h2>
+            <div className="space-y-8">
+              {featuredProducts.map(product => (
+                <ProductFeatured key={product.id} product={product} requireAuth={true} />
+              ))}
+            </div>
+          </section>
+        )}
+        
+        <section>
+          <h2 className="text-2xl font-bold mb-6">
+            {selectedCategory === 'Tous' 
+              ? 'Tous les produits' 
+              : `Produits ${selectedCategory}`}
+          </h2>
           
-          <ProductList products={regularProducts} isLoading={isLoading} requireAuth={true} />
-        </div>
+          <ProductList 
+            products={regularProducts} 
+            isLoading={isLoading} 
+            requireAuth={true}
+          />
+        </section>
       </main>
-      
+
       <Footer />
     </div>
   );

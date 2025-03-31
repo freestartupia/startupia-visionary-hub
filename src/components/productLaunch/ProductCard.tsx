@@ -41,15 +41,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, requireAuth = false 
     <Card className="glass-card overflow-hidden hover:border-startupia-turquoise/30 transition-colors">
       <div className="relative h-48 overflow-hidden">
         <img
-          src={product.imageUrl}
+          src={product.logo_url || '/placeholder.svg'}
           alt={product.name}
           className="w-full h-full object-cover"
         />
         <div className="absolute top-0 left-0 w-full p-3 flex justify-between">
           <Badge variant="outline" className="glass-badge">
-            {product.category}
+            {Array.isArray(product.category) ? product.category[0] : product.category}
           </Badge>
-          {product.featured && (
+          {product.featured_order !== null && (
             <Badge className="bg-startupia-gold text-black">Featured</Badge>
           )}
         </div>
@@ -58,7 +58,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, requireAuth = false 
       <CardContent className="p-4">
         <h3 className="text-xl font-bold mb-1 line-clamp-1">{product.name}</h3>
         <p className="text-sm text-white/60 mb-3">
-          Par {product.creatorName}
+          Par {product.created_by}
         </p>
         <p className="text-white/80 text-sm mb-4 line-clamp-2">
           {truncateDescription(product.description)}

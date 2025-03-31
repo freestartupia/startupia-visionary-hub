@@ -1,46 +1,46 @@
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
-interface ProductCategoryFilterProps {
-  activeCategory: string;
-  setActiveCategory: (category: string | null) => void;
+export interface ProductCategoryFilterProps {
+  selectedCategory: string;
+  onCategorySelect: (category: string) => void;
 }
 
-const ProductCategoryFilter = ({ activeCategory, setActiveCategory }: ProductCategoryFilterProps) => {
+const ProductCategoryFilter: React.FC<ProductCategoryFilterProps> = ({ 
+  selectedCategory, 
+  onCategorySelect 
+}) => {
   const categories = [
-    'all',
-    'Marketing',
-    'Productivité',
-    'IA Générative',
-    'No-Code',
-    'Développement',
-    'Service Client',
-    'Industrie',
-    'Santé',
+    'Tous',
+    'AI Tools',
     'Finance',
-    'RH',
-    'Éducation'
+    'Marketing',
+    'Productivity',
+    'Healthcare',
+    'Education',
+    'Communication',
+    'Creative',
+    'Other'
   ];
 
   return (
-    <div className="overflow-x-auto pb-2 scrollbar-none">
-      <div className="flex gap-2 min-w-max">
-        {categories.map((category) => (
-          <Badge 
-            key={category}
-            variant={activeCategory === category ? "default" : "outline"}
-            className={`cursor-pointer px-3 py-1 text-sm ${
-              activeCategory === category 
-                ? 'bg-startupia-turquoise text-black' 
-                : 'hover:bg-startupia-turquoise/10 border-startupia-turquoise/30'
-            }`}
-            onClick={() => setActiveCategory(category === 'all' ? null : category)}
-          >
-            {category === 'all' ? 'Toutes les catégories' : category}
-          </Badge>
-        ))}
-      </div>
+    <div className="flex flex-wrap gap-2 mb-6">
+      {categories.map(category => (
+        <Button
+          key={category}
+          variant={selectedCategory === category ? "default" : "outline"}
+          size="sm"
+          onClick={() => onCategorySelect(category)}
+          className={
+            selectedCategory === category
+              ? "bg-startupia-turquoise hover:bg-startupia-turquoise/80"
+              : "border-startupia-turquoise/30 text-white/70 hover:bg-startupia-turquoise/20"
+          }
+        >
+          {category}
+        </Button>
+      ))}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, Heart, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,25 +11,120 @@ import { mockProjects } from '@/data/mockCommunityData';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CollaborativeProjectsProps {
   requireAuth?: boolean;
 }
 
 const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAuth = false }) => {
-  const [projects, setProjects] = useState<CollaborativeProject[]>(mockProjects);
+  const [projects, setProjects] = useState<CollaborativeProject[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<ProjectStatus | 'all'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
   
   const statuses: (ProjectStatus | 'all')[] = [
     'all', 'Idée', 'En cours', 'Recherche de collaborateurs', 'MVP', 'Lancé'
   ];
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    setIsLoading(true);
+    try {
+      // Try to fetch from Supabase first
+      const { data, error } = await supabase
+        .from('collaborative_projects')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching projects:', error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        setProjects(data as CollaborativeProject[]);
+      } else {
+        // Fallback to mock data if no projects in database
+        setProjects(mockProjects);
+      }
+    } catch (err) {
+      console.log('Falling back to mock data');
+      setProjects(mockProjects);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
-  const filteredProjects = selectedStatus === 'all' 
-    ? projects 
-    : projects.filter(project => project.status === selectedStatus);
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleLike = async (projectId: string) => {
+    if (requireAuth && !user) {
+      toast.error("Vous devez être connecté pour aimer un projet");
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      // First, find the project in the local state
+      const projectIndex = projects.findIndex(p => p.id === projectId);
+      if (projectIndex === -1) return;
+
+      // Clone the projects array and update the likes count
+      const updatedProjects = [...projects];
+      updatedProjects[projectIndex] = {
+        ...updatedProjects[projectIndex],
+        likes: (updatedProjects[projectIndex].likes || 0) + 1
+      };
+
+      // Update the UI immediately
+      setProjects(updatedProjects);
+      
+      // Then update in the database if we're connected to Supabase
+      try {
+        const { error } = await supabase
+          .from('collaborative_projects')
+          .update({ likes: updatedProjects[projectIndex].likes })
+          .eq('id', projectId);
+          
+        if (error) throw error;
+        toast.success("Vous avez aimé ce projet");
+      } catch (err) {
+        console.log('Could not update in database, but UI is updated');
+        toast.success("Vous avez aimé ce projet");
+      }
+    } catch (err) {
+      console.error('Error liking project:', err);
+      toast.error("Une erreur est survenue");
+    }
+  };
+
+  const handleContact = (projectId: string) => {
+    if (requireAuth && !user) {
+      toast.error("Vous devez être connecté pour contacter l'initiateur du projet");
+      navigate('/auth');
+      return;
+    }
     
+    toast.success("Fonctionnalité en développement - Contact initiateur");
+  };
+  
+  const handleProposeProject = () => {
+    if (requireAuth && !user) {
+      toast.error("Vous devez être connecté pour proposer un projet");
+      navigate('/auth');
+      return;
+    }
+    
+    toast.success("Fonctionnalité en développement");
+  };
+  
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -57,15 +152,24 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
     }
   };
 
-  const handleProposeProject = () => {
-    if (requireAuth && !user) {
-      toast.error("Vous devez être connecté pour proposer un projet");
-      navigate('/auth');
-      return;
-    }
-    
-    toast.success("Fonctionnalité en développement");
-  };
+  const filteredProjects = projects
+    .filter(project => selectedStatus === 'all' || project.status === selectedStatus)
+    .filter(project => 
+      searchTerm === '' || 
+      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-center">
+          <div className="w-12 h-12 border-t-2 border-startupia-turquoise border-solid rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -75,6 +179,8 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
           <Input
             placeholder="Rechercher un projet..."
             className="pl-10"
+            value={searchTerm}
+            onChange={handleSearch}
           />
         </div>
         <Button className="flex items-center gap-2" onClick={handleProposeProject}>
@@ -125,19 +231,22 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={project.initiatorAvatar} alt={project.initiatorName} />
-                      <AvatarFallback>{getInitials(project.initiatorName)}</AvatarFallback>
+                      <AvatarImage src={project.initiator_avatar} alt={project.initiator_name} />
+                      <AvatarFallback>{getInitials(project.initiator_name)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <span className="text-sm font-medium">{project.initiatorName}</span>
-                      <p className="text-xs text-white/60">{formatDate(project.createdAt)}</p>
+                      <span className="text-sm font-medium">{project.initiator_name}</span>
+                      <p className="text-xs text-white/60">{formatDate(project.created_at)}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <div className="flex items-center text-white/60">
+                    <button 
+                      className="flex items-center text-white/60 hover:text-white transition-colors"
+                      onClick={() => handleLike(project.id)}
+                    >
                       <Heart className="h-4 w-4 mr-1" />
-                      <span className="text-sm">{project.likes}</span>
-                    </div>
+                      <span className="text-sm">{project.likes || 0}</span>
+                    </button>
                     <div className="flex items-center text-white/60">
                       <Users className="h-4 w-4 mr-1" />
                       <span className="text-sm">{project.applications}</span>
@@ -145,10 +254,17 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
                   </div>
                 </div>
                 <div className="flex gap-2 w-full">
-                  <Button variant="outline" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => toast.info(`Détails du projet "${project.title}"`)}
+                  >
                     En savoir plus
                   </Button>
-                  <Button className="flex-1">
+                  <Button 
+                    className="flex-1"
+                    onClick={() => handleContact(project.id)}
+                  >
                     Contacter
                   </Button>
                 </div>
@@ -158,7 +274,7 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
         ) : (
           <div className="text-center py-12 col-span-full">
             <p className="text-white/60">Aucun projet trouvé pour ce statut.</p>
-            <Button variant="outline" className="mt-4">
+            <Button variant="outline" className="mt-4" onClick={handleProposeProject}>
               Proposer un projet
             </Button>
           </div>

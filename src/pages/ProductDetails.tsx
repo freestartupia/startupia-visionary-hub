@@ -1,15 +1,15 @@
 
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { mockProductLaunches } from '@/data/mockProductLaunches';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ThumbsUp, 
   MessageSquare, 
@@ -17,59 +17,134 @@ import {
   ExternalLink, 
   Calendar, 
   ArrowLeft,
-  Send
+  Send,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ProductComment } from '@/types/productLaunch';
+import { fetchProductById, addComment, upvoteProduct } from '@/services/productService';
+import { useToast } from '@/hooks/use-toast';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState('overview');
   const [newComment, setNewComment] = useState('');
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const navigate = useNavigate();
   
-  // Find the product in the mock data
-  const product = mockProductLaunches.find(p => p.id === id);
-  
-  if (!product) {
-    return (
-      <div className="min-h-screen bg-hero-pattern text-white">
-        <Navbar />
-        <main className="container mx-auto pt-28 pb-16 px-4">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold mb-4">Produit non trouvé</h1>
-            <p className="mb-6">Le produit que vous recherchez n'existe pas.</p>
-            <Button asChild>
-              <Link to="/products">Retour aux produits</Link>
-            </Button>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  useEffect(() => {
+    async function loadProduct() {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const data = await fetchProductById(id);
+        if (!data) {
+          toast({
+            title: "Erreur",
+            description: "Produit non trouvé",
+            variant: "destructive"
+          });
+          navigate('/products');
+          return;
+        }
+        setProduct(data);
+      } catch (error) {
+        console.error('Failed to load product:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les détails du produit",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadProduct();
+  }, [id, toast, navigate]);
   
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'dd MMMM yyyy', { locale: fr });
+    try {
+      return format(new Date(dateString), 'dd MMMM yyyy', { locale: fr });
+    } catch (error) {
+      return dateString;
+    }
   };
   
-  const handleSubmitComment = (e: React.FormEvent) => {
+  const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !id) return;
     
     setCommentSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // Here we would normally send the comment to the backend
-      // For now, just reset the form
-      setNewComment('');
-      setCommentSubmitting(false);
+    try {
+      // Dans une vraie application nous utiliserions l'information utilisateur authentifié
+      const tempUserName = "Utilisateur temporaire";
+      const result = await addComment(id, newComment, tempUserName);
       
-      // You could use a toast notification here
-      // toast({ description: "Votre commentaire a été publié" });
-    }, 1000);
+      if (result) {
+        toast({
+          title: "Commentaire ajouté",
+          description: "Votre commentaire a été publié avec succès"
+        });
+        
+        // Rafraîchir les données du produit
+        const updatedProduct = await fetchProductById(id);
+        if (updatedProduct) {
+          setProduct(updatedProduct);
+        }
+        
+        setNewComment('');
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible d'ajouter le commentaire",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de la publication du commentaire",
+        variant: "destructive"
+      });
+    } finally {
+      setCommentSubmitting(false);
+    }
+  };
+  
+  const handleUpvote = async () => {
+    if (!id) return;
+    
+    try {
+      const success = await upvoteProduct(id);
+      
+      if (success) {
+        // Optimistically update the UI
+        setProduct(prev => ({
+          ...prev,
+          upvotes: (prev.upvotes || 0) + 1
+        }));
+        
+        toast({
+          title: "Merci pour votre soutien !",
+          description: "Votre vote a été comptabilisé"
+        });
+      }
+    } catch (error) {
+      console.error('Failed to upvote:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'enregistrer votre vote",
+        variant: "destructive"
+      });
+    }
   };
   
   const renderComment = (comment: ProductComment) => {
@@ -102,6 +177,88 @@ const ProductDetails = () => {
       </div>
     );
   };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-hero-pattern text-white">
+        <Navbar />
+        <main className="relative container mx-auto pt-24 pb-16 px-4 z-10">
+          <div className="mb-6">
+            <Button variant="ghost" className="text-white/60">
+              <ArrowLeft size={16} className="mr-1" />
+              Retour aux produits
+            </Button>
+          </div>
+          
+          <Card className="glass-card border border-startupia-turquoise/20 bg-black/30 mb-8">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="md:w-2/5">
+                  <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="w-16 h-16 rounded-lg" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-6 w-40" />
+                      <Skeleton className="h-4 w-60" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-40 w-full rounded-md mb-4" />
+                  <div className="flex gap-2 mb-4">
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                  <div className="space-y-3">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                </div>
+                
+                <div className="md:w-3/5">
+                  <Skeleton className="h-10 w-full mb-6" />
+                  <div className="space-y-6">
+                    <div>
+                      <Skeleton className="h-6 w-32 mb-3" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full mt-2" />
+                      <Skeleton className="h-4 w-2/3 mt-2" />
+                    </div>
+                    <div>
+                      <Skeleton className="h-6 w-32 mb-3" />
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <div>
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-16 mt-1" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-hero-pattern text-white">
+        <Navbar />
+        <main className="container mx-auto pt-28 pb-16 px-4">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-4">Produit non trouvé</h1>
+            <p className="mb-6">Le produit que vous recherchez n'existe pas.</p>
+            <Button asChild>
+              <Link to="/products">Retour aux produits</Link>
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
@@ -160,7 +317,7 @@ const ProductDetails = () => {
                 )}
                 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {product.category.map((tag, i) => (
+                  {product.category.map((tag: string, i: number) => (
                     <Badge key={i} variant="outline" className="border-startupia-turquoise/30 text-white/80">
                       {tag}
                     </Badge>
@@ -186,7 +343,7 @@ const ProductDetails = () => {
                 </div>
                 
                 <div className="space-y-3">
-                  <Button className="w-full bg-startupia-turquoise hover:bg-startupia-turquoise/90">
+                  <Button className="w-full bg-startupia-turquoise hover:bg-startupia-turquoise/90" onClick={handleUpvote}>
                     <ThumbsUp size={16} className="mr-2" />
                     Soutenir ce produit
                   </Button>
@@ -277,7 +434,10 @@ const ProductDetails = () => {
                             disabled={!newComment.trim() || commentSubmitting}
                           >
                             {commentSubmitting ? (
-                              <span>Envoi en cours...</span>
+                              <>
+                                <Loader2 size={16} className="mr-2 animate-spin" />
+                                Envoi en cours...
+                              </>
                             ) : (
                               <>
                                 <Send size={16} className="mr-2" />
@@ -291,7 +451,7 @@ const ProductDetails = () => {
                     
                     <div className="space-y-6">
                       {product.comments.length > 0 ? (
-                        product.comments.map(comment => renderComment(comment))
+                        product.comments.map((comment: ProductComment) => renderComment(comment))
                       ) : (
                         <div className="text-center py-8">
                           <MessageSquare size={32} className="mx-auto mb-2 text-white/40" />
@@ -304,7 +464,7 @@ const ProductDetails = () => {
                   <TabsContent value="media" className="mt-0">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {product.mediaUrls && product.mediaUrls.length > 0 ? (
-                        product.mediaUrls.map((url, index) => (
+                        product.mediaUrls.map((url: string, index: number) => (
                           <div key={index} className="rounded-md overflow-hidden">
                             <img 
                               src={url} 
@@ -325,9 +485,6 @@ const ProductDetails = () => {
             </div>
           </CardContent>
         </Card>
-        
-        {/* Related products section could be added here */}
-        
       </main>
 
       <Footer />

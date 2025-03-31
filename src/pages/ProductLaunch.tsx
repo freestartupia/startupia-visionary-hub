@@ -1,35 +1,61 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductHero from '@/components/productLaunch/ProductHero';
 import ProductList from '@/components/productLaunch/ProductList';
 import ProductFeatured from '@/components/productLaunch/ProductFeatured';
 import ProductCategoryFilter from '@/components/productLaunch/ProductCategoryFilter';
-import { mockProductLaunches } from '@/data/mockProductLaunches';
 import { ProductLaunch } from '@/types/productLaunch';
+import { fetchProductLaunches } from '@/services/productService';
+import { useToast } from '@/hooks/use-toast';
 
 const ProductLaunchPage = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [products, setProducts] = useState<ProductLaunch[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const { toast } = useToast();
+  
+  // Fetch products from Supabase
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        setLoading(true);
+        const data = await fetchProductLaunches();
+        setProducts(data);
+      } catch (error) {
+        console.error('Failed to load products:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les produits. Veuillez réessayer plus tard.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadProducts();
+  }, [toast]);
   
   // Get today's launches
-  const todayLaunches = mockProductLaunches.filter(
+  const todayLaunches = products.filter(
     product => product.status === 'launching_today'
   );
   
   // Get upcoming launches
-  const upcomingLaunches = mockProductLaunches.filter(
+  const upcomingLaunches = products.filter(
     product => product.status === 'upcoming'
   );
   
   // Get past launches
-  const pastLaunches = mockProductLaunches.filter(
+  const pastLaunches = products.filter(
     product => product.status === 'launched'
   );
   
   // Get featured products
-  const featuredProducts = mockProductLaunches
+  const featuredProducts = products
     .filter(product => product.featuredOrder !== undefined)
     .sort((a, b) => (a.featuredOrder || 0) - (b.featuredOrder || 0));
 
@@ -69,30 +95,24 @@ const ProductLaunchPage = () => {
         {featuredProducts.length > 0 && (
           <section className="mb-16">
             <h2 className="text-2xl md:text-3xl font-bold mb-6">Produits en vedette</h2>
-            <ProductFeatured products={filterProducts(featuredProducts)} />
+            <ProductFeatured products={filterProducts(featuredProducts)} isLoading={loading} />
           </section>
         )}
 
-        {todayLaunches.length > 0 && (
-          <section className="mb-16">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements du jour</h2>
-            <ProductList products={filterProducts(todayLaunches)} />
-          </section>
-        )}
+        <section className="mb-16">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements du jour</h2>
+          <ProductList products={filterProducts(todayLaunches)} isLoading={loading} />
+        </section>
         
-        {upcomingLaunches.length > 0 && (
-          <section className="mb-16">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements à venir</h2>
-            <ProductList products={filterProducts(upcomingLaunches)} />
-          </section>
-        )}
+        <section className="mb-16">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements à venir</h2>
+          <ProductList products={filterProducts(upcomingLaunches)} isLoading={loading} />
+        </section>
         
-        {pastLaunches.length > 0 && (
-          <section>
-            <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements précédents</h2>
-            <ProductList products={filterProducts(pastLaunches)} />
-          </section>
-        )}
+        <section>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Lancements précédents</h2>
+          <ProductList products={filterProducts(pastLaunches)} isLoading={loading} />
+        </section>
       </main>
 
       <Footer />

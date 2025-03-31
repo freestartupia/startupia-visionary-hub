@@ -4,7 +4,7 @@ import { ProductLaunch } from '@/types/productLaunch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowUpRight, Calendar, ArrowRight } from 'lucide-react';
+import { ArrowUpRight, Calendar, ThumbsUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StartupiaLaunchBadge from './StartupiaLaunchBadge';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,48 +47,48 @@ const ProductFeatured: React.FC<ProductFeaturedProps> = ({ product, requireAuth 
   return (
     <Card className="relative overflow-hidden border-0 bg-transparent">
       <div className="absolute inset-0 bg-gradient-to-br from-startupia-turquoise/30 to-startupia-purple/30 rounded-xl blur-xl -z-10"></div>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+      <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
         {/* Left column - Image */}
-        <div className="relative rounded-lg overflow-hidden h-[300px] md:h-auto">
+        <div className="relative rounded-lg overflow-hidden h-[200px]">
           <img 
-            src={product.logo_url || '/placeholder.svg'}
+            src={product.logoUrl || '/placeholder.svg'}
             alt={product.name} 
             className="w-full h-full object-cover"
           />
-          <div className="absolute top-4 left-4">
-            {product.featured_order !== null && (
+          <div className="absolute top-3 left-3">
+            {product.featuredOrder !== null && (
               <StartupiaLaunchBadge isFeatured={true} />
             )}
           </div>
         </div>
         
         {/* Right column - Content */}
-        <div className="flex flex-col justify-between">
+        <div className="flex flex-col justify-between md:col-span-2">
           <div>
             {/* Title and badges */}
-            <div className="mb-4">
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">{product.name}</h2>
-              <p className="text-white/70">Par {product.created_by}</p>
+            <div className="mb-3">
+              <h2 className="text-xl md:text-2xl font-bold mb-1">{product.name}</h2>
+              <p className="text-white/70 text-sm">Par {product.createdBy}</p>
             </div>
             
             {/* Description */}
-            <p className="text-white/80 mb-6">
+            <p className="text-white/80 text-sm mb-4 line-clamp-3">
               {product.description}
             </p>
             
             {/* Categories */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-4">
               {Array.isArray(product.category) && product.category.map((cat, index) => (
-                <Badge key={index} variant="outline">
+                <Badge key={index} variant="outline" className="text-xs">
                   {cat}
                 </Badge>
               ))}
             </div>
             
             {/* Launch date */}
-            <div className="flex items-center text-white/70 mb-4">
-              <Calendar className="h-4 w-4 mr-2" />
-              <span>Lancement : {formatDate(product.launch_date)}</span>
+            <div className="flex items-center text-white/70 mb-4 text-xs">
+              <Calendar className="h-3 w-3 mr-1" />
+              <span>Lancement : {formatDate(product.launchDate)}</span>
             </div>
           </div>
           
@@ -96,16 +96,17 @@ const ProductFeatured: React.FC<ProductFeaturedProps> = ({ product, requireAuth 
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               variant="outline"
-              className="flex-1 flex items-center justify-center"
+              size="sm"
+              className="flex items-center justify-center"
               onClick={handleUpvote}
             >
-              👍 {product.upvotes || 0} Upvotes
+              <ThumbsUp className="mr-2 h-3 w-3" /> {product.upvotes || 0} Upvotes
             </Button>
             
-            <Button asChild className="flex-1 bg-startupia-turquoise hover:bg-startupia-turquoise/80">
+            <Button asChild size="sm" className="bg-startupia-turquoise hover:bg-startupia-turquoise/80">
               <Link to={`/product/${product.id}`} className="flex items-center justify-center">
                 Voir le détail
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowUpRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
           </div>

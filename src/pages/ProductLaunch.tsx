@@ -53,11 +53,11 @@ const ProductLaunchPage: React.FC = () => {
   });
 
   // Featured products at the top
-  const featuredProducts = filteredProducts.filter(product => product.featured_order !== null)
-    .sort((a, b) => (a.featured_order || 0) - (b.featured_order || 0));
+  const featuredProducts = filteredProducts.filter(product => product.featuredOrder !== null)
+    .sort((a, b) => (a.featuredOrder || 0) - (b.featuredOrder || 0));
   
   // Regular products
-  const regularProducts = filteredProducts.filter(product => product.featured_order === null);
+  const regularProducts = filteredProducts.filter(product => product.featuredOrder === null);
 
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
@@ -81,9 +81,9 @@ const ProductLaunchPage: React.FC = () => {
         />
         
         {featuredProducts.length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">À la Une</h2>
-            <div className="space-y-8">
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">À la Une</h2>
+            <div className="space-y-6">
               {featuredProducts.map(product => (
                 <ProductFeatured key={product.id} product={product} requireAuth={true} />
               ))}
@@ -92,7 +92,7 @@ const ProductLaunchPage: React.FC = () => {
         )}
         
         <section>
-          <h2 className="text-2xl font-bold mb-6">
+          <h2 className="text-2xl font-bold mb-4">
             {selectedCategory === 'Tous' 
               ? 'Tous les produits' 
               : `Produits ${selectedCategory}`}

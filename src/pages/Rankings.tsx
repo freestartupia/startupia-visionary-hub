@@ -172,43 +172,6 @@ const Rankings = () => {
               </div>
             </section>
             
-            <section>
-              <div className="flex items-center gap-2 mb-6">
-                <TrendingUp className="text-startupia-turquoise" />
-                <h2 className="text-2xl font-bold">Évolution des startups IA françaises</h2>
-              </div>
-              <Card className="bg-black/50 border-startupia-turquoise/20">
-                <CardContent className="pt-6">
-                  <ChartContainer
-                    config={{
-                      startups: {
-                        label: "Nouvelles startups",
-                        theme: {
-                          light: "#2EDBA0",
-                          dark: "#2EDBA0",
-                        },
-                      }
-                    }}
-                    className="h-72"
-                  >
-                    <AreaChart data={startupTrendsData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                      <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                      <Tooltip />
-                      <Area
-                        type="monotone"
-                        dataKey="count"
-                        stackId="1"
-                        stroke="var(--color-startups)"
-                        fill="var(--color-startups)"
-                        fillOpacity={0.2}
-                        name="startups"
-                      />
-                    </AreaChart>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-            </section>
             
             <section>
               <div className="flex items-center justify-between mb-6">

@@ -32,9 +32,9 @@ const RankingsList = ({ items, showDescription = false }: RankingsListProps) => 
       {items.map((item, index) => (
         <div
           key={item.id}
-          className="flex items-center justify-between p-4 rounded-lg bg-black/40 border border-startupia-turquoise/10 hover:border-startupia-turquoise/30 transition-colors"
+          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg bg-black/40 border border-startupia-turquoise/10 hover:border-startupia-turquoise/30 transition-colors"
         >
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 mb-3 sm:mb-0">
             <div className="text-xl font-bold text-white/60 w-6 text-center">
               {index + 1}
             </div>
@@ -61,11 +61,11 @@ const RankingsList = ({ items, showDescription = false }: RankingsListProps) => 
                 </Badge>
               )}
               {showDescription && item.description && (
-                <p className="text-sm text-white/70 mt-1">{item.description}</p>
+                <p className="text-sm text-white/70 mt-1 max-w-xl">{item.description}</p>
               )}
             </div>
           </div>
-          <div className="text-lg font-bold text-startupia-turquoise">
+          <div className="text-lg font-bold text-startupia-turquoise ml-10 sm:ml-0">
             {item.points} pts
           </div>
         </div>

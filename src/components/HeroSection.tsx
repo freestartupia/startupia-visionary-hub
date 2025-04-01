@@ -3,8 +3,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Search, Rocket, ArrowRight, Users, MessageSquare, Star } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const HeroSection = () => {
+  const isMobile = useIsMobile();
+  
   return (
     <section className="min-h-screen relative flex flex-col items-center justify-center pt-16 overflow-hidden">
       {/* Background elements */}
@@ -76,7 +79,7 @@ const HeroSection = () => {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-16">
           <Button 
-            size="lg" 
+            size={isMobile ? "default" : "lg"}
             className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold text-lg py-6 px-8 w-full sm:w-auto"
             asChild
           >
@@ -86,7 +89,7 @@ const HeroSection = () => {
             </Link>
           </Button>
           <Button 
-            size="lg" 
+            size={isMobile ? "default" : "lg"}
             variant="outline" 
             className="border-startupia-gold text-startupia-gold hover:bg-startupia-gold/20 text-lg py-6 px-8 w-full sm:w-auto"
             asChild
@@ -97,7 +100,7 @@ const HeroSection = () => {
             </Link>
           </Button>
           <Button 
-            size="lg" 
+            size={isMobile ? "default" : "lg"}
             variant="outline" 
             className="border-startupia-turquoise text-startupia-turquoise hover:bg-startupia-turquoise/20 text-lg py-6 px-8 w-full sm:w-auto"
             asChild

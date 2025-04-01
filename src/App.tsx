@@ -19,6 +19,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Tools from "./pages/Tools";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Navbar from "./components/navbar/Navbar";
 
 const queryClient = new QueryClient();
 
@@ -29,22 +30,25 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/startups" element={<StartupIndex />} />
-            <Route path="/startup/:id" element={<StartupDetails />} />
-            <Route path="/radar" element={<RadarIA />} />
-            <Route path="/ecosystem" element={<AIEcosystem />} />
-            <Route path="/cofounder" element={<CoFounder />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/rankings" element={<Rankings />} />
-            <Route path="/tools" element={<Tools />} />
-            <Route path="/products" element={<Navigate to="/ecosystem" replace />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Navbar />
+          <div className="min-h-screen pt-16 w-full">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/startups" element={<StartupIndex />} />
+              <Route path="/startup/:id" element={<StartupDetails />} />
+              <Route path="/radar" element={<RadarIA />} />
+              <Route path="/ecosystem" element={<AIEcosystem />} />
+              <Route path="/cofounder" element={<CoFounder />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/rankings" element={<Rankings />} />
+              <Route path="/tools" element={<Tools />} />
+              <Route path="/products" element={<Navigate to="/ecosystem" replace />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
         </TooltipProvider>
       </AuthProvider>
     </BrowserRouter>

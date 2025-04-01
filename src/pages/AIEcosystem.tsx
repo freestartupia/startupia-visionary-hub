@@ -63,8 +63,7 @@ const AIEcosystem = () => {
 
         {/* Tabs */}
         <Tabs 
-          defaultValue={activeTab}
-          value={activeTab}
+          defaultValue="directory"
           onValueChange={handleTabChange}
           className="max-w-7xl mx-auto"
         >

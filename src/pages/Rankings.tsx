@@ -8,7 +8,7 @@ import { mockProductLaunches } from '@/data/mockProductLaunches';
 import StartupCard from '@/components/StartupCard';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Rocket, TrendingUp, Award } from 'lucide-react';
+import { Trophy, Rocket, TrendingUp, Award, ExternalLink } from 'lucide-react';
 import { incrementValue, supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +17,8 @@ import ProductList from '@/components/productLaunch/ProductList';
 import { ChartContainer } from '@/components/ui/chart';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import RankingsList from '@/components/rankings/RankingsList';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const Rankings = () => {
   const { toast } = useToast();
@@ -35,6 +37,46 @@ const Rankings = () => {
   const topTools = [...mockProductLaunches]
     .sort((a, b) => b.upvotes - a.upvotes)
     .slice(0, 3);
+
+  // Top AI tools with affiliate links (would be from a specific database in production)
+  const topAIToolsWithAffiliates = [
+    { 
+      id: 1, 
+      name: "Genius Copilot", 
+      avatar: "https://placehold.co/400x400/2E2E2E/2EDBA0?text=GC&font=montserrat",
+      points: 58,
+      badge: "🔥 Marketing",
+      link: "/product/genius-copilot",
+      description: "Assistant IA multimodal pour les équipes marketing. Analyse et génère du contenu automatiquement."
+    },
+    { 
+      id: 2, 
+      name: "Neuron Labs", 
+      avatar: "https://placehold.co/400x400/2E2E2E/2EDBA0?text=NL&font=montserrat",
+      points: 127,
+      badge: "👨‍💻 No-Code",
+      link: "/product/neuron-labs",
+      description: "Créez des agents IA personnalisés sans coder. Idéal pour les entreprises de toutes tailles."
+    },
+    { 
+      id: 3, 
+      name: "Sentient", 
+      avatar: "https://placehold.co/400x400/2E2E2E/F4C770?text=S&font=montserrat",
+      points: 215,
+      badge: "🎯 Service Client",
+      link: "/product/sentient",
+      description: "Analyse émotionnelle en temps réel pour vos conversations client. Augmentez votre satisfaction client de 23%."
+    },
+    { 
+      id: 4, 
+      name: "AIdar", 
+      avatar: "https://placehold.co/400x400/2E2E2E/2EDBA0?text=AD&font=montserrat",
+      points: 89,
+      badge: "🏭 Industrie",
+      link: "/product/aidar",
+      description: "Détection proactive des anomalies industrielles. Réduisez vos coûts de maintenance de 40%."
+    }
+  ];
 
   // Simulated startup data trends for the chart
   const startupTrendsData = [
@@ -55,6 +97,12 @@ const Rankings = () => {
     { id: 3, name: 'Julie Leroy', avatar: 'https://i.pravatar.cc/150?img=5', points: 156, badge: '⚡️ Actif' },
     { id: 4, name: 'Antoine Bernard', avatar: 'https://i.pravatar.cc/150?img=8', points: 132, badge: '👨‍💻 Contributeur' }
   ];
+
+  const handleToolClick = (toolId: number) => {
+    // In production, this would track affiliate link clicks
+    console.log(`Tool ${toolId} affiliate link clicked`);
+    // Could also track with analytics or increment in database
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -106,9 +154,10 @@ const Rankings = () => {
               </div>
               
               <div className="flex justify-center mt-6">
-                <a href="/ecosystem" className="text-startupia-turquoise hover:underline">
-                  Voir toutes les startups →
-                </a>
+                <Link to="/ecosystem" className="text-startupia-turquoise hover:underline inline-flex items-center">
+                  Voir toutes les startups 
+                  <ExternalLink className="ml-1 h-4 w-4" />
+                </Link>
               </div>
             </section>
             
@@ -163,16 +212,31 @@ const Rankings = () => {
             </section>
             
             <section>
-              <div className="flex items-center gap-2 mb-6">
-                <TrendingUp className="text-startupia-turquoise" />
-                <h2 className="text-2xl font-bold">Top Outils IA</h2>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="text-startupia-turquoise" />
+                  <h2 className="text-2xl font-bold">Top Outils IA</h2>
+                </div>
+                <Link to="/ecosystem?view=tools" className="text-startupia-turquoise hover:underline flex items-center">
+                  Voir tous les outils
+                  <ExternalLink className="ml-1 h-4 w-4" />
+                </Link>
               </div>
-              <ProductList products={topTools} />
-              <div className="flex justify-center mt-6">
-                <a href="/ecosystem" className="text-startupia-turquoise hover:underline">
-                  Voir tous les outils →
-                </a>
-              </div>
+              
+              <Card className="bg-black/50 border-startupia-turquoise/20">
+                <CardContent className="pt-6">
+                  <RankingsList items={topAIToolsWithAffiliates} showDescription={true} />
+                  
+                  <div className="mt-6 flex justify-center">
+                    <Button asChild variant="outline" className="border-startupia-turquoise text-startupia-turquoise">
+                      <Link to="/ecosystem?view=tools">
+                        Explorer tous les outils IA
+                        <ExternalLink className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </section>
             
             <section>

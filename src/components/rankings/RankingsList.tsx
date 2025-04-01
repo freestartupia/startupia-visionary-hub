@@ -2,6 +2,7 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
 
 interface RankingsItem {
   id: number;
@@ -9,13 +10,16 @@ interface RankingsItem {
   avatar?: string;
   points: number;
   badge?: string;
+  link?: string;
+  description?: string;
 }
 
 interface RankingsListProps {
   items: RankingsItem[];
+  showDescription?: boolean;
 }
 
-const RankingsList = ({ items }: RankingsListProps) => {
+const RankingsList = ({ items, showDescription = false }: RankingsListProps) => {
   return (
     <div className="space-y-4">
       {items.map((item, index) => (
@@ -32,11 +36,20 @@ const RankingsList = ({ items }: RankingsListProps) => {
               <AvatarFallback>{item.name.substring(0, 2)}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-medium">{item.name}</div>
+              {item.link ? (
+                <Link to={item.link} className="font-medium hover:text-startupia-turquoise transition-colors">
+                  {item.name}
+                </Link>
+              ) : (
+                <div className="font-medium">{item.name}</div>
+              )}
               {item.badge && (
                 <Badge variant="outline" className="mt-1 bg-startupia-turquoise/10 text-startupia-turquoise border-none">
                   {item.badge}
                 </Badge>
+              )}
+              {showDescription && item.description && (
+                <p className="text-sm text-white/70 mt-1">{item.description}</p>
               )}
             </div>
           </div>

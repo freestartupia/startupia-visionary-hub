@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
@@ -217,7 +216,7 @@ const Rankings = () => {
                   <TrendingUp className="text-startupia-turquoise" />
                   <h2 className="text-2xl font-bold">Top Outils IA</h2>
                 </div>
-                <Link to="/ecosystem?view=tools" className="text-startupia-turquoise hover:underline flex items-center">
+                <Link to="/tools" className="text-startupia-turquoise hover:underline flex items-center">
                   Voir tous les outils
                   <ExternalLink className="ml-1 h-4 w-4" />
                 </Link>
@@ -229,7 +228,7 @@ const Rankings = () => {
                   
                   <div className="mt-6 flex justify-center">
                     <Button asChild variant="outline" className="border-startupia-turquoise text-startupia-turquoise">
-                      <Link to="/ecosystem?view=tools">
+                      <Link to="/tools">
                         Explorer tous les outils IA
                         <ExternalLink className="ml-2 h-4 w-4" />
                       </Link>

@@ -3,6 +3,7 @@ import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
+import { ExternalLink } from 'lucide-react';
 
 interface RankingsItem {
   id: number;
@@ -20,6 +21,12 @@ interface RankingsListProps {
 }
 
 const RankingsList = ({ items, showDescription = false }: RankingsListProps) => {
+  const handleClick = (id: number) => {
+    // This would track affiliate link clicks in a real application
+    console.log(`Tool ${id} affiliate link clicked`);
+    // Could also use analytics service or backend API to track
+  };
+
   return (
     <div className="space-y-4">
       {items.map((item, index) => (
@@ -37,8 +44,13 @@ const RankingsList = ({ items, showDescription = false }: RankingsListProps) => 
             </Avatar>
             <div>
               {item.link ? (
-                <Link to={item.link} className="font-medium hover:text-startupia-turquoise transition-colors">
+                <Link 
+                  to={item.link} 
+                  className="font-medium hover:text-startupia-turquoise transition-colors flex items-center gap-1"
+                  onClick={() => handleClick(item.id)}
+                >
                   {item.name}
+                  <ExternalLink size={14} className="text-startupia-turquoise/70" />
                 </Link>
               ) : (
                 <div className="font-medium">{item.name}</div>

@@ -17,6 +17,7 @@ import Rankings from "./pages/Rankings";
 import ProductDetails from "./pages/ProductDetails";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Tools from "./pages/Tools";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/community" element={<Community />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/rankings" element={<Rankings />} />
+            <Route path="/tools" element={<Tools />} />
             <Route path="/products" element={<Navigate to="/ecosystem" replace />} />
             <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/auth" element={<Auth />} />

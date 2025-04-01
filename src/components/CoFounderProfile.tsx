@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,7 +49,11 @@ const formSchema = z.object({
   projectStage: z.enum(['Idée', 'MVP', 'Beta', 'Lancé']).optional(),
 });
 
-const CoFounderProfile = () => {
+interface CoFounderProfileProps {
+  onProfileCreated?: () => void;
+}
+
+const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -57,7 +62,7 @@ const CoFounderProfile = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       profileType: 'collaborator',
-      name: user?.displayName || '',
+      name: user?.email?.split('@')[0] || '',
       role: '',
       seekingRoles: [],
       pitch: '',
@@ -97,7 +102,7 @@ const CoFounderProfile = () => {
       linkedinUrl: values.linkedinUrl || undefined,
       portfolioUrl: values.portfolioUrl || undefined,
       websiteUrl: values.websiteUrl || undefined,
-      photoUrl: user?.photoURL || undefined,
+      photoUrl: user?.email ? `https://ui-avatars.com/api/?name=${encodeURIComponent(values.name)}&background=random` : undefined,
       dateCreated: new Date().toISOString(),
       hasAIBadge: values.aiTools.length > 3, // Simple logic for AI badge
       projectName: values.profileType === 'project-owner' ? values.projectName : undefined,
@@ -115,8 +120,10 @@ const CoFounderProfile = () => {
         description: "Vous pouvez maintenant rechercher ou être trouvé par d'autres cofondateurs"
       });
       
-      // After successful profile creation, navigate to the search tab
-      navigate('/cofounder?tab=search');
+      // Call the onProfileCreated callback if provided
+      if (onProfileCreated) {
+        onProfileCreated();
+      }
     }, 1000);
   };
 

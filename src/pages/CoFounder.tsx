@@ -1,42 +1,33 @@
 
-import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState } from 'react';
 import CoFounderSearch from '@/components/CoFounderSearch';
 import CoFounderProfile from '@/components/CoFounderProfile';
 import ProjectsList from '@/components/ProjectsList';
 import Footer from '@/components/Footer';
 import { CofounderProfile } from '@/types/cofounders';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import SEO from '@/components/SEO';
+import { ArrowRight } from 'lucide-react';
 
 // Mock data for development purposes
 import { mockCofounderProfiles } from '@/data/mockCofounderProfiles';
 
 const CoFounder = () => {
   const [profiles] = useState<CofounderProfile[]>(mockCofounderProfiles);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<string>(searchParams.get('tab') || 'search');
+  const [showProfileForm, setShowProfileForm] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast: toastUI } = useToast();
 
-  // Set the active tab based on URL params when component mounts
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam && ['search', 'profile', 'projects'].includes(tabParam)) {
-      setActiveTab(tabParam);
-    }
-  }, [searchParams]);
-
   // Filter for project owners
   const projects = profiles.filter(profile => profile.profileType === 'project-owner');
 
-  const handleTabChange = (value: string) => {
-    if ((value === 'profile') && !user) {
+  const handleCreateProfileClick = () => {
+    if (!user) {
       toastUI({
         title: "Connexion requise",
         description: "Vous devez être connecté pour créer un profil",
@@ -46,8 +37,7 @@ const CoFounder = () => {
       return;
     }
     
-    setActiveTab(value);
-    setSearchParams({ tab: value });
+    setShowProfileForm(true);
   };
 
   const handleMatchRequest = (profileId: string) => {
@@ -91,48 +81,48 @@ const CoFounder = () => {
           </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-6xl mx-auto">
-          <TabsList className="grid grid-cols-3 mb-8">
-            <TabsTrigger value="search">Rechercher</TabsTrigger>
-            <TabsTrigger value="profile">Créer un profil</TabsTrigger>
-            <TabsTrigger value="projects">Projets</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="search" className="mt-0">
-            <CoFounderSearch 
-              profiles={profiles} 
-              requireAuth={true} 
-              onMatchRequest={handleMatchRequest}
-            />
-          </TabsContent>
-          
-          <TabsContent value="profile" className="mt-0">
-            {user ? (
-              <CoFounderProfile />
-            ) : (
-              <div className="text-center py-12 glass-card">
-                <h3 className="text-2xl font-semibold mb-4">Connexion requise</h3>
-                <p className="text-white/70 mb-6">
-                  Vous devez être connecté pour créer ou modifier votre profil.
-                </p>
-                <Button 
-                  onClick={() => navigate('/auth')}
-                  className="bg-startupia-turquoise hover:bg-startupia-turquoise/90"
-                >
-                  Se connecter / S'inscrire
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="projects" className="mt-0">
-            <ProjectsList 
-              projects={projects} 
-              requireAuth={true}
-              onMatchRequest={handleMatchRequest} 
-            />
-          </TabsContent>
-        </Tabs>
+        {!showProfileForm ? (
+          <div className="max-w-6xl mx-auto">
+            <div className="flex justify-center mb-10">
+              <Button 
+                onClick={handleCreateProfileClick}
+                className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black button-glow py-6 px-8 text-lg"
+              >
+                Créer mon profil de co-fondateur <ArrowRight className="ml-2" />
+              </Button>
+            </div>
+
+            <div className="mb-16">
+              <CoFounderSearch 
+                profiles={profiles} 
+                requireAuth={true} 
+                onMatchRequest={handleMatchRequest}
+              />
+            </div>
+            
+            <div className="mt-16">
+              <ProjectsList 
+                projects={projects} 
+                requireAuth={true}
+                onMatchRequest={handleMatchRequest} 
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-6xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Créer mon profil</h2>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowProfileForm(false)}
+                className="border-startupia-turquoise text-startupia-turquoise hover:bg-startupia-turquoise/10"
+              >
+                Retour à la recherche
+              </Button>
+            </div>
+            <CoFounderProfile onProfileCreated={() => setShowProfileForm(false)} />
+          </div>
+        )}
       </main>
 
       <Footer />

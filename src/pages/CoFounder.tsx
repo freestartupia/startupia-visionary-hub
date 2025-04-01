@@ -45,6 +45,26 @@ const CoFounder = () => {
     setShowProfileForm(true);
   };
 
+  // Re-implementing the match request handler that was accidentally removed
+  const handleMatchRequest = (profileId: string) => {
+    if (!user) {
+      toast("Connexion requise", { 
+        description: "Vous devez être connecté pour contacter un profil",
+        action: {
+          label: "Se connecter",
+          onClick: () => navigate('/auth')
+        }
+      });
+      return;
+    }
+    
+    // In real app, this would trigger a backend call to send the match request
+    console.log(`Match request sent to profile ${profileId}`);
+    toast.success("Demande de contact envoyée !");
+    
+    // In a real app, we would update the UI to reflect the match request
+  };
+
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
       <SEO 

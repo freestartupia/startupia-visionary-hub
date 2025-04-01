@@ -1,407 +1,352 @@
-import React, { useState, lazy, Suspense } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { signIn, signUp } from '@/services/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
-import { signIn, signUp } from '@/services/authService';
-import { Eye, EyeOff, User, Mail, Lock, CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
-import SEO from '@/components/SEO';
-import { Label } from '@/components/ui/label';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import LoadingSpinner from '@/components/ui/loading-spinner';
+import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
+import Navbar from '@/components/navbar/Navbar';
+import Footer from '@/components/Footer';
+
+const loginSchema = z.object({
+  email: z.string().email("Email invalide"),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+});
+
+const registerSchema = z.object({
+  firstName: z.string().min(1, "Le prénom est requis"),
+  lastName: z.string().min(1, "Le nom est requis"),
+  email: z.string().email("Email invalide"),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  confirmPassword: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
 
 const Auth = () => {
-  const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'register' ? 'register' : 'login';
-  
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(initialTab);
-  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user } = useAuth();
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+  const { toast } = useToast();
 
-    if (activeTab === 'register' && password !== confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas.");
-      setError("Les mots de passe ne correspondent pas.");
-      setLoading(false);
-      return;
-    }
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-    if (activeTab === 'register' && !acceptTerms) {
-      toast.error("Veuillez accepter les conditions d'utilisation.");
-      setError("Veuillez accepter les conditions d'utilisation.");
-      setLoading(false);
-      return;
-    }
+  const registerForm = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
+  const handleLogin = async (values: z.infer<typeof loginSchema>) => {
+    setIsLoading(true);
     try {
-      if (activeTab === 'login') {
-        const response = await signIn(email, password);
-        if (response.error) {
-          throw response.error;
-        }
-        toast.success("Connexion réussie !");
-        // Redirect to the previous page or the home page
-        const from = location.state?.from || "/";
-        navigate(from, { replace: true });
-      } else {
-        const response = await signUp(email, password, firstName, lastName);
-        if (response.error) {
-          throw response.error;
-        }
-        toast.success("Inscription réussie !");
-        setActiveTab('login'); // Automatically switch to login tab after successful registration
+      const { user, error } = await signIn(values.email, values.password);
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur de connexion",
+          description: error.message || "Vérifiez vos identifiants et réessayez.",
+        });
+      } else if (user) {
+        navigate('/');
       }
-    } catch (error: any) {
-      console.error("Authentication error:", error);
-      const errorMessage = error.message || "Erreur d'authentification.";
-      toast.error(errorMessage);
-      setError(errorMessage);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur de connexion",
+        description: "Une erreur inattendue s'est produite. Veuillez réessayer.",
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const benefitsList = [
-    "Accès à la plus grande communauté IA française",
-    "Promotion gratuite de vos services et produits",
-    "Mise en relation avec des co-fondateurs potentiels",
-    "Ressources exclusives et inspirations",
-    "100% gratuit, sans frais cachés"
-  ];
+  const handleRegister = async (values: z.infer<typeof registerSchema>) => {
+    setIsLoading(true);
+    try {
+      const { user, error } = await signUp(
+        values.email, 
+        values.password,
+        values.firstName,
+        values.lastName
+      );
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur d'inscription",
+          description: error.message || "Vérifiez vos informations et réessayez.",
+        });
+      } else {
+        toast({
+          title: "Inscription réussie",
+          description: "Vérifiez votre email pour confirmer votre compte.",
+        });
+        navigate('/');
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur d'inscription",
+        description: "Une erreur inattendue s'est produite. Veuillez réessayer.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-black flex md:items-center justify-center p-4 md:p-8">
-      <SEO 
-        title="Connexion & Inscription – StartupIA.fr"
-        description="Connectez-vous ou créez un compte sur StartupIA.fr pour rejoindre la communauté des innovateurs de l'IA en France et accéder à toutes les fonctionnalités du hub."
-        noindex={true}
-      />
-      
-      <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8 relative">
-        {/* Left side - Auth Form */}
-        <Card className="bg-black/80 border border-startupia-turquoise/20 backdrop-blur-xl shadow-xl relative z-10 h-full">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-startupia-turquoise/5 to-transparent rounded-lg pointer-events-none"></div>
+    <div className="min-h-screen bg-hero-pattern text-white">
+      <Navbar />
+
+      <div className="container mx-auto px-4 py-32">
+        <div className="max-w-md mx-auto bg-black/50 backdrop-blur-lg p-8 rounded-xl border border-white/10 shadow-xl">
+          <h1 className="text-3xl font-bold mb-6 text-center">
+            Bienvenue sur <span className="text-startupia-turquoise">Startupia.fr</span>
+          </h1>
           
-          <CardHeader className="space-y-2 text-center">
-            <CardTitle className="text-2xl md:text-3xl font-bold text-white">
-              Bienvenue sur StartupIA
-            </CardTitle>
-            <CardDescription className="text-gray-300">
-              {activeTab === 'login' ? 
-                'Connectez-vous pour accéder à votre compte' : 
-                'Créez votre compte pour rejoindre la communauté'}
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="login" className="text-base">Connexion</TabsTrigger>
-                <TabsTrigger value="register" className="text-base">Inscription</TabsTrigger>
-              </TabsList>
-              
-              {error && (
-                <div className="mb-4">
-                  <div className="p-3 bg-red-900/20 border border-red-500/50 rounded-md">
-                    <p className="text-sm text-red-300">{error}</p>
-                  </div>
-                </div>
-              )}
-              
-              <TabsContent value="login" className="mt-2 space-y-4">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-white text-sm font-medium">
-                      Email
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        type="email"
-                        id="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={loading}
-                        className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
-                        placeholder="votre@email.com"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label htmlFor="password" className="text-white text-sm font-medium">
-                        Mot de passe
-                      </Label>
-                      <a href="#" className="text-xs text-startupia-turquoise hover:underline">
-                        Mot de passe oublié?
-                      </a>
-                    </div>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={loading}
-                        className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
-                        placeholder="••••••••"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={loading}
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <Button
-                    type="submit"
-                    className="w-full bg-startupia-turquoise text-black font-medium hover:bg-startupia-turquoise/90 focus:ring-2 focus:ring-startupia-turquoise focus:ring-offset-1 mt-6 h-12"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Connexion en cours...
-                      </>
-                    ) : (
-                      <>
-                        Se connecter
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
+          <Tabs value={mode} onValueChange={(value) => setMode(value as 'login' | 'register')} className="w-full">
+            <TabsList className="grid grid-cols-2 mb-6 w-full">
+              <TabsTrigger value="login">Connexion</TabsTrigger>
+              <TabsTrigger value="register">Inscription</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="login">
+              <Form {...loginForm}>
+                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+                  <FormField
+                    control={loginForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="email@exemple.com" 
+                            type="email" 
+                            className="bg-white/5 border-white/10 text-white"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </Button>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="register" className="mt-2 space-y-4">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-white text-sm font-medium">
-                        Prénom
-                      </Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          type="text"
-                          id="firstName"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          required
-                          disabled={loading}
-                          className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
-                          placeholder="Jean"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-white text-sm font-medium">
-                        Nom
-                      </Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          type="text"
-                          id="lastName"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          required
-                          disabled={loading}
-                          className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
-                          placeholder="Dupont"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  />
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-white text-sm font-medium">
-                      Email
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        type="email"
-                        id="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={loading}
-                        className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
-                        placeholder="votre@email.com"
-                      />
-                    </div>
-                  </div>
+                  <FormField
+                    control={loginForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mot de passe</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input 
+                              placeholder="••••••••" 
+                              type={showPassword ? "text" : "password"} 
+                              className="bg-white/5 border-white/10 text-white"
+                              {...field} 
+                            />
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              className="absolute right-0 top-0 h-full text-white/70 hover:text-white"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </Button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-white text-sm font-medium">
-                      Mot de passe
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={loading}
-                        className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
-                        placeholder="••••••••"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={loading}
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-white text-sm font-medium">
-                      Confirmer le mot de passe
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        id="confirmPassword"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        disabled={loading}
-                        className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 mt-4">
-                    <Checkbox 
-                      id="terms" 
-                      checked={acceptTerms}
-                      onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
-                      disabled={loading}
-                      className="border-gray-500 data-[state=checked]:bg-startupia-turquoise data-[state=checked]:border-startupia-turquoise"
-                    />
-                    <Label 
-                      htmlFor="terms" 
-                      className="text-gray-300 text-sm leading-tight"
+                  <div className="pt-2">
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-startupia-turquoise hover:bg-startupia-turquoise/90" 
+                      disabled={isLoading}
                     >
-                      J'accepte les <a href="#" className="text-startupia-turquoise hover:underline">conditions d'utilisation</a> et la <a href="#" className="text-startupia-turquoise hover:underline">politique de confidentialité</a>
-                    </Label>
+                      {isLoading ? (
+                        <span className="flex items-center">Connexion en cours...</span>
+                      ) : (
+                        <span className="flex items-center">
+                          <LogIn size={18} className="mr-2" />
+                          Se connecter
+                        </span>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </TabsContent>
+            
+            <TabsContent value="register">
+              <Form {...registerForm}>
+                <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={registerForm.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prénom</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Jean" 
+                              className="bg-white/5 border-white/10 text-white"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={registerForm.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nom</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Dupont" 
+                              className="bg-white/5 border-white/10 text-white"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                   
-                  <Button
-                    type="submit"
-                    className="w-full bg-startupia-turquoise text-black font-medium hover:bg-startupia-turquoise/90 focus:ring-2 focus:ring-startupia-turquoise focus:ring-offset-1 mt-4 h-12"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Inscription en cours...
-                      </>
-                    ) : (
-                      <>
-                        Créer mon compte
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
+                  <FormField
+                    control={registerForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="email@exemple.com" 
+                            type="email" 
+                            className="bg-white/5 border-white/10 text-white"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </Button>
+                  />
+                  
+                  <FormField
+                    control={registerForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mot de passe</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input 
+                              placeholder="••••••••" 
+                              type={showPassword ? "text" : "password"} 
+                              className="bg-white/5 border-white/10 text-white"
+                              {...field} 
+                            />
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              className="absolute right-0 top-0 h-full text-white/70 hover:text-white"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </Button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={registerForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmer le mot de passe</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input 
+                              placeholder="••••••••" 
+                              type={showConfirmPassword ? "text" : "password"} 
+                              className="bg-white/5 border-white/10 text-white"
+                              {...field} 
+                            />
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              className="absolute right-0 top-0 h-full text-white/70 hover:text-white"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            >
+                              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </Button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="pt-2">
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-startupia-gold hover:bg-startupia-gold/90 text-black" 
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <span className="flex items-center">Inscription en cours...</span>
+                      ) : (
+                        <span className="flex items-center">
+                          <UserPlus size={18} className="mr-2" />
+                          S'inscrire
+                        </span>
+                      )}
+                    </Button>
+                  </div>
                 </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-          
-          <CardFooter className="flex flex-col space-y-2 text-center text-sm text-gray-400 pb-6 px-8">
-            <p>En vous connectant, vous rejoignez la communauté StartupIA.</p>
-            <p>Besoin d'aide ? <a href="#" className="text-startupia-turquoise hover:underline">Contactez-nous</a></p>
-          </CardFooter>
-        </Card>
-        
-        {/* Right side - Benefits */}
-        <div className="hidden md:flex flex-col justify-center">
-          <div className="text-white space-y-6">
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold mb-3 text-startupia-turquoise">Rejoignez la communauté StartupIA</h2>
-              <p className="text-gray-300 text-lg">
-                La première plateforme dédiée à l'IA et aux startups innovantes en France.
-              </p>
-            </div>
-            
-            <ul className="space-y-4">
-              {benefitsList.map((benefit, index) => (
-                <li key={index} className="flex items-start space-x-3 text-lg">
-                  <CheckCircle className="h-6 w-6 text-startupia-turquoise flex-shrink-0 mt-1" />
-                  <span>{benefit}</span>
-                </li>
-              ))}
-            </ul>
-            
-            <div className="pt-6 mt-8 border-t border-gray-800">
-              <div className="py-4 px-6 bg-gradient-to-r from-startupia-turquoise/10 to-transparent rounded-lg backdrop-blur-sm border border-startupia-turquoise/20">
-                <p className="text-white font-medium">
-                  "StartupIA m'a permis de rencontrer mon co-fondateur technique et de développer mon projet d'IA en moins de 3 mois."
-                </p>
-                <p className="text-sm text-gray-400 mt-2">— Sophie Martin, CEO de NeoLearn AI</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Mobile banner for benefits */}
-        <div className="md:hidden w-full mt-4 py-4 px-5 bg-gradient-to-r from-startupia-turquoise/10 to-transparent rounded-lg backdrop-blur-sm border border-startupia-turquoise/20">
-          <h3 className="text-lg font-semibold text-white mb-2">Pourquoi nous rejoindre?</h3>
-          <ul className="space-y-2 text-gray-300 text-sm">
-            {benefitsList.map((benefit, index) => (
-              <li key={index} className="flex items-start space-x-2">
-                <CheckCircle className="h-4 w-4 text-startupia-turquoise flex-shrink-0 mt-0.5" />
-                <span>{benefit}</span>
-              </li>
-            ))}
-          </ul>
+              </Form>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
-      
-      {/* Background elements */}
-      <div className="absolute top-0 left-0 right-0 bottom-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-20 -left-20 w-64 h-64 bg-startupia-turquoise/10 rounded-full filter blur-3xl"></div>
-        <div className="absolute -bottom-32 -right-20 w-80 h-80 bg-startupia-turquoise/10 rounded-full filter blur-3xl"></div>
-      </div>
+
+      <Footer />
     </div>
   );
 };

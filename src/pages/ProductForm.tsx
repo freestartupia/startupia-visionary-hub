@@ -1,295 +1,395 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from '@/components/ui/separator';
-import { productService } from '@/services/productService';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format, addDays } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { CalendarIcon, Plus, X } from 'lucide-react';
 import { ProductLaunch } from '@/types/productLaunch';
-import { mockProductLaunches } from '@/data/mockProductLaunches';
-import { ArrowLeft, Upload, Calendar } from 'lucide-react';
-import SEO from '@/components/SEO';
+import { createProduct } from '@/services/productService';
+import { useToast } from '@/hooks/use-toast';
 
 const ProductForm = () => {
-  const { id } = useParams();
-  const isEditing = id !== 'new' && id !== undefined;
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  
-  const ProductSchema = z.object({
-    name: z.string().min(2, {
-      message: "Le nom du produit doit comporter au moins 2 caractères.",
-    }),
-    description: z.string().min(10, {
-      message: "La description doit comporter au moins 10 caractères.",
-    }),
-    websiteUrl: z.string().url({
-      message: "L'URL du site web doit être une URL valide.",
-    }),
-    category: z.string().min(1, {
-      message: "Veuillez sélectionner une catégorie.",
-    }),
-    status: z.enum(['upcoming', 'launching_today', 'launched']).default('upcoming'),
-    launchDate: z.date(),
+  const [date, setDate] = useState<Date | undefined>(addDays(new Date(), 7));
+  const [categories, setCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState('');
+  const [mediaUrls, setMediaUrls] = useState<string[]>(['']);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    logoUrl: '',
+    tagline: '',
+    description: '',
+    createdBy: '',
+    creatorAvatarUrl: '',
+    websiteUrl: '',
+    demoUrl: '',
+    betaSignupUrl: '',
+    status: 'upcoming' as const
   });
 
-  const form = useForm<z.infer<typeof ProductSchema>>({
-    resolver: zodResolver(ProductSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      websiteUrl: '',
-      category: '',
-      status: 'upcoming',
-      launchDate: new Date(),
-    },
-  });
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-  useEffect(() => {
-    if (isEditing && id) {
-      const productToEdit = mockProductLaunches.find(product => product.id === id);
-      if (productToEdit) {
-        form.reset({
-          name: productToEdit.name,
-          description: productToEdit.description,
-          websiteUrl: productToEdit.websiteUrl,
-          category: productToEdit.category[0] || '',
-          status: productToEdit.status,
-          launchDate: new Date(productToEdit.launchDate),
-        });
-        setImagePreview(productToEdit.imageUrl);
-      } else {
-        toast({
-          title: "Erreur",
-          description: "Produit non trouvé.",
-        });
-        navigate('/products');
-      }
-    }
-  }, [isEditing, id, navigate, form]);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-      setImagePreview(URL.createObjectURL(file));
+  const handleAddCategory = () => {
+    if (newCategory.trim() && !categories.includes(newCategory.trim())) {
+      setCategories(prev => [...prev, newCategory.trim()]);
+      setNewCategory('');
     }
   };
 
-  const onSubmit = async (values: z.infer<typeof ProductSchema>) => {
-    setLoading(true);
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  const handleRemoveCategory = (index: number) => {
+    setCategories(prev => prev.filter((_, i) => i !== index));
+  };
 
-      toast.success(`Produit ${isEditing ? 'modifié' : 'ajouté'} avec succès !`);
-      navigate('/products');
+  const handleAddMediaUrl = () => {
+    setMediaUrls(prev => [...prev, '']);
+  };
+
+  const handleMediaUrlChange = (index: number, value: string) => {
+    setMediaUrls(prev => prev.map((url, i) => (i === index ? value : url)));
+  };
+
+  const handleRemoveMediaUrl = (index: number) => {
+    setMediaUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.tagline || !formData.description || !formData.websiteUrl || !formData.createdBy || !date || categories.length === 0) {
+      toast({
+        title: "Formulaire incomplet",
+        description: "Veuillez remplir tous les champs obligatoires.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      const productData: Omit<ProductLaunch, 'id' | 'upvotes' | 'comments'> = {
+        name: formData.name,
+        logoUrl: formData.logoUrl,
+        tagline: formData.tagline,
+        description: formData.description,
+        launchDate: date.toISOString(),
+        createdBy: formData.createdBy,
+        creatorAvatarUrl: formData.creatorAvatarUrl || undefined,
+        websiteUrl: formData.websiteUrl,
+        demoUrl: formData.demoUrl || undefined,
+        category: categories,
+        status: formData.status,
+        startupId: undefined, // À relier plus tard à un compte utilisateur
+        mediaUrls: mediaUrls.filter(url => url.trim() !== ''),
+        betaSignupUrl: formData.betaSignupUrl || undefined,
+        featuredOrder: undefined,
+        badgeCode: undefined
+      };
+      
+      const result = await createProduct(productData);
+      
+      if (result) {
+        toast({
+          title: "Produit créé avec succès",
+          description: "Votre produit a été enregistré et sera bientôt visible."
+        });
+        navigate(`/product/${result.id}`);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de créer le produit. Veuillez réessayer.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
-      toast.error("Une erreur est survenue lors de l'enregistrement du produit.");
+      console.error('Error creating product:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création du produit.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-hero-pattern text-white pb-8">
-      <SEO 
-        title={isEditing ? "Modifier un produit – StartupIA.fr" : "Ajouter un produit – StartupIA.fr"}
-        description="Ajoutez ou modifiez votre produit ou outil IA sur StartupIA.fr pour le présenter à la communauté des innovateurs de l'intelligence artificielle en France."
-        noindex={true}
-      />
+    <div className="min-h-screen bg-hero-pattern text-white">
+      {/* Background elements */}
+      <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
+      <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
+      <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-gold/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
       
-      <div className="container mx-auto px-4 pt-24 relative z-10">
-        <Button variant="ghost" onClick={() => navigate('/products')} className="mb-4">
-          <ArrowLeft className="mr-2" size={16} />
-          Retour à la liste
-        </Button>
+      <Navbar />
+      
+      <main className="relative container mx-auto pt-24 pb-16 px-4 z-10">
+        <div className="mb-10 text-center">
+          <h1 className="text-4xl font-bold mb-4">Lancer votre produit</h1>
+          <p className="text-white/70 max-w-2xl mx-auto">
+            Partagez votre innovation avec la communauté Startupia et obtenez de la visibilité, des retours et vos premiers utilisateurs.
+          </p>
+        </div>
         
-        <Card className="bg-black/70 backdrop-blur-md border-none">
+        <Card className="glass-card border border-startupia-turquoise/20 bg-black/30 max-w-3xl mx-auto">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold">
-              {isEditing ? 'Modifier le produit' : 'Ajouter un produit'}
-            </CardTitle>
-            <CardDescription>
-              {isEditing ? 'Modifiez les informations de votre produit.' : 'Ajoutez un nouveau produit à la liste.'}
-            </CardDescription>
+            <CardTitle className="text-center">Formulaire de lancement</CardTitle>
           </CardHeader>
-          
           <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nom du produit</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nom de votre produit" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Description de votre produit"
-                          className="resize-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="websiteUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>URL du site web</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://votreproduit.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Catégorie</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner une catégorie" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="IA Générative">IA Générative</SelectItem>
-                          <SelectItem value="Outils No-Code">Outils No-Code</SelectItem>
-                          <SelectItem value="Analyse de données">Analyse de données</SelectItem>
-                          <SelectItem value="Automatisation">Automatisation</SelectItem>
-                          <SelectItem value="Marketing IA">Marketing IA</SelectItem>
-                          <SelectItem value="Autres">Autres</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status du lancement</FormLabel>
-                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="upcoming" id="upcoming" />
-                          </FormControl>
-                          <FormLabel htmlFor="upcoming">À venir</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="launching_today" id="launching_today" />
-                          </FormControl>
-                          <FormLabel htmlFor="launching_today">Lancement aujourd'hui</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="launched" id="launched" />
-                          </FormControl>
-                          <FormLabel htmlFor="launched">Lancé</FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="launchDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date de lancement</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="date"
-                          {...field}
-                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
-                          onChange={(e) => field.onChange(new Date(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="space-y-2">
-                  <Label htmlFor="image">Image du produit</Label>
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Nom du produit *</Label>
+                  <Input 
+                    id="name"
+                    name="name"
+                    placeholder="Le nom de votre produit"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise"
                   />
-                  <Button variant="outline" asChild>
-                    <Label htmlFor="image" className="cursor-pointer">
-                      <Upload className="mr-2 h-4 w-4" />
-                      Télécharger une image
-                    </Label>
-                  </Button>
-                  {imagePreview && (
-                    <div className="relative w-32 h-32 rounded-md overflow-hidden">
-                      <img
-                        src={imagePreview}
-                        alt="Aperçu de l'image"
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                  )}
                 </div>
                 
-                <Separator />
+                <div>
+                  <Label htmlFor="tagline">Slogan *</Label>
+                  <Input 
+                    id="tagline"
+                    name="tagline"
+                    placeholder="Une phrase accrocheuse décrivant votre produit"
+                    value={formData.tagline}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise"
+                  />
+                </div>
                 
-                <Button type="submit" disabled={loading}>
-                  {loading ? 'Enregistrement...' : 'Enregistrer'}
+                <div>
+                  <Label htmlFor="logoUrl">URL du logo</Label>
+                  <Input 
+                    id="logoUrl"
+                    name="logoUrl"
+                    placeholder="https://exemple.com/votre-logo.png"
+                    value={formData.logoUrl}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea 
+                    id="description"
+                    name="description"
+                    placeholder="Décrivez votre produit en détail"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise"
+                    rows={5}
+                  />
+                </div>
+                
+                <div>
+                  <Label>Date de lancement *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal bg-black/30 border-startupia-turquoise/30",
+                          !date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, "PPP") : <span>Choisir une date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        initialFocus
+                        disabled={(date) => date < new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                <div>
+                  <Label htmlFor="createdBy">Créé par *</Label>
+                  <Input 
+                    id="createdBy"
+                    name="createdBy"
+                    placeholder="Votre nom ou celui de l'équipe"
+                    value={formData.createdBy}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="creatorAvatarUrl">URL de votre avatar</Label>
+                  <Input 
+                    id="creatorAvatarUrl"
+                    name="creatorAvatarUrl"
+                    placeholder="https://exemple.com/votre-avatar.png"
+                    value={formData.creatorAvatarUrl}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="websiteUrl">URL du site web *</Label>
+                  <Input 
+                    id="websiteUrl"
+                    name="websiteUrl"
+                    placeholder="https://votre-produit.com"
+                    value={formData.websiteUrl}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="demoUrl">URL de la démo (optionnel)</Label>
+                  <Input 
+                    id="demoUrl"
+                    name="demoUrl"
+                    placeholder="https://demo.votre-produit.com"
+                    value={formData.demoUrl}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="betaSignupUrl">URL d'inscription à la bêta (optionnel)</Label>
+                  <Input 
+                    id="betaSignupUrl"
+                    name="betaSignupUrl"
+                    placeholder="https://votre-produit.com/beta"
+                    value={formData.betaSignupUrl}
+                    onChange={handleInputChange}
+                    className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="status">Statut *</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}
+                  >
+                    <SelectTrigger className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise">
+                      <SelectValue placeholder="Choisir un statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="upcoming">À venir</SelectItem>
+                      <SelectItem value="launching_today">Lancement aujourd'hui</SelectItem>
+                      <SelectItem value="launched">Déjà lancé</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label className="mb-2 block">Catégories *</Label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {categories.map((category, index) => (
+                      <div 
+                        key={index} 
+                        className="bg-startupia-turquoise/20 text-startupia-turquoise px-3 py-1 rounded-full flex items-center gap-1"
+                      >
+                        <span>{category}</span>
+                        <X 
+                          size={14} 
+                          className="cursor-pointer" 
+                          onClick={() => handleRemoveCategory(index)} 
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Ajouter une catégorie"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise"
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCategory())}
+                    />
+                    <Button 
+                      type="button" 
+                      onClick={handleAddCategory}
+                      variant="outline" 
+                      className="border-startupia-turquoise text-startupia-turquoise"
+                    >
+                      <Plus size={16} />
+                    </Button>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label className="mb-2 block">Images du produit</Label>
+                  {mediaUrls.map((url, index) => (
+                    <div key={index} className="flex gap-2 mb-2">
+                      <Input 
+                        placeholder="URL de l'image"
+                        value={url}
+                        onChange={(e) => handleMediaUrlChange(index, e.target.value)}
+                        className="bg-black/30 border-startupia-turquoise/30 focus:border-startupia-turquoise"
+                      />
+                      {mediaUrls.length > 1 && (
+                        <Button 
+                          type="button" 
+                          onClick={() => handleRemoveMediaUrl(index)}
+                          variant="outline" 
+                          className="border-red-500 text-red-500"
+                        >
+                          <X size={16} />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button 
+                    type="button" 
+                    onClick={handleAddMediaUrl}
+                    variant="outline" 
+                    className="border-startupia-turquoise text-startupia-turquoise"
+                  >
+                    <Plus size={16} className="mr-2" />
+                    Ajouter une image
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="pt-4">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold"
+                  disabled={loading}
+                >
+                  {loading ? 'Création en cours...' : 'Lancer mon produit'}
                 </Button>
-              </form>
-            </Form>
+              </div>
+            </form>
           </CardContent>
         </Card>
-      </div>
-      
+      </main>
+
       <Footer />
     </div>
   );

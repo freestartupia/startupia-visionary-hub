@@ -21,9 +21,6 @@ import NotFound from "./pages/NotFound";
 import Tools from "./pages/Tools";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/navbar/Navbar";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import CofounderProfileEdit from "./pages/CofounderProfileEdit";
 
 const queryClient = new QueryClient();
 
@@ -44,7 +41,6 @@ const App = () => (
                 <Route path="/radar" element={<RadarIA />} />
                 <Route path="/ecosystem" element={<AIEcosystem />} />
                 <Route path="/cofounder" element={<CoFounder />} />
-                <Route path="/cofounder/edit/:id" element={<ProtectedRoute><CofounderProfileEdit /></ProtectedRoute>} />
                 <Route path="/community" element={<Community />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/rankings" element={<Rankings />} />
@@ -52,8 +48,6 @@ const App = () => (
                 <Route path="/products" element={<Navigate to="/ecosystem" replace />} />
                 <Route path="/product/:id" element={<ProductDetails />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>

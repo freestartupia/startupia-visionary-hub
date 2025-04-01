@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -15,7 +14,7 @@ interface NavLinksProps {
 
 const navLinks: NavLink[] = [
   { 
-    path: '/radar', 
+    path: '/ecosystem', 
     label: "Hub IA Français",
     matches: ['/ecosystem', '/startups', '/radar', '/products']
   },

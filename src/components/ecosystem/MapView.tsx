@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { mockStartups } from "@/data/mockStartups";
@@ -6,7 +7,6 @@ import { Info } from 'lucide-react';
 
 interface MapViewProps {
   searchQuery: string;
-  showFilters: boolean;
 }
 
 // Fake geo data for our demo
@@ -21,7 +21,7 @@ const STARTUP_LOCATIONS: Record<string, { lat: number, lng: number }> = {
   "labelai": { lat: 50.6292, lng: 3.0573 },    // Lille
 };
 
-const MapView = ({ searchQuery, showFilters }: MapViewProps) => {
+const MapView = ({ searchQuery }: MapViewProps) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const markersRef = useRef<any[]>([]);
   const [selectedStartup, setSelectedStartup] = useState<Startup | null>(null);

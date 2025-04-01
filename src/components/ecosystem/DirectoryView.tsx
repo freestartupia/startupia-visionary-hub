@@ -5,9 +5,12 @@ import { Startup } from "@/types/startup";
 import { usePagination } from "@/hooks/usePagination";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import ErrorMessage from "@/components/ui/error-message";
-import { CalendarDays, TrendingUp, Filter } from "lucide-react";
+import { CalendarDays, ThumbsUp, TrendingUp, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DirectoryViewProps {
   searchQuery: string;
@@ -21,6 +24,8 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeSortTab, setActiveSortTab] = useState<string>("tous");
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Get unique sectors for category tabs
   const sectors = Array.from(new Set(mockStartups.map(startup => startup.sector)));
@@ -106,6 +111,23 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     }, 500);
   };
 
+  const handleVote = (e: React.MouseEvent, startupName: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast.error("Vous devez être connecté pour voter");
+      navigate('/auth');
+      return;
+    }
+    
+    toast.success(`Vous avez upvoté ${startupName}`);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setActiveCategory(value);
+  };
+
   // Category options
   const categoryOptions = [
     { value: "all", label: "Toutes les catégories" },
@@ -142,7 +164,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <p className="text-white text-sm mb-2 font-medium">Catégorie</p>
-              <Select defaultValue="all">
+              <Select defaultValue="all" onValueChange={handleCategoryChange}>
                 <SelectTrigger className="bg-black/30 border-gray-700 text-white w-full">
                   <SelectValue placeholder="Toutes les catégories" />
                 </SelectTrigger>
@@ -220,7 +242,11 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
         ) : paginatedStartups.length > 0 ? (
           <div className="space-y-6">
             {paginatedStartups.map((startup) => (
-              <div key={startup.id} className="bg-black/20 border border-gray-800 rounded-lg p-4 flex items-start md:items-center justify-between hover:border-gray-700 transition-all">
+              <div key={startup.id} 
+                   className="bg-black/20 border border-gray-800 rounded-lg p-4 flex items-start md:items-center justify-between hover:border-gray-700 transition-all"
+                   onClick={() => navigate(`/startup/${startup.id}`)}
+                   style={{ cursor: 'pointer' }}
+              >
                 <div className="flex items-center space-x-4">
                   <div className={`bg-black/40 text-yellow-400 w-12 h-12 rounded-md flex items-center justify-center font-bold text-xl ${startup.logoUrl ? 'p-0 overflow-hidden' : ''}`}>
                     {startup.logoUrl ? (
@@ -242,11 +268,24 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <div className="flex items-center space-x-1 text-gray-400 mb-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center space-x-1 text-gray-400 mb-2 hover:bg-gray-800/50"
+                    onClick={(e) => handleVote(e, startup.name)}
+                  >
                     <span>{Math.floor(Math.random() * 100) + 30}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"></path><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"></path></svg>
-                  </div>
-                  <Button variant="default" size="sm" className="bg-black/50 hover:bg-black/80 border border-gray-700 text-white">
+                    <ThumbsUp size={16} />
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="bg-black/50 hover:bg-black/80 border border-gray-700 text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/startup/${startup.id}`);
+                    }}
+                  >
                     Découvrir
                   </Button>
                 </div>

@@ -72,6 +72,7 @@ const RadarIA = () => {
             <Button 
               variant="outline" 
               className="border-gray-700 bg-black/20 text-white hover:bg-black/30 hidden md:flex"
+              onClick={() => navigate('/startups')}
             >
               Vue détaillée
             </Button>

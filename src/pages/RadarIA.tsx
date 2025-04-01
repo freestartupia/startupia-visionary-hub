@@ -1,26 +1,23 @@
 
 import React, { useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from '@/hooks/use-toast';
-import Footer from '@/components/Footer';
+import { Filter, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Filter } from 'lucide-react';
+import Footer from '@/components/Footer';
 import SearchBar from '@/components/ecosystem/SearchBar';
-import RadarView from '@/components/ecosystem/RadarView';
+import DirectoryView from '@/components/ecosystem/DirectoryView';
 import SEO from '@/components/SEO';
+import { useNavigate } from 'react-router-dom';
 
 const RadarIA = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [sortOrder, setSortOrder] = useState('newest');
-  const { toast } = useToast();
+  const navigate = useNavigate();
   
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
       <SEO 
-        title="Radar IA – Tendances, Mouvements et Prévisions de l'Intelligence Artificielle"
-        description="Suivez les tendances émergentes et l'évolution du marché de l'IA en France : mouvements clés, levées de fonds, acquisitions et prédictions sur l'avenir de l'intelligence artificielle."
+        title="Hub IA Français – Explorez et découvrez les meilleures startups IA françaises"
+        description="Explorez les meilleures startups IA françaises, votez pour vos préférées et suivez les derniers lancements du marché de l'intelligence artificielle."
       />
       
       {/* Background elements */}
@@ -30,36 +27,56 @@ const RadarIA = () => {
       
       <main className="container mx-auto pt-24 pb-16 px-4">
         <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Radar <span className="gradient-text">IA</span> France
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-yellow-300">
+            Hub IA Français
           </h1>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            Suivez les tendances, mouvements et prédictions du marché de l'intelligence artificielle
+          <p className="text-xl text-white/80 max-w-3xl mx-auto">
+            Explorez les meilleures startups IA françaises, votez pour vos préférées et suivez les derniers lancements
           </p>
         </div>
 
-        <div className="flex justify-between items-center mb-6">
-          <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-          <Button onClick={() => setShowFilters(!showFilters)} variant="outline" className="space-x-2 border-startupia-turquoise text-startupia-turquoise hover:bg-startupia-turquoise/10">
-            <Filter size={16} />
-            <span>Filtres</span>
-          </Button>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+          <div className="relative w-full md:w-auto md:flex-1">
+            <input
+              type="text"
+              placeholder="Rechercher une startup ou un produit IA..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full md:max-w-xl bg-black/20 border border-gray-700 text-white rounded-md px-4 py-2.5 focus:outline-none focus:border-yellow-400/50"
+            />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-yellow-500">
+              🔥 Tendance
+            </div>
+          </div>
+          
+          <div className="flex gap-2 w-full md:w-auto">
+            <Button 
+              onClick={() => setShowFilters(!showFilters)} 
+              variant="outline" 
+              className="flex items-center gap-2 border-white/20 text-white hover:bg-black/30 flex-grow md:flex-grow-0"
+            >
+              <Filter size={18} />
+              <span>Filtres</span>
+            </Button>
+            
+            <Button 
+              onClick={() => navigate('/submit-startup')}
+              className="bg-yellow-400 hover:bg-yellow-500 text-black flex items-center gap-2 flex-grow md:flex-grow-0"
+            >
+              <Plus size={18} />
+              <span>Ajouter un projet</span>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="border-white/20 text-white hover:bg-black/30 hidden md:block"
+            >
+              Vue détaillée
+            </Button>
+          </div>
         </div>
 
-        <div className="mb-8">
-          <Select value={sortOrder} onValueChange={setSortOrder}>
-            <SelectTrigger className="w-[180px] bg-black/20 text-white/80">
-              <SelectValue placeholder="Trier par..." />
-            </SelectTrigger>
-            <SelectContent className="bg-black border-white/20 text-white">
-              <SelectItem value="newest">Plus récentes</SelectItem>
-              <SelectItem value="impact">Impact IA</SelectItem>
-              <SelectItem value="alphabetical">Alphabétique</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <RadarView searchQuery={searchQuery} showFilters={showFilters} />
+        <DirectoryView searchQuery={searchQuery} showFilters={showFilters} />
       </main>
       
       <Footer />

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CoFounderSearch from '@/components/CoFounderSearch';
 import CoFounderProfile from '@/components/CoFounderProfile';
 import ProjectsList from '@/components/ProjectsList';
@@ -28,12 +28,13 @@ const CoFounder = () => {
 
   const handleCreateProfileClick = () => {
     if (!user) {
-      toastUI({
-        title: "Connexion requise",
+      toast("Connexion requise", { 
         description: "Vous devez être connecté pour créer un profil",
-        variant: "destructive",
+        action: {
+          label: "Se connecter",
+          onClick: () => navigate('/auth')
+        }
       });
-      navigate('/auth');
       return;
     }
     

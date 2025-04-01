@@ -16,9 +16,13 @@ import { LogOut, User, Settings, Plus } from 'lucide-react';
 import MatchNotifications from './MatchNotifications';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-const UserMenu = () => {
+interface UserMenuProps {
+  isMobile?: boolean;
+}
+
+const UserMenu = ({ isMobile }: UserMenuProps) => {
   const { user, signOut } = useAuth();
-  const isMobile = useIsMobile();
+  const isScreenMobile = useIsMobile();
   
   // Si l'utilisateur n'est pas connecté, ne rien afficher
   if (!user) return null;
@@ -70,7 +74,7 @@ const UserMenu = () => {
               <span>Paramètres</span>
             </Link>
           </DropdownMenuItem>
-          {!isMobile && (
+          {!isScreenMobile && !isMobile && (
             <DropdownMenuItem asChild>
               <Link to="/cofounders" className="cursor-pointer">
                 <Plus className="mr-2 h-4 w-4" />

@@ -2,7 +2,7 @@
 import React from 'react';
 import { NavLinks } from './NavLinks';
 import { AuthButtons } from './AuthButtons';
-import { UserMenu } from './UserMenu';
+import UserMenu from './UserMenu';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface MobileMenuProps {

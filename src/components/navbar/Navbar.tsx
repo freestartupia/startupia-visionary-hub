@@ -4,7 +4,7 @@ import { Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { NavLinks } from './NavLinks';
 import { AuthButtons } from './AuthButtons';
-import { UserMenu } from './UserMenu';
+import UserMenu from './UserMenu';
 import { MobileMenu } from './MobileMenu';
 import { useAuth } from '@/contexts/AuthContext';
 

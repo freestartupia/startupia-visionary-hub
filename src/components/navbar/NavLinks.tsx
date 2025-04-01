@@ -27,6 +27,10 @@ const navLinks: NavLink[] = [
     path: '/community', 
     label: "Communauté" 
   },
+  {
+    path: '/blog',
+    label: "Blog & Actualités"
+  },
 ];
 
 export const NavLinks: React.FC<NavLinksProps> = ({ isMobile = false, onMobileItemClick }) => {

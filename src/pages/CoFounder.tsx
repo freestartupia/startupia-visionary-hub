@@ -89,7 +89,8 @@ const CoFounder = () => {
             <div className="flex justify-center mb-10">
               <Button 
                 onClick={handleCreateProfileClick}
-                className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black button-glow py-6 px-8 text-lg"
+                type="button"
+                className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black button-glow py-6 px-8 text-lg cursor-pointer"
               >
                 Créer mon profil de co-fondateur <ArrowRight className="ml-2" />
               </Button>

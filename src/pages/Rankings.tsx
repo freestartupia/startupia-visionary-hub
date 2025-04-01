@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,10 +17,17 @@ import RankingsList from '@/components/rankings/RankingsList';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import SEO from '@/components/SEO';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from '@/components/ui/input';
+import { Search, Filter } from 'lucide-react';
 
 const Rankings = () => {
   const { toast } = useToast();
-  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [rankingType, setRankingType] = useState('startups');
+  const [timeframe, setTimeframe] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
+
   // Top voted startups (would be from DB in production)
   const topStartups = [...mockStartups]
     .sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
@@ -91,10 +98,10 @@ const Rankings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-hero-pattern text-white pb-16">
       <SEO 
-        title="Top Startups et Outils IA – Les Tendances IA en Temps Réel"
-        description="Découvrez les startups IA les plus votées, les outils IA émergents et les tendances qui façonnent l'avenir de l'intelligence artificielle en France. Classement mis à jour en continu."
+        title="Classements IA – Top Startups, Outils et Innovations en Intelligence Artificielle"
+        description="Découvrez les classements des meilleures startups IA, outils d'intelligence artificielle et innovations technologiques en France, votés par la communauté et mis à jour en temps réel."
       />
       
       {/* Background elements */}

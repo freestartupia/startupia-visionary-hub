@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 
 const NotFound = () => {
   const location = useLocation();
@@ -16,6 +17,12 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
+      <SEO 
+        title="Page non trouvée – 404 | StartupIA.fr"
+        description="La page que vous recherchez n'existe pas ou a été déplacée. Revenez à l'accueil pour explorer le hub StartupIA.fr."
+        noindex={true}
+      />
+
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>

@@ -1,7 +1,37 @@
+
+# StartupIA.fr Robots.txt
+# Updated: 2024
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://startupia.fr/sitemap.xml
+
+# Disallow admin and sensitive paths
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /api/
+Disallow: /private/
+Disallow: /internal/
+
+# Allow major crawlers specifically
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: Yandex
 Allow: /
 
 User-agent: Twitterbot
@@ -10,5 +40,9 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
-Allow: /
+# Prevent crawling of duplicate content on any future pagination paths
+Disallow: /*?page=*
+Disallow: /*&page=*
+
+# Slow down crawling a bit to reduce server load
+Crawl-delay: 1

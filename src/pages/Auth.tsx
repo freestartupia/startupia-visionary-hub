@@ -18,6 +18,8 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -46,7 +48,7 @@ const Auth = () => {
         const from = location.state?.from || "/";
         navigate(from, { replace: true });
       } else {
-        const response = await signUp(email, password);
+        const response = await signUp(email, password, firstName, lastName);
         if (response.error) {
           throw response.error;
         }
@@ -125,6 +127,34 @@ const Auth = () => {
           </TabsContent>
           <TabsContent value="register" className="mt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName" className="block text-sm font-medium text-white">
+                    Prénom
+                  </Label>
+                  <Input
+                    type="text"
+                    id="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    className="mt-1 w-full rounded-md shadow-sm bg-black/50 border-gray-600 text-white focus:border-startupia-turquoise focus:ring-startupia-turquoise"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName" className="block text-sm font-medium text-white">
+                    Nom
+                  </Label>
+                  <Input
+                    type="text"
+                    id="lastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    className="mt-1 w-full rounded-md shadow-sm bg-black/50 border-gray-600 text-white focus:border-startupia-turquoise focus:ring-startupia-turquoise"
+                  />
+                </div>
+              </div>
               <div>
                 <Label htmlFor="email" className="block text-sm font-medium text-white">
                   Email

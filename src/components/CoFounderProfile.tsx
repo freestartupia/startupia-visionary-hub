@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -24,7 +23,10 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { AITool, Availability, Region, Sector } from '@/types/cofounders';
+import { AITool, Availability, Region, Sector, CofounderProfile } from '@/types/cofounders';
+import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 // Form schema
 const formSchema = z.object({
@@ -47,11 +49,15 @@ const formSchema = z.object({
 });
 
 const CoFounderProfile = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       profileType: 'collaborator',
-      name: '',
+      name: user?.displayName || '',
       role: '',
       seekingRoles: [],
       pitch: '',
@@ -72,10 +78,46 @@ const CoFounderProfile = () => {
   const profileType = form.watch('profileType');
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log(values);
-    // In a real app, this would send the form data to a backend API
-    toast.success("Votre profil a été créé avec succès !");
-    form.reset();
+    setIsSubmitting(true);
+    
+    // Create the cofounder profile object
+    const newProfile: CofounderProfile = {
+      id: uuidv4(),
+      name: values.name,
+      profileType: values.profileType,
+      role: values.role as any,
+      seekingRoles: values.seekingRoles as any[] || [],
+      pitch: values.pitch,
+      sector: values.sector as any,
+      objective: values.objective as any,
+      aiTools: values.aiTools as any[],
+      availability: values.availability as any,
+      vision: values.vision,
+      region: values.region as any,
+      linkedinUrl: values.linkedinUrl || undefined,
+      portfolioUrl: values.portfolioUrl || undefined,
+      websiteUrl: values.websiteUrl || undefined,
+      photoUrl: user?.photoURL || undefined,
+      dateCreated: new Date().toISOString(),
+      hasAIBadge: values.aiTools.length > 3, // Simple logic for AI badge
+      projectName: values.profileType === 'project-owner' ? values.projectName : undefined,
+      projectStage: values.profileType === 'project-owner' ? values.projectStage : undefined,
+      matches: []
+    };
+
+    // In a real app, this would send the data to a backend API or database
+    console.log('Created new profile:', newProfile);
+    
+    // Simulate API call with timeout
+    setTimeout(() => {
+      setIsSubmitting(false);
+      toast.success("Votre profil a été créé avec succès !", {
+        description: "Vous pouvez maintenant rechercher ou être trouvé par d'autres cofondateurs"
+      });
+      
+      // After successful profile creation, navigate to the search tab
+      navigate('/cofounder?tab=search');
+    }, 1000);
   };
 
   const availabilityOptions: Availability[] = [
@@ -581,8 +623,9 @@ const CoFounderProfile = () => {
             <Button 
               type="submit" 
               className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black button-glow"
+              disabled={isSubmitting}
             >
-              Créer mon profil
+              {isSubmitting ? 'Création en cours...' : 'Créer mon profil'}
             </Button>
           </div>
         </form>

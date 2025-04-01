@@ -13,12 +13,6 @@ import { Search, Filter } from 'lucide-react';
 const AIEcosystem = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [activeTab, setActiveTab] = useState('directory');
-
-  // Handle tab change
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
 
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
@@ -64,7 +58,6 @@ const AIEcosystem = () => {
         {/* Tabs */}
         <Tabs 
           defaultValue="directory"
-          onValueChange={handleTabChange}
           className="max-w-7xl mx-auto"
         >
           <TabsList className="grid w-full grid-cols-3 mb-8 bg-black/30 border border-startupia-turquoise/20">

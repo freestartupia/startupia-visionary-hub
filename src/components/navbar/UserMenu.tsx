@@ -1,86 +1,90 @@
 
 import React from 'react';
-import { User, Bell, LogOut, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAuth } from '@/contexts/AuthContext';
+} from '@/components/ui/dropdown-menu';
+import { LogOut, User, Settings, Plus } from 'lucide-react';
+import MatchNotifications from './MatchNotifications';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-interface UserMenuProps {
-  isMobile?: boolean;
-}
-
-export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
+const UserMenu = () => {
   const { user, signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
+  const isMobile = useIsMobile();
+  
+  // Si l'utilisateur n'est pas connecté, ne rien afficher
+  if (!user) return null;
+  
+  // Récupérer les initiales de l'utilisateur pour l'avatar
+  const getInitials = () => {
+    if (!user.user_metadata) return 'U';
+    const firstName = user.user_metadata.first_name || '';
+    const lastName = user.user_metadata.last_name || '';
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
   };
   
-  if (isMobile) {
-    return (
-      <div className="border-t border-white/10 pt-4 mt-2">
-        <div className="flex justify-between items-center px-4 py-2">
-          <span className="text-white/80 truncate">{user?.email}</span>
-          <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10">
-            <Bell size={18} />
-          </Button>
-        </div>
-        <div className="mt-2 space-y-2">
-          <Button variant="ghost" className="w-full justify-start text-white/80 hover:text-white hover:bg-white/5">
-            <User size={16} className="mr-2" />
-            Mon profil
-          </Button>
-          <Button variant="ghost" className="w-full justify-start text-white/80 hover:text-white hover:bg-white/5">
-            <Settings size={16} className="mr-2" />
-            Paramètres
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
-            onClick={handleSignOut}
-          >
-            <LogOut size={16} className="mr-2" />
-            Se déconnecter
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex items-center gap-4 ml-4">
-      <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-        <Bell size={20} />
-      </Button>
-      
+    <div className="flex items-center gap-2">
+      {/* Icône de notifications */}
+      <MatchNotifications />
+
+      {/* Menu utilisateur */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full">
-            <User size={20} />
+          <Button variant="ghost" className="p-0">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={user.user_metadata?.avatar_url} />
+              <AvatarFallback className="bg-startupia-turquoise text-black">
+                {getInitials()}
+              </AvatarFallback>
+            </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 bg-black/90 backdrop-blur-lg border border-white/10 text-white">
+        <DropdownMenuContent align="end" className="w-56 bg-black border border-gray-800">
           <DropdownMenuLabel className="font-normal">
-            <div className="font-medium truncate">{user?.email}</div>
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium">
+                {user.user_metadata?.first_name} {user.user_metadata?.last_name}
+              </p>
+              <p className="text-xs text-gray-400 truncate">{user.email}</p>
+            </div>
           </DropdownMenuLabel>
-          <DropdownMenuSeparator className="bg-white/10" />
-          <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer">
-            <User className="mr-2 h-4 w-4" />
-            <span>Profil</span>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/profile" className="cursor-pointer">
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer">
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Paramètres</span>
+          <DropdownMenuItem asChild>
+            <Link to="/settings" className="cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Paramètres</span>
+            </Link>
           </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-white/10" />
-          <DropdownMenuItem onClick={handleSignOut} className="text-rose-500 hover:bg-rose-500/10 cursor-pointer">
+          {!isMobile && (
+            <DropdownMenuItem asChild>
+              <Link to="/cofounders" className="cursor-pointer">
+                <Plus className="mr-2 h-4 w-4" />
+                <span>Créer un profil</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem 
+            className="cursor-pointer text-red-500 focus:text-red-500"
+            onClick={() => {
+              signOut();
+            }}
+          >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Se déconnecter</span>
           </DropdownMenuItem>
@@ -89,3 +93,5 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
     </div>
   );
 };
+
+export default UserMenu;

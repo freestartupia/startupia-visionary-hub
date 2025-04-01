@@ -1,4 +1,3 @@
-
 import { 
   ForumPost, 
   ServiceListing, 
@@ -204,7 +203,7 @@ export const mockResources: ResourceListing[] = [
   }
 ];
 
-// Mock collaborative projects
+// Mock collaborative projects - updated to use snake_case consistent with Supabase structure
 export const mockProjects: CollaborativeProject[] = [
   {
     id: uuidv4(),
@@ -212,10 +211,10 @@ export const mockProjects: CollaborativeProject[] = [
     description: "Je développe un assistant IA pour aider les médecins dans leur diagnostic. Recherche développeur Python et expert médical.",
     status: 'Recherche de collaborateurs',
     skills: ['Python', 'ML', 'Médecine', 'LLM'],
-    initiatorId: uuidv4(),
-    initiatorName: "Dr. Philippe Martin",
-    initiatorAvatar: "https://randomuser.me/api/portraits/men/29.jpg",
-    createdAt: '2023-10-08T14:00:00Z',
+    initiator_id: uuidv4(),
+    initiator_name: "Dr. Philippe Martin",
+    initiator_avatar: "https://randomuser.me/api/portraits/men/29.jpg",
+    created_at: '2023-10-08T14:00:00Z',
     likes: 32,
     applications: 5,
     category: 'Santé'
@@ -226,10 +225,10 @@ export const mockProjects: CollaborativeProject[] = [
     description: "Projet open-source pour permettre aux non-développeurs de créer leurs propres agents IA. Recherche contributeurs.",
     status: 'En cours',
     skills: ['React', 'Node.js', 'UX/UI', 'LangChain'],
-    initiatorId: uuidv4(),
-    initiatorName: "Léa Fischer",
-    initiatorAvatar: "https://randomuser.me/api/portraits/women/12.jpg",
-    createdAt: '2023-09-30T10:15:00Z',
+    initiator_id: uuidv4(),
+    initiator_name: "Léa Fischer",
+    initiator_avatar: "https://randomuser.me/api/portraits/women/12.jpg",
+    created_at: '2023-09-30T10:15:00Z',
     likes: 47,
     applications: 12,
     category: 'No-code'
@@ -240,10 +239,10 @@ export const mockProjects: CollaborativeProject[] = [
     description: "Idée de startup : IA qui génère des business plans détaillés adaptés au secteur et au marché cible.",
     status: 'Idée',
     skills: ['Business', 'ML', 'GPT', 'Finance'],
-    initiatorId: uuidv4(),
-    initiatorName: "Hugo Lemaitre",
-    initiatorAvatar: "https://randomuser.me/api/portraits/men/36.jpg",
-    createdAt: '2023-10-12T16:45:00Z',
+    initiator_id: uuidv4(),
+    initiator_name: "Hugo Lemaitre",
+    initiator_avatar: "https://randomuser.me/api/portraits/men/36.jpg",
+    created_at: '2023-10-12T16:45:00Z',
     likes: 21,
     applications: 3,
     category: 'Business'

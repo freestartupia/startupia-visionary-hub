@@ -112,10 +112,11 @@ export interface CollaborativeProject {
   description: string;
   status: ProjectStatus;
   skills: string[];
-  initiatorId: string;
-  initiatorName: string;
-  initiatorAvatar?: string;
-  createdAt: string;
+  // Updated field names to match the snake_case format from Supabase/mock data
+  initiator_id?: string;
+  initiator_name: string;
+  initiator_avatar?: string;
+  created_at: string;
   likes: number;
   applications: number;
   category: string;

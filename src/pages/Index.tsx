@@ -11,11 +11,10 @@ import Footer from '@/components/Footer';
 import Testimonials from '@/components/Testimonials';
 import TrustSignals from '@/components/TrustSignals';
 import CommunitySummary from '@/components/CommunitySummary';
+import SEO from '@/components/SEO';
 
 const Index = () => {
   useEffect(() => {
-    document.title = "Startupia.fr – L'intelligence derrière les startups IA françaises";
-    
     // Add observers for each section to animate on scroll
     const observer = new IntersectionObserver(
       (entries) => {
@@ -47,6 +46,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-hero-pattern text-white relative w-full overflow-x-hidden">
+      <SEO 
+        title="StartupIA.fr – Le Hub des Startups & Outils IA en France"
+        description="Découvrez les meilleures startups IA françaises, les outils d'intelligence artificielle du moment, et connectez-vous à une communauté active d'innovateurs. Rejoignez le hub de l'IA en France !"
+      />
+
       {/* Background gradient elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-64 sm:w-96 h-64 sm:h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>

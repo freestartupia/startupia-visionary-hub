@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import DirectoryView from '@/components/ecosystem/DirectoryView';
+import SEO from '@/components/SEO';
 
 const AIEcosystem = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,6 +101,11 @@ const AIEcosystem = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <SEO 
+        title="StartupIA.fr – Le Hub des Startups & Outils IA en France"
+        description="Découvrez les meilleures startups IA françaises, les outils d'intelligence artificielle du moment, et connectez-vous à une communauté active d'innovateurs. Rejoignez le hub de l'IA en France !"
+      />
+      
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>

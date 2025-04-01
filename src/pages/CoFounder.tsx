@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
+import SEO from '@/components/SEO';
 
 // Mock data for development purposes
 import { mockCofounderProfiles } from '@/data/mockCofounderProfiles';
@@ -60,6 +61,11 @@ const CoFounder = () => {
 
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
+      <SEO 
+        title="Trouvez un Cofondateur pour votre Startup IA – StartupIA.fr"
+        description="Vous cherchez un cofondateur technique, marketing ou produit pour lancer une startup IA ? Rejoignez StartupIA.fr et trouvez le bon profil pour concrétiser votre idée d'intelligence artificielle."
+      />
+
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>

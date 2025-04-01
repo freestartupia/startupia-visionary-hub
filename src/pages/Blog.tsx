@@ -14,6 +14,7 @@ import {
   getFeaturedPosts 
 } from '@/data/mockBlogPosts';
 import { BlogCategory, BlogPost } from '@/types/blog';
+import SEO from '@/components/SEO';
 
 const Blog = () => {
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(mockBlogPosts);
@@ -55,6 +56,11 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <SEO 
+        title="Blog IA & Actualités Startups – Tendance, Outils et Innovations IA"
+        description="Explorez les dernières tendances IA, les outils d'intelligence artificielle à connaître, et l'actualité des startups IA en France. Analyses, interviews et découvertes chaque semaine."
+      />
+      
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       

@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
 import StartupIndex from "./pages/StartupIndex";
 import StartupDetails from "./pages/StartupDetails";
@@ -26,31 +27,33 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Navbar />
-          <div className="min-h-screen pt-16 w-full">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/startups" element={<StartupIndex />} />
-              <Route path="/startup/:id" element={<StartupDetails />} />
-              <Route path="/radar" element={<RadarIA />} />
-              <Route path="/ecosystem" element={<AIEcosystem />} />
-              <Route path="/cofounder" element={<CoFounder />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/rankings" element={<Rankings />} />
-              <Route path="/tools" element={<Tools />} />
-              <Route path="/products" element={<Navigate to="/ecosystem" replace />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
-        </TooltipProvider>
-      </AuthProvider>
+      <HelmetProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Navbar />
+            <div className="min-h-screen pt-16 w-full">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/startups" element={<StartupIndex />} />
+                <Route path="/startup/:id" element={<StartupDetails />} />
+                <Route path="/radar" element={<RadarIA />} />
+                <Route path="/ecosystem" element={<AIEcosystem />} />
+                <Route path="/cofounder" element={<CoFounder />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/rankings" element={<Rankings />} />
+                <Route path="/tools" element={<Tools />} />
+                <Route path="/products" element={<Navigate to="/ecosystem" replace />} />
+                <Route path="/product/:id" element={<ProductDetails />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+          </TooltipProvider>
+        </AuthProvider>
+      </HelmetProvider>
     </BrowserRouter>
   </QueryClientProvider>
 );

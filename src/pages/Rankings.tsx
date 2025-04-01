@@ -13,11 +13,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import ProductList from '@/components/productLaunch/ProductList';
-import { ChartContainer } from '@/components/ui/chart';
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import RankingsList from '@/components/rankings/RankingsList';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import SEO from '@/components/SEO';
 
 const Rankings = () => {
   const { toast } = useToast();
@@ -77,18 +76,6 @@ const Rankings = () => {
     }
   ];
 
-  // Simulated startup data trends for the chart
-  const startupTrendsData = [
-    { date: '2023-10', count: 15 },
-    { date: '2023-11', count: 18 },
-    { date: '2023-12', count: 22 },
-    { date: '2024-01', count: 28 },
-    { date: '2024-02', count: 31 },
-    { date: '2024-03', count: 35 },
-    { date: '2024-04', count: 42 },
-    { date: '2024-05', count: 48 }
-  ];
-
   // Top contributors (hardcoded for now)
   const topContributors = [
     { id: 1, name: 'Sophie Martin', avatar: 'https://i.pravatar.cc/150?img=1', points: 245, badge: '🏆 Expert' },
@@ -105,6 +92,11 @@ const Rankings = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <SEO 
+        title="Top Startups et Outils IA – Les Tendances IA en Temps Réel"
+        description="Découvrez les startups IA les plus votées, les outils IA émergents et les tendances qui façonnent l'avenir de l'intelligence artificielle en France. Classement mis à jour en continu."
+      />
+      
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       

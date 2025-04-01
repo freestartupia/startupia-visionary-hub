@@ -11,6 +11,7 @@ import CommunityFeed from '@/components/community/CommunityFeed';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import SEO from '@/components/SEO';
 
 const Community = () => {
   const [activeTab, setActiveTab] = useState('forum');
@@ -24,6 +25,11 @@ const Community = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <SEO 
+        title="Communauté IA Française – Rejoignez les Bâtisseurs de l'IA"
+        description="Rejoignez la communauté StartupIA.fr : discutez, collaborez et échangez avec des passionnés d'intelligence artificielle, fondateurs de startups IA et créateurs d'outils IA."
+      />
+      
       {/* Background elements - simplified */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       

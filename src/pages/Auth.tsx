@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,11 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { signIn, signUp } from '@/services/authService';
-import { Eye, EyeOff, User, Mail, Lock, CheckCircle, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Lock, CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import SEO from '@/components/SEO';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import LoadingSpinner from '@/components/ui/loading-spinner';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -24,6 +24,7 @@ const Auth = () => {
   const [lastName, setLastName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(initialTab);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const navigate = useNavigate();
@@ -33,15 +34,18 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     if (activeTab === 'register' && password !== confirmPassword) {
       toast.error("Les mots de passe ne correspondent pas.");
+      setError("Les mots de passe ne correspondent pas.");
       setLoading(false);
       return;
     }
 
     if (activeTab === 'register' && !acceptTerms) {
       toast.error("Veuillez accepter les conditions d'utilisation.");
+      setError("Veuillez accepter les conditions d'utilisation.");
       setLoading(false);
       return;
     }
@@ -66,7 +70,9 @@ const Auth = () => {
       }
     } catch (error: any) {
       console.error("Authentication error:", error);
-      toast.error(error.message || "Erreur d'authentification.");
+      const errorMessage = error.message || "Erreur d'authentification.";
+      toast.error(errorMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -111,6 +117,14 @@ const Auth = () => {
                 <TabsTrigger value="register" className="text-base">Inscription</TabsTrigger>
               </TabsList>
               
+              {error && (
+                <div className="mb-4">
+                  <div className="p-3 bg-red-900/20 border border-red-500/50 rounded-md">
+                    <p className="text-sm text-red-300">{error}</p>
+                  </div>
+                </div>
+              )}
+              
               <TabsContent value="login" className="mt-2 space-y-4">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
@@ -125,6 +139,7 @@ const Auth = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        disabled={loading}
                         className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
                         placeholder="votre@email.com"
                       />
@@ -148,6 +163,7 @@ const Auth = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        disabled={loading}
                         className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
                         placeholder="••••••••"
                       />
@@ -155,6 +171,7 @@ const Auth = () => {
                         type="button"
                         variant="ghost"
                         size="icon"
+                        disabled={loading}
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                       >
@@ -168,8 +185,17 @@ const Auth = () => {
                     className="w-full bg-startupia-turquoise text-black font-medium hover:bg-startupia-turquoise/90 focus:ring-2 focus:ring-startupia-turquoise focus:ring-offset-1 mt-6 h-12"
                     disabled={loading}
                   >
-                    {loading ? "Connexion en cours..." : "Se connecter"}
-                    {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Connexion en cours...
+                      </>
+                    ) : (
+                      <>
+                        Se connecter
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
                   </Button>
                 </form>
               </TabsContent>
@@ -189,6 +215,7 @@ const Auth = () => {
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
                           required
+                          disabled={loading}
                           className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
                           placeholder="Jean"
                         />
@@ -207,6 +234,7 @@ const Auth = () => {
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
                           required
+                          disabled={loading}
                           className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
                           placeholder="Dupont"
                         />
@@ -226,6 +254,7 @@ const Auth = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        disabled={loading}
                         className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
                         placeholder="votre@email.com"
                       />
@@ -244,6 +273,7 @@ const Auth = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        disabled={loading}
                         className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
                         placeholder="••••••••"
                       />
@@ -251,6 +281,7 @@ const Auth = () => {
                         type="button"
                         variant="ghost"
                         size="icon"
+                        disabled={loading}
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                       >
@@ -271,6 +302,7 @@ const Auth = () => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
+                        disabled={loading}
                         className="pl-10 bg-black/60 border-gray-700 text-white focus:border-startupia-turquoise"
                         placeholder="••••••••"
                       />
@@ -282,6 +314,7 @@ const Auth = () => {
                       id="terms" 
                       checked={acceptTerms}
                       onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+                      disabled={loading}
                       className="border-gray-500 data-[state=checked]:bg-startupia-turquoise data-[state=checked]:border-startupia-turquoise"
                     />
                     <Label 
@@ -297,8 +330,17 @@ const Auth = () => {
                     className="w-full bg-startupia-turquoise text-black font-medium hover:bg-startupia-turquoise/90 focus:ring-2 focus:ring-startupia-turquoise focus:ring-offset-1 mt-4 h-12"
                     disabled={loading}
                   >
-                    {loading ? "Inscription en cours..." : "Créer mon compte"}
-                    {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Inscription en cours...
+                      </>
+                    ) : (
+                      <>
+                        Créer mon compte
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
                   </Button>
                 </form>
               </TabsContent>

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Bell, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
 
 interface UserMenuProps {
   isMobile?: boolean;
@@ -19,6 +21,50 @@ interface UserMenuProps {
 
 export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
   const { user, signOut } = useAuth();
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  // Fetch notifications count when user is logged in
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchNotifications = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('match_notifications')
+          .select('id')
+          .eq('recipient_id', user.id)
+          .eq('status', 'pending');
+
+        if (error) {
+          console.error('Error fetching notifications:', error);
+          return;
+        }
+
+        setNotificationCount(data?.length || 0);
+      } catch (error) {
+        console.error('Error in notification fetch:', error);
+      }
+    };
+
+    fetchNotifications();
+
+    // Set up realtime subscription for new notifications
+    const channel = supabase
+      .channel('match_notifications_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'match_notifications',
+        filter: `recipient_id=eq.${user.id}`,
+      }, () => {
+        fetchNotifications();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -29,9 +75,16 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
       <div className="border-t border-white/10 pt-4 mt-2">
         <div className="flex justify-between items-center px-4 py-2">
           <span className="text-white/80 truncate">{user?.email}</span>
-          <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10">
-            <Bell size={18} />
-          </Button>
+          <div className="relative">
+            <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10">
+              <Bell size={18} />
+            </Button>
+            {notificationCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500">
+                {notificationCount}
+              </Badge>
+            )}
+          </div>
         </div>
         <div className="mt-2 space-y-2">
           <Button 
@@ -63,9 +116,16 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
 
   return (
     <div className="flex items-center gap-4 ml-4">
-      <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-        <Bell size={20} />
-      </Button>
+      <div className="relative">
+        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+          <Bell size={20} />
+        </Button>
+        {notificationCount > 0 && (
+          <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500">
+            {notificationCount}
+          </Badge>
+        )}
+      </div>
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

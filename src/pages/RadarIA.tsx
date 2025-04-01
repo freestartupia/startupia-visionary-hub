@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Filter, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Footer from '@/components/Footer';
-import SearchBar from '@/components/ecosystem/SearchBar';
 import DirectoryView from '@/components/ecosystem/DirectoryView';
 import SEO from '@/components/SEO';
 import { useNavigate } from 'react-router-dom';

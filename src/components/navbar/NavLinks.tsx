@@ -15,7 +15,7 @@ interface NavLinksProps {
 
 const navLinks: NavLink[] = [
   { 
-    path: '/ecosystem', 
+    path: '/radar', 
     label: "Hub IA Français",
     matches: ['/ecosystem', '/startups', '/radar', '/products']
   },

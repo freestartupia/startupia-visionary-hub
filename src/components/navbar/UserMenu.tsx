@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 interface UserMenuProps {
   isMobile?: boolean;
@@ -33,9 +34,15 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
           </Button>
         </div>
         <div className="mt-2 space-y-2">
-          <Button variant="ghost" className="w-full justify-start text-white/80 hover:text-white hover:bg-white/5">
-            <User size={16} className="mr-2" />
-            Mon profil
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-white/80 hover:text-white hover:bg-white/5"
+            asChild
+          >
+            <Link to="/profile">
+              <User size={16} className="mr-2" />
+              Mon profil
+            </Link>
           </Button>
           <Button variant="ghost" className="w-full justify-start text-white/80 hover:text-white hover:bg-white/5">
             <Settings size={16} className="mr-2" />
@@ -72,8 +79,10 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-white/10" />
           <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer">
-            <User className="mr-2 h-4 w-4" />
-            <span>Profil</span>
+            <Link to="/profile" className="flex w-full">
+              <User className="mr-2 h-4 w-4" />
+              <span>Profil</span>
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer">
             <Settings className="mr-2 h-4 w-4" />

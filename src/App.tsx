@@ -13,6 +13,7 @@ import AIEcosystem from "./pages/AIEcosystem";
 import CoFounder from "./pages/CoFounder";
 import Community from "./pages/Community";
 import Blog from "./pages/Blog";
+import Rankings from "./pages/Rankings";
 import ProductDetails from "./pages/ProductDetails";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/cofounder" element={<CoFounder />} />
             <Route path="/community" element={<Community />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/rankings" element={<Rankings />} />
             <Route path="/products" element={<Navigate to="/ecosystem" replace />} />
             <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/auth" element={<Auth />} />

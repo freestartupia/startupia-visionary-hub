@@ -31,6 +31,10 @@ const navLinks: NavLink[] = [
     path: '/blog',
     label: "Blog & Actualités"
   },
+  {
+    path: '/rankings',
+    label: "Classements & Tendances"
+  }
 ];
 
 export const NavLinks: React.FC<NavLinksProps> = ({ isMobile = false, onMobileItemClick }) => {

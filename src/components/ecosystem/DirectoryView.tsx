@@ -5,7 +5,7 @@ import { Startup } from "@/types/startup";
 import { usePagination } from "@/hooks/usePagination";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import ErrorMessage from "@/components/ui/error-message";
-import { Filter, CalendarDays, TrendingUp } from "lucide-react";
+import { CalendarDays, TrendingUp, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -106,13 +106,13 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     }, 500);
   };
 
-  // Category tabs shown in the screenshot
+  // Category options
   const categoryOptions = [
     { value: "all", label: "Toutes les catégories" },
     ...sectors.map(sector => ({ value: sector, label: sector }))
   ];
 
-  // Technology tabs shown in the screenshot
+  // Technology options
   const techOptions = [
     { value: "all", label: "Toutes les technologies" },
     { value: "llm", label: "LLM" },
@@ -121,7 +121,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     { value: "llama", label: "Llama" }
   ];
   
-  // Stage tabs shown in the screenshot
+  // Stage options
   const stageOptions = [
     { value: "all", label: "Tous les stades" },
     { value: "idee", label: "Idée" },
@@ -136,12 +136,12 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
 
   return (
     <div className="mb-16">
-      {/* Category filtering section as shown in the screenshot */}
+      {/* Category filtering section */}
       {showFilters && (
         <div className="mb-8 space-y-4 bg-black/20 border border-gray-800 rounded-lg p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <p className="text-white text-sm mb-2">Catégorie</p>
+              <p className="text-white text-sm mb-2 font-medium">Catégorie</p>
               <Select defaultValue="all">
                 <SelectTrigger className="bg-black/30 border-gray-700 text-white w-full">
                   <SelectValue placeholder="Toutes les catégories" />
@@ -155,7 +155,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
             </div>
             
             <div>
-              <p className="text-white text-sm mb-2">Tech IA utilisée</p>
+              <p className="text-white text-sm mb-2 font-medium">Tech IA utilisée</p>
               <Select defaultValue="all">
                 <SelectTrigger className="bg-black/30 border-gray-700 text-white w-full">
                   <SelectValue placeholder="Toutes les technologies" />
@@ -169,7 +169,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
             </div>
             
             <div>
-              <p className="text-white text-sm mb-2">Stade</p>
+              <p className="text-white text-sm mb-2 font-medium">Stade</p>
               <Select defaultValue="all">
                 <SelectTrigger className="bg-black/30 border-gray-700 text-white w-full">
                   <SelectValue placeholder="Tous les stades" />
@@ -185,13 +185,13 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
         </div>
       )}
       
-      {/* View tabs as shown in the screenshot */}
-      <div className="flex items-center space-x-2 mb-8">
+      {/* View tabs */}
+      <div className="flex flex-wrap items-center space-x-2 mb-8">
         <button 
           className={`${activeSortTab === 'tous' ? 'bg-gray-800/50' : 'bg-transparent hover:bg-gray-800/50'} px-4 py-2 rounded-md flex items-center space-x-2`}
           onClick={() => setActiveSortTab('tous')}
         >
-          <TrendingUp size={16} className={activeSortTab === 'tous' ? "text-yellow-500" : "text-white/70"} />
+          <TrendingUp size={16} className={activeSortTab === 'tous' ? "text-yellow-300" : "text-white/70"} />
           <span className={activeSortTab === 'tous' ? "text-white" : "text-white/70"}>Tous</span>
         </button>
         
@@ -199,7 +199,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           className={`${activeSortTab === 'lancement' ? 'bg-gray-800/50' : 'bg-transparent hover:bg-gray-800/50'} px-4 py-2 rounded-md flex items-center space-x-2`}
           onClick={() => setActiveSortTab('lancement')}
         >
-          <CalendarDays size={16} className={activeSortTab === 'lancement' ? "text-yellow-500" : "text-white/70"} />
+          <CalendarDays size={16} className={activeSortTab === 'lancement' ? "text-yellow-300" : "text-white/70"} />
           <span className={activeSortTab === 'lancement' ? "text-white" : "text-white/70"}>Lancement du jour</span>
         </button>
         
@@ -207,7 +207,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           className={`${activeSortTab === 'recents' ? 'bg-gray-800/50' : 'bg-transparent hover:bg-gray-800/50'} px-4 py-2 rounded-md flex items-center space-x-2`}
           onClick={() => setActiveSortTab('recents')}
         >
-          <Filter size={16} className={activeSortTab === 'recents' ? "text-yellow-500" : "text-white/70"} />
+          <Filter size={16} className={activeSortTab === 'recents' ? "text-yellow-300" : "text-white/70"} />
           <span className={activeSortTab === 'recents' ? "text-white" : "text-white/70"}>Récents</span>
         </button>
       </div>
@@ -220,9 +220,9 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
         ) : paginatedStartups.length > 0 ? (
           <div className="space-y-6">
             {paginatedStartups.map((startup) => (
-              <div key={startup.id} className="bg-black/20 border border-gray-800 rounded-lg p-4 flex items-center justify-between hover:border-gray-700 transition-all">
+              <div key={startup.id} className="bg-black/20 border border-gray-800 rounded-lg p-4 flex items-start md:items-center justify-between hover:border-gray-700 transition-all">
                 <div className="flex items-center space-x-4">
-                  <div className={`bg-yellow-900/30 text-yellow-600 w-12 h-12 rounded-md flex items-center justify-center font-bold text-xl ${startup.logoUrl ? 'p-0 overflow-hidden' : ''}`}>
+                  <div className={`bg-black/40 text-yellow-400 w-12 h-12 rounded-md flex items-center justify-center font-bold text-xl ${startup.logoUrl ? 'p-0 overflow-hidden' : ''}`}>
                     {startup.logoUrl ? (
                       <img src={startup.logoUrl} alt={`${startup.name} logo`} className="w-full h-full object-cover" />
                     ) : (
@@ -232,9 +232,9 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                   <div>
                     <h3 className="font-semibold text-lg">{startup.name}</h3>
                     <p className="text-gray-400 text-sm">{startup.shortDescription}</p>
-                    <div className="flex mt-2 space-x-2">
+                    <div className="flex flex-wrap mt-2 gap-2">
                       {startup.tags.slice(0, 3).map((tag, idx) => (
-                        <span key={idx} className={`${idx === 0 ? 'bg-yellow-900/20 text-yellow-600' : 'bg-gray-800 text-gray-300'} text-xs px-2 py-1 rounded`}>
+                        <span key={idx} className={`${idx === 0 ? 'bg-yellow-900/20 text-yellow-400' : 'bg-gray-800 text-gray-300'} text-xs px-2 py-1 rounded`}>
                           {tag}
                         </span>
                       ))}
@@ -242,11 +242,11 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <div className="flex items-center space-x-1 text-gray-400">
+                  <div className="flex items-center space-x-1 text-gray-400 mb-2">
                     <span>{Math.floor(Math.random() * 100) + 30}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"></path><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"></path></svg>
                   </div>
-                  <Button variant="default" size="sm" className="mt-2 bg-gray-800 hover:bg-gray-700 text-white">
+                  <Button variant="default" size="sm" className="bg-black/50 hover:bg-black/80 border border-gray-700 text-white">
                     Découvrir
                   </Button>
                 </div>

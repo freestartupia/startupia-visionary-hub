@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Filter, Plus } from 'lucide-react';
+import { Filter, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Footer from '@/components/Footer';
 import DirectoryView from '@/components/ecosystem/DirectoryView';
@@ -13,7 +13,7 @@ const RadarIA = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="min-h-screen bg-hero-pattern text-white">
+    <div className="min-h-screen bg-black text-white">
       <SEO 
         title="Hub IA Français – Explorez et découvrez les meilleures startups IA françaises"
         description="Explorez les meilleures startups IA françaises, votez pour vos préférées et suivez les derniers lancements du marché de l'intelligence artificielle."
@@ -36,15 +36,18 @@ const RadarIA = () => {
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
           <div className="relative w-full md:w-auto md:flex-1">
-            <input
-              type="text"
-              placeholder="Rechercher une startup ou un produit IA..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:max-w-xl bg-black/20 border border-gray-700 text-white rounded-md px-4 py-2.5 focus:outline-none focus:border-yellow-400/50"
-            />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-yellow-500">
-              🔥 Tendance
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Rechercher une startup ou un produit IA..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full md:max-w-xl bg-black/20 border border-gray-700 text-white rounded-md pl-10 pr-24 py-2.5 focus:outline-none focus:border-yellow-400/50"
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-yellow-500">
+                🔥 Tendance
+              </div>
             </div>
           </div>
           
@@ -52,7 +55,7 @@ const RadarIA = () => {
             <Button 
               onClick={() => setShowFilters(!showFilters)} 
               variant="outline" 
-              className="flex items-center gap-2 border-white/20 text-white hover:bg-black/30 flex-grow md:flex-grow-0"
+              className="flex items-center gap-2 border-gray-700 bg-black/20 text-white hover:bg-black/30 flex-grow md:flex-grow-0"
             >
               <Filter size={18} />
               <span>Filtres</span>
@@ -68,7 +71,7 @@ const RadarIA = () => {
             
             <Button 
               variant="outline" 
-              className="border-white/20 text-white hover:bg-black/30 hidden md:block"
+              className="border-gray-700 bg-black/20 text-white hover:bg-black/30 hidden md:flex"
             >
               Vue détaillée
             </Button>

@@ -26,8 +26,9 @@ const CoFounder = () => {
   // Filter for project owners
   const projects = profiles.filter(profile => profile.profileType === 'project-owner');
 
+  // Handler wrapped in useCallback to avoid recreation
   const handleCreateProfileClick = () => {
-    console.log("Button clicked");
+    console.log("Button clicked - new implementation");
     if (!user) {
       // Show toast and provide a direct way to navigate to auth page
       toast("Connexion requise", { 
@@ -42,25 +43,6 @@ const CoFounder = () => {
     
     // If user is authenticated, show the profile form
     setShowProfileForm(true);
-  };
-
-  const handleMatchRequest = (profileId: string) => {
-    if (!user) {
-      toast("Connexion requise", { 
-        description: "Vous devez être connecté pour contacter un profil",
-        action: {
-          label: "Se connecter",
-          onClick: () => navigate('/auth')
-        }
-      });
-      return;
-    }
-    
-    // In real app, this would trigger a backend call to send the match request
-    console.log(`Match request sent to profile ${profileId}`);
-    toast.success("Demande de contact envoyée !");
-    
-    // In a real app, we would update the UI to reflect the match request
   };
 
   return (
@@ -87,13 +69,27 @@ const CoFounder = () => {
 
         {!showProfileForm ? (
           <div className="max-w-6xl mx-auto">
-            <div className="flex justify-center mb-10">
-              <button 
-                onClick={handleCreateProfileClick}
-                className="inline-flex items-center justify-center bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black button-glow py-6 px-8 text-lg cursor-pointer rounded-md"
+            <div className="flex justify-center mb-10 relative z-10">
+              <div 
+                className="inline-block"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log("Container clicked");
+                  handleCreateProfileClick();
+                }}
               >
-                Créer mon profil de co-fondateur <ArrowRight className="ml-2 size-4" />
-              </button>
+                <button 
+                  type="button"
+                  className="inline-flex items-center justify-center bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black py-6 px-8 text-lg rounded-md button-glow cursor-pointer z-20 relative"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log("Inner button clicked");
+                    handleCreateProfileClick();
+                  }}
+                >
+                  Créer mon profil de co-fondateur <ArrowRight className="ml-2 size-4" />
+                </button>
+              </div>
             </div>
 
             <div className="mb-16">

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -5,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { authService } from '@/services/authService';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { signIn, signUp } from '@/services/authService';
+import { Eye, EyeOff } from 'lucide-react';
 import SEO from '@/components/SEO';
+import { Label } from '@/components/ui/label';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -18,7 +20,7 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState('login');
   const navigate = useNavigate();
   const location = useLocation();
-  const { setUser } = useAuth();
+  const { user } = useAuth();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,15 +34,19 @@ const Auth = () => {
 
     try {
       if (activeTab === 'login') {
-        const response = await authService.login(email, password);
-        setUser(response.user);
+        const response = await signIn(email, password);
+        if (response.error) {
+          throw response.error;
+        }
         toast.success("Connexion réussie !");
         // Redirect to the previous page or the home page
         const from = location.state?.from || "/";
         navigate(from, { replace: true });
       } else {
-        const response = await authService.register(email, password);
-        setUser(response.user);
+        const response = await signUp(email, password);
+        if (response.error) {
+          throw response.error;
+        }
         toast.success("Inscription réussie !");
         setActiveTab('login'); // Automatically switch to login tab after successful registration
       }

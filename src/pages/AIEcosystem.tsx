@@ -26,10 +26,10 @@ const AIEcosystem = () => {
       <main className="container mx-auto pt-28 pb-16 px-4">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Explorer l'écosystème <span className="gradient-text">IA</span>
+            Hub <span className="gradient-text">IA Français</span>
           </h1>
           <p className="text-xl text-white/80 max-w-3xl mx-auto">
-            Découvrez les startups, suivez les tendances et explorez l'écosystème de l'intelligence artificielle
+            La référence des startups IA françaises, leurs innovations, leurs levées de fonds et leur impact sur l'écosystème
           </p>
         </div>
 

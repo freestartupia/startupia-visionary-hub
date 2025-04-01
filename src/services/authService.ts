@@ -6,6 +6,12 @@ export type AuthError = {
   message: string;
 };
 
+export type UserMetadata = {
+  first_name?: string;
+  last_name?: string;
+  avatar_url?: string;
+};
+
 export async function signUp(email: string, password: string, firstName?: string, lastName?: string) {
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -61,5 +67,33 @@ export async function getCurrentSession() {
   } catch (error) {
     console.error('Error getting session:', error);
     return { session: null, error };
+  }
+}
+
+export async function updateUserProfile(metadata: UserMetadata) {
+  try {
+    const { data, error } = await supabase.auth.updateUser({
+      data: metadata
+    });
+    
+    if (error) throw error;
+    return { user: data.user, error: null };
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    return { user: null, error };
+  }
+}
+
+export async function updateUserPassword(password: string) {
+  try {
+    const { data, error } = await supabase.auth.updateUser({
+      password
+    });
+    
+    if (error) throw error;
+    return { user: data.user, error: null };
+  } catch (error) {
+    console.error('Error updating user password:', error);
+    return { user: null, error };
   }
 }

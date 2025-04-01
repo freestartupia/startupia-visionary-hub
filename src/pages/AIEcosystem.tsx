@@ -63,14 +63,30 @@ const AIEcosystem = () => {
 
         {/* Tabs */}
         <Tabs 
-          value={activeTab} 
+          defaultValue={activeTab}
+          value={activeTab}
           onValueChange={handleTabChange}
           className="max-w-7xl mx-auto"
         >
-          <TabsList className="grid grid-cols-3 mb-8">
-            <TabsTrigger value="directory">Annuaire</TabsTrigger>
-            <TabsTrigger value="radar">Radar & Tendances</TabsTrigger>
-            <TabsTrigger value="map">Carte</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-black/30 border border-startupia-turquoise/20">
+            <TabsTrigger 
+              value="directory" 
+              className="data-[state=active]:bg-startupia-turquoise/20"
+            >
+              Annuaire
+            </TabsTrigger>
+            <TabsTrigger 
+              value="radar" 
+              className="data-[state=active]:bg-startupia-turquoise/20"
+            >
+              Radar & Tendances
+            </TabsTrigger>
+            <TabsTrigger 
+              value="map" 
+              className="data-[state=active]:bg-startupia-turquoise/20"
+            >
+              Carte
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="directory" className="mt-0">

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,12 +12,15 @@ import SEO from '@/components/SEO';
 import { Label } from '@/components/ui/label';
 
 const Auth = () => {
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'register' ? 'register' : 'login';
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('login');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -172,7 +175,6 @@ const Auth = () => {
                     required
                     className="mt-1 w-full rounded-md shadow-sm bg-black/50 border-gray-600 text-white focus:border-startupia-turquoise focus:ring-startupia-turquoise"
                   />
-                  
                 </div>
               </div>
               <Button

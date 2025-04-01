@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,7 +10,7 @@ import MapView from '@/components/ecosystem/MapView';
 import RadarView from '@/components/ecosystem/RadarView';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Footer from '@/components/Footer';
 import SEO from '@/components/SEO';
@@ -26,10 +27,10 @@ const AIEcosystem = () => {
     // For now, just show a toast
     toast({
       title: "Fonctionnalité à venir",
-      description: "L'ajout de startups sera disponible prochainement.",
+      description: "L'ajout de startups sera disponible prochainement."
     });
   };
-  
+
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
       <SEO 
@@ -74,7 +75,6 @@ const AIEcosystem = () => {
               </TabsTrigger>
             </TabsList>
           </Tabs>
-
           <Select value={sortOrder} onValueChange={setSortOrder}>
             <SelectTrigger className="w-[180px] bg-black/20 text-white/80">
               <SelectValue placeholder="Trier par..." />
@@ -83,22 +83,23 @@ const AIEcosystem = () => {
               <SelectItem value="newest">Plus récentes</SelectItem>
               <SelectItem value="impact">Impact IA</SelectItem>
               <SelectItem value="alphabetical">Alphabétique</SelectItem>
-              {/* <SelectItem value="funding">Levée de fonds</SelectItem> */}
             </SelectContent>
           </Select>
         </div>
 
-        <TabsContent value="directory" className="mt-0">
-          <DirectoryView searchQuery={searchQuery} showFilters={showFilters} />
-        </TabsContent>
-        
-        <TabsContent value="map" className="mt-0">
-          <MapView searchQuery={searchQuery} showFilters={showFilters} />
-        </TabsContent>
-        
-        <TabsContent value="radar" className="mt-0">
-          <RadarView searchQuery={searchQuery} showFilters={showFilters} />
-        </TabsContent>
+        <Tabs value={activeView} onValueChange={setActiveView}>
+          <TabsContent value="directory" className="mt-0">
+            <DirectoryView searchQuery={searchQuery} showFilters={showFilters} />
+          </TabsContent>
+          
+          <TabsContent value="map" className="mt-0">
+            <MapView searchQuery={searchQuery} showFilters={showFilters} />
+          </TabsContent>
+          
+          <TabsContent value="radar" className="mt-0">
+            <RadarView searchQuery={searchQuery} showFilters={showFilters} />
+          </TabsContent>
+        </Tabs>
 
         <section className="mb-12">
           <div className="flex justify-between items-center mb-4">
@@ -107,6 +108,7 @@ const AIEcosystem = () => {
               Voir le classement complet
             </Button>
           </div>
+
           <TopStartups searchQuery={searchQuery} showFilters={showFilters} sortOrder={sortOrder} />
         </section>
 
@@ -117,6 +119,7 @@ const AIEcosystem = () => {
               Explorer tous les outils
             </Button>
           </div>
+
           <NewLaunches searchQuery={searchQuery} showFilters={showFilters} sortOrder={sortOrder} />
         </section>
       </main>

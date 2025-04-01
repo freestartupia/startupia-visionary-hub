@@ -2,15 +2,11 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import DirectoryView from '@/components/ecosystem/DirectoryView';
-import RadarView from '@/components/ecosystem/RadarView';
-import MapView from '@/components/ecosystem/MapView';
-import TopStartups from '@/components/ecosystem/TopStartups';
-import NewLaunches from '@/components/ecosystem/NewLaunches';
+import { mockStartups } from '@/data/mockStartups';
+import StartupCard from '@/components/StartupCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, ArrowUpDown, ArrowDown, Rss } from 'lucide-react';
+import { Search, Filter, TrendingUp, Rocket, Clock, BadgePlus } from 'lucide-react';
 import { 
   Select,
   SelectContent,
@@ -19,14 +15,60 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 
 const AIEcosystem = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [sortOrder, setSortOrder] = useState('newest');
+  const [sortOrder, setSortOrder] = useState('trending');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Get all unique sectors from startups
+  const categories = Array.from(new Set(mockStartups.map(startup => startup.sector)));
+  
+  // Get all unique AI tools
+  const aiTools = Array.from(new Set(mockStartups.flatMap(startup => startup.aiTools)));
+
+  // Filter and sort startups based on search, category, and sort order
+  const filterStartups = () => {
+    let filtered = [...mockStartups];
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((startup) =>
+        startup.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        startup.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        startup.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+    
+    // Apply category filter
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(startup => startup.sector === selectedCategory);
+    }
+    
+    // Sort startups
+    switch (sortOrder) {
+      case 'trending':
+        filtered.sort((a, b) => b.aiImpactScore - a.aiImpactScore);
+        break;
+      case 'newest':
+        filtered = filtered.reverse();
+        break;
+      case 'alphabetical':
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+    }
+    
+    return filtered;
+  };
+
+  const filteredStartups = filterStartups();
 
   return (
-    <div className="min-h-screen bg-hero-pattern text-white">
+    <div className="min-h-screen bg-black text-white">
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
@@ -34,23 +76,23 @@ const AIEcosystem = () => {
 
       <Navbar />
       
-      <main className="container mx-auto pt-28 pb-16 px-4">
+      <main className="container mx-auto pt-28 pb-16 px-4 relative z-10">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Hub <span className="gradient-text">IA Français</span>
+            Découvrir des <span className="gradient-text">Startups IA</span>
           </h1>
           <p className="text-xl text-white/80 max-w-3xl mx-auto">
-            La référence des startups IA françaises, leurs innovations, leurs levées de fonds et leur impact sur l'écosystème
+            Explorez les meilleures startups IA françaises, votez pour vos préférées et suivez les derniers lancements
           </p>
         </div>
 
-        {/* Search and filters toolbar */}
+        {/* Search and filters bar */}
         <div className="flex flex-col md:flex-row gap-4 mb-8 max-w-5xl mx-auto">
           <div className="relative flex-grow">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50" />
             <Input
               type="text"
-              placeholder="Rechercher par nom, secteur ou technologie..."
+              placeholder="Rechercher une startup IA..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 bg-black/20 border-startupia-turquoise/30 focus-visible:ring-startupia-turquoise/50"
@@ -64,10 +106,9 @@ const AIEcosystem = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="newest">Plus récent</SelectItem>
-                  <SelectItem value="impact">Impact IA</SelectItem>
-                  <SelectItem value="funding">Levées de fonds</SelectItem>
-                  <SelectItem value="alphabetical">Alphabétique</SelectItem>
+                  <SelectItem value="trending">🔥 Tendance</SelectItem>
+                  <SelectItem value="newest">⏱️ Récent</SelectItem>
+                  <SelectItem value="alphabetical">🔤 Alphabétique</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -82,78 +123,191 @@ const AIEcosystem = () => {
             </Button>
 
             <Button
-              variant="ghost"
-              className="text-white/70 hover:text-white hover:bg-startupia-turquoise/10"
+              variant="default"
+              className="bg-startupia-turquoise hover:bg-startupia-turquoise/90"
             >
-              <Rss size={18} className="mr-2" />
-              Suivre
+              <BadgePlus className="mr-2" size={16} />
+              Poster ma startup
             </Button>
           </div>
         </div>
 
-        {/* Top Startups Section */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Top Startups IA</h2>
-            <Button variant="link" className="text-startupia-turquoise">
-              Voir tout
-            </Button>
-          </div>
-          <TopStartups searchQuery={searchQuery} showFilters={showFilters} sortOrder={sortOrder} />
-        </section>
-
-        {/* New Launches Section */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Nouveaux Lancements</h2>
-            <Button variant="link" className="text-startupia-turquoise">
-              Tous les lancements
-            </Button>
-          </div>
-          <NewLaunches searchQuery={searchQuery} showFilters={showFilters} sortOrder={sortOrder} />
-        </section>
+        {/* Advanced filters panel */}
+        {showFilters && (
+          <Card className="p-4 mb-6 bg-black/30 border border-startupia-turquoise/30">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <h3 className="mb-2 font-medium">Catégorie</h3>
+                <Select defaultValue={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="bg-black/20 border-startupia-turquoise/30">
+                    <SelectValue placeholder="Toutes les catégories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toutes les catégories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <h3 className="mb-2 font-medium">Tech IA utilisée</h3>
+                <Select defaultValue="all">
+                  <SelectTrigger className="bg-black/20 border-startupia-turquoise/30">
+                    <SelectValue placeholder="Toutes les technologies" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toutes les technologies</SelectItem>
+                    {aiTools.map((tool) => (
+                      <SelectItem key={tool} value={tool}>{tool}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <h3 className="mb-2 font-medium">Stade</h3>
+                <Select defaultValue="all">
+                  <SelectTrigger className="bg-black/20 border-startupia-turquoise/30">
+                    <SelectValue placeholder="Tous les stades" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les stades</SelectItem>
+                    <SelectItem value="mvp">MVP</SelectItem>
+                    <SelectItem value="seed">Seed</SelectItem>
+                    <SelectItem value="series-a">Série A</SelectItem>
+                    <SelectItem value="series-b">Série B+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </Card>
+        )}
         
-        {/* Tabs for more detailed views */}
-        <Tabs 
-          defaultValue="directory"
-          className="max-w-7xl mx-auto mt-12 pt-6 border-t border-startupia-turquoise/20"
-        >
-          <TabsList className="grid w-full grid-cols-3 mb-8 bg-black/30 border border-startupia-turquoise/20">
-            <TabsTrigger 
-              value="directory" 
-              className="data-[state=active]:bg-startupia-turquoise/20"
-            >
-              Annuaire Complet
+        {/* Tabs for different views */}
+        <Tabs defaultValue="all" className="mb-6">
+          <TabsList className="bg-black/30 border border-startupia-turquoise/20">
+            <TabsTrigger value="all" className="data-[state=active]:bg-startupia-turquoise/20">
+              <TrendingUp className="mr-2" size={16} />
+              Tous
             </TabsTrigger>
-            <TabsTrigger 
-              value="radar" 
-              className="data-[state=active]:bg-startupia-turquoise/20"
-            >
-              Radar & Tendances
+            <TabsTrigger value="featured" className="data-[state=active]:bg-startupia-turquoise/20">
+              <Rocket className="mr-2" size={16} />
+              Lancement du jour
             </TabsTrigger>
-            <TabsTrigger 
-              value="map" 
-              className="data-[state=active]:bg-startupia-turquoise/20"
-            >
-              Carte
+            <TabsTrigger value="recent" className="data-[state=active]:bg-startupia-turquoise/20">
+              <Clock className="mr-2" size={16} />
+              Récents
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="directory" className="mt-0">
-            <DirectoryView searchQuery={searchQuery} showFilters={showFilters} />
+          <TabsContent value="all" className="mt-6">
+            {filteredStartups.length > 0 ? (
+              renderStartupGrid(filteredStartups)
+            ) : (
+              <div className="text-center py-16">
+                <p className="text-white/70 text-xl">Aucune startup ne correspond à votre recherche</p>
+              </div>
+            )}
           </TabsContent>
           
-          <TabsContent value="radar" className="mt-0">
-            <RadarView searchQuery={searchQuery} showFilters={showFilters} />
+          <TabsContent value="featured" className="mt-6">
+            {/* Filter for featured startups (for demo, just use high impact score) */}
+            {renderStartupGrid(filteredStartups.filter(s => s.aiImpactScore >= 4))}
           </TabsContent>
           
-          <TabsContent value="map" className="mt-0">
-            <MapView searchQuery={searchQuery} />
+          <TabsContent value="recent" className="mt-6">
+            {/* For demo, just use the first few startups */}
+            {renderStartupGrid(filteredStartups.slice(0, 4))}
           </TabsContent>
         </Tabs>
       </main>
 
       <Footer />
+    </div>
+  );
+};
+
+// Helper function to render the startup grid with Product Hunt style
+const renderStartupGrid = (startups: typeof mockStartups) => {
+  if (startups.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-white/70 text-xl">Aucune startup ne correspond à cette sélection</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {startups.map((startup, index) => (
+        <Card 
+          key={startup.id} 
+          className="p-4 bg-black/30 border border-startupia-turquoise/20 hover:border-startupia-turquoise/50 transition-all hover:bg-black/40"
+        >
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-startupia-turquoise/10 flex items-center justify-center">
+                {startup.logoUrl ? (
+                  <img 
+                    src={startup.logoUrl} 
+                    alt={`${startup.name} logo`} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-startupia-turquoise">
+                    {startup.name.charAt(0)}
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div className="flex-grow">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-bold">{startup.name}</h2>
+                  <p className="text-sm text-white/70">{startup.shortDescription}</p>
+                </div>
+                
+                {/* Vote counter */}
+                <div className="flex flex-col items-center">
+                  <Button variant="ghost" className="hover:bg-startupia-turquoise/20 space-x-1">
+                    <TrendingUp size={18} />
+                    <span>{50 + Math.floor(Math.random() * 200)}</span>
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <Badge className="bg-startupia-turquoise/20 border-none text-startupia-turquoise hover:bg-startupia-turquoise/30">
+                  {startup.sector}
+                </Badge>
+                
+                {startup.aiTools.slice(0, 2).map((tool) => (
+                  <Badge key={tool} variant="outline" className="bg-black/40 border-white/20">
+                    {tool}
+                  </Badge>
+                ))}
+                
+                {startup.aiTools.length > 2 && (
+                  <Badge variant="outline" className="bg-black/40 border-white/20">
+                    +{startup.aiTools.length - 2} autres
+                  </Badge>
+                )}
+                
+                <div className="ml-auto">
+                  <Button variant="outline" className="border-startupia-turquoise hover:bg-startupia-turquoise/20">
+                    Découvrir
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      ))}
     </div>
   );
 };

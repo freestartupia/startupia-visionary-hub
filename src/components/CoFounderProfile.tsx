@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -28,6 +27,8 @@ import { AITool, Availability, Region, Sector, CofounderProfile } from '@/types/
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 // Form schema
 const formSchema = z.object({
@@ -51,16 +52,36 @@ const formSchema = z.object({
 
 interface CoFounderProfileProps {
   onProfileCreated?: () => void;
+  onProfileUpdated?: () => void;
+  initialData?: CofounderProfile;
+  isEditing?: boolean;
 }
 
-const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
+const CoFounderProfile = ({ onProfileCreated, onProfileUpdated, initialData, isEditing = false }: CoFounderProfileProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+      profileType: initialData.profileType,
+      name: initialData.name,
+      role: initialData.role,
+      seekingRoles: initialData.seekingRoles || [],
+      pitch: initialData.pitch,
+      sector: initialData.sector,
+      objective: initialData.objective,
+      aiTools: initialData.aiTools || [],
+      availability: initialData.availability,
+      vision: initialData.vision,
+      region: initialData.region,
+      linkedinUrl: initialData.linkedinUrl || '',
+      portfolioUrl: initialData.portfolioUrl || '',
+      websiteUrl: initialData.websiteUrl || '',
+      projectName: initialData.projectName || '',
+      projectStage: initialData.projectStage as any,
+    } : {
       profileType: 'collaborator',
       name: user?.email?.split('@')[0] || '',
       role: '',
@@ -82,49 +103,79 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
 
   const profileType = form.watch('profileType');
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     
-    // Create the cofounder profile object
-    const newProfile: CofounderProfile = {
-      id: uuidv4(),
-      name: values.name,
-      profileType: values.profileType,
-      role: values.role as any,
-      seekingRoles: values.seekingRoles as any[] || [],
-      pitch: values.pitch,
-      sector: values.sector as any,
-      objective: values.objective as any,
-      aiTools: values.aiTools as any[],
-      availability: values.availability as any,
-      vision: values.vision,
-      region: values.region as any,
-      linkedinUrl: values.linkedinUrl || undefined,
-      portfolioUrl: values.portfolioUrl || undefined,
-      websiteUrl: values.websiteUrl || undefined,
-      photoUrl: user?.email ? `https://ui-avatars.com/api/?name=${encodeURIComponent(values.name)}&background=random` : undefined,
-      dateCreated: new Date().toISOString(),
-      hasAIBadge: values.aiTools.length > 3, // Simple logic for AI badge
-      projectName: values.profileType === 'project-owner' ? values.projectName : undefined,
-      projectStage: values.profileType === 'project-owner' ? values.projectStage : undefined,
-      matches: []
-    };
+    try {
+      // Create the cofounder profile object for database
+      const profileData = {
+        name: values.name,
+        profile_type: values.profileType,
+        role: values.role,
+        seeking_roles: values.seekingRoles || [],
+        pitch: values.pitch,
+        sector: values.sector,
+        objective: values.objective,
+        ai_tools: values.aiTools,
+        availability: values.availability,
+        vision: values.vision,
+        region: values.region,
+        linkedin_url: values.linkedinUrl || null,
+        portfolio_url: values.portfolioUrl || null,
+        website_url: values.websiteUrl || null,
+        photo_url: user?.email ? `https://ui-avatars.com/api/?name=${encodeURIComponent(values.name)}&background=random` : null,
+        has_ai_badge: values.aiTools.length > 3, // Simple logic for AI badge
+        project_name: values.profileType === 'project-owner' ? values.projectName : null,
+        project_stage: values.profileType === 'project-owner' ? values.projectStage : null,
+      };
 
-    // In a real app, this would send the data to a backend API or database
-    console.log('Created new profile:', newProfile);
-    
-    // Simulate API call with timeout
-    setTimeout(() => {
-      setIsSubmitting(false);
-      toast.success("Votre profil a été créé avec succès !", {
-        description: "Vous pouvez maintenant rechercher ou être trouvé par d'autres cofondateurs"
-      });
-      
-      // Call the onProfileCreated callback if provided
-      if (onProfileCreated) {
-        onProfileCreated();
+      if (isEditing && initialData) {
+        // Update existing profile
+        const { error } = await supabase
+          .from('cofounder_profiles')
+          .update(profileData)
+          .eq('id', initialData.id);
+          
+        if (error) throw error;
+        
+        toast.success("Votre profil a été mis à jour avec succès !");
+        
+        if (onProfileUpdated) {
+          onProfileUpdated();
+        }
+      } else {
+        // Create new profile
+        const { error } = await supabase
+          .from('cofounder_profiles')
+          .insert([{ 
+            ...profileData,
+            id: uuidv4(),
+            user_id: user?.id,
+            date_created: new Date().toISOString(),
+            matches: []
+          }]);
+          
+        if (error) throw error;
+        
+        toast.success("Votre profil a été créé avec succès !", {
+          description: "Vous pouvez maintenant rechercher ou être trouvé par d'autres cofondateurs"
+        });
+        
+        if (onProfileCreated) {
+          onProfileCreated();
+        }
       }
-    }, 1000);
+
+      // Redirect after a delay to let the user see the success message
+      setTimeout(() => {
+        navigate('/profile');
+      }, 1500);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast.error("Une erreur est survenue lors de la sauvegarde du profil");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const availabilityOptions: Availability[] = [
@@ -202,7 +253,9 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
 
   return (
     <div className="glass-card p-6">
-      <h2 className="font-semibold text-xl mb-6">Créer votre profil Co-Founder</h2>
+      <h2 className="font-semibold text-xl mb-6">
+        {isEditing ? "Modifier votre profil de cofondateur" : "Créer votre profil de cofondateur"}
+      </h2>
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -632,7 +685,14 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
               className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black button-glow"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Création en cours...' : 'Créer mon profil'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {isEditing ? 'Mise à jour en cours...' : 'Création en cours...'}
+                </>
+              ) : (
+                isEditing ? 'Mettre à jour mon profil' : 'Créer mon profil'
+              )}
             </Button>
           </div>
         </form>

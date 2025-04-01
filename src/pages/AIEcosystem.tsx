@@ -15,6 +15,11 @@ const AIEcosystem = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState('directory');
 
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
       {/* Background elements */}
@@ -59,7 +64,7 @@ const AIEcosystem = () => {
         {/* Tabs */}
         <Tabs 
           value={activeTab} 
-          onValueChange={setActiveTab}
+          onValueChange={handleTabChange}
           className="max-w-7xl mx-auto"
         >
           <TabsList className="grid grid-cols-3 mb-8">

@@ -9,7 +9,7 @@ interface MapViewProps {
   searchQuery: string;
 }
 
-// De fausses données géographiques pour notre démo
+// Fake geo data for our demo
 const STARTUP_LOCATIONS: Record<string, { lat: number, lng: number }> = {
   "mistral-ai": { lat: 48.8566, lng: 2.3522 },  // Paris
   "doctrine": { lat: 48.8744, lng: 2.3526 },   // Paris Nord
@@ -23,7 +23,6 @@ const STARTUP_LOCATIONS: Record<string, { lat: number, lng: number }> = {
 
 const MapView = ({ searchQuery }: MapViewProps) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const [selectedStartup, setSelectedStartup] = useState<Startup | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -44,56 +43,36 @@ const MapView = ({ searchQuery }: MapViewProps) => {
     setFilteredStartups(filtered);
   }, [searchQuery]);
   
-  // Initialiser la carte lors du montage du composant
+  // Initialize map when component mounts
   useEffect(() => {
-    // Simuler le chargement d'une bibliothèque de cartographie
+    // Simulate loading a mapping library
     const initializeMap = () => {
       if (!mapContainerRef.current) return;
       
-      console.log("La carte serait initialisée ici avec une vraie bibliothèque de cartographie");
+      console.log("Map would be initialized here with a real mapping library");
       setMapLoaded(true);
-      
-      // Simuler l'ajout des marqueurs sur la carte
-      if (mapLoaded) {
-        // Nettoyage des marqueurs existants
-        markersRef.current.forEach(marker => {
-          // Dans une vraie implémentation: marker.remove()
-        });
-        markersRef.current = [];
-        
-        // Ajout des nouveaux marqueurs
-        filteredStartups.forEach(startup => {
-          const location = STARTUP_LOCATIONS[startup.id];
-          if (location) {
-            // Dans une vraie implémentation: 
-            // const marker = new maplibregl.Marker().setLngLat([location.lng, location.lat]).addTo(map);
-            // marker.getElement().addEventListener('click', () => setSelectedStartup(startup));
-            // markersRef.current.push(marker);
-            console.log(`Ajout d'un marqueur pour ${startup.name} à ${location.lat}, ${location.lng}`);
-          }
-        });
-      }
     };
 
     initializeMap();
     
-    // Nettoyage lors du démontage
+    // Clean up when component unmounts
     return () => {
-      if (mapRef.current) {
-        // Dans une vraie implémentation: mapRef.current.remove();
-      }
+      markersRef.current.forEach(marker => {
+        // In a real implementation: marker.remove()
+      });
+      markersRef.current = [];
     };
-  }, [filteredStartups, mapLoaded]);
+  }, []);
 
   return (
     <div className="mb-16">
       <div className="relative">
-        {/* Carte simulée */}
+        {/* Simulated map */}
         <div ref={mapContainerRef} className="w-full h-[600px] rounded-lg overflow-hidden bg-gray-800 relative">
-          {/* Fond de carte simulé */}
+          {/* Simulated map background */}
           <div className="absolute inset-0 opacity-50 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-700 via-gray-900 to-black"></div>
           
-          {/* Message d'intégration future */}
+          {/* Future integration message */}
           <div className="absolute inset-0 flex items-center justify-center">
             <Card className="p-6 bg-black/80 border border-startupia-turquoise/30 max-w-md text-center">
               <Info className="w-12 h-12 mx-auto mb-4 text-startupia-turquoise" />
@@ -110,13 +89,13 @@ const MapView = ({ searchQuery }: MapViewProps) => {
             </Card>
           </div>
           
-          {/* Points simulés sur la carte */}
+          {/* Simulated map points */}
           {filteredStartups.map(startup => {
             const location = STARTUP_LOCATIONS[startup.id];
             if (!location) return null;
             
-            // Convertir les coordonnées en positions CSS approximatives
-            const posLeft = (location.lng + 5) / 10 * 100;  // Ajustement grossier pour la démo
+            // Convert coordinates to approximate CSS positions for demo
+            const posLeft = (location.lng + 5) / 10 * 100;  // Rough adjustment for demo
             const posTop = (50 - location.lat / 2);
             
             return (
@@ -131,7 +110,7 @@ const MapView = ({ searchQuery }: MapViewProps) => {
           })}
         </div>
         
-        {/* Détails de la startup sélectionnée */}
+        {/* Selected startup details */}
         {selectedStartup && (
           <Card className="absolute top-4 right-4 p-4 bg-black/80 border border-startupia-turquoise/30 max-w-xs">
             <button 
@@ -153,13 +132,13 @@ const MapView = ({ searchQuery }: MapViewProps) => {
         )}
       </div>
       
-      {/* Liste des startups au-dessous de la carte */}
+      {/* Startups list by region */}
       <div className="mt-8">
         <h2 className="text-2xl font-bold mb-4">Startups par région</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Object.entries(
             filteredStartups.reduce<Record<string, Startup[]>>((acc, startup) => {
-              // Déterminer la région en fonction des coordonnées (pour la démo)
+              // Determine the region based on coordinates (for demo)
               const location = STARTUP_LOCATIONS[startup.id];
               let region = "Autre";
               

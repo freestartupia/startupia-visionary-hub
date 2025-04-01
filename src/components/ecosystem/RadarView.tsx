@@ -110,6 +110,7 @@ const formatAmount = (amount: number) => {
 };
 
 const RadarView = ({ searchQuery, showFilters }: RadarViewProps) => {
+  const [radarTab, setRadarTab] = useState('nouveautes');
   const [recentStartups, setRecentStartups] = useState<Startup[]>([]);
   const [topHealthStartups, setTopHealthStartups] = useState<Startup[]>([]);
   const [topHRStartups, setTopHRStartups] = useState<Startup[]>([]);
@@ -138,7 +139,7 @@ const RadarView = ({ searchQuery, showFilters }: RadarViewProps) => {
 
   return (
     <div className="mb-16">
-      <Tabs defaultValue="nouveautes" className="mb-8">
+      <Tabs value={radarTab} onValueChange={setRadarTab} className="mb-8">
         <TabsList className="bg-black/30 border border-startupia-turquoise/20">
           <TabsTrigger value="nouveautes" className="data-[state=active]:bg-startupia-turquoise/20">
             <Clock size={16} className="mr-2" />

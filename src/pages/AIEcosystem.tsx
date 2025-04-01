@@ -6,7 +6,7 @@ import { mockStartups } from '@/data/mockStartups';
 import StartupCard from '@/components/StartupCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, TrendingUp, Rocket, Clock, BadgePlus } from 'lucide-react';
+import { Search, Filter, TrendingUp, Rocket, Clock, BadgePlus, ThumbsUp } from 'lucide-react';
 import { 
   Select,
   SelectContent,
@@ -18,12 +18,19 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import DirectoryView from '@/components/ecosystem/DirectoryView';
 
 const AIEcosystem = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [sortOrder, setSortOrder] = useState('trending');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'directory'
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Get all unique sectors from startups
   const categories = Array.from(new Set(mockStartups.map(startup => startup.sector)));
@@ -60,12 +67,36 @@ const AIEcosystem = () => {
       case 'alphabetical':
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
+      case 'votes':
+        // Using aiImpactScore as a proxy for votes until we implement real voting
+        filtered.sort((a, b) => b.aiImpactScore - a.aiImpactScore);
+        break;
     }
     
     return filtered;
   };
 
   const filteredStartups = filterStartups();
+
+  const handleAddStartup = () => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour ajouter une startup");
+      navigate('/auth');
+      return;
+    }
+    
+    toast.info("Cette fonctionnalité sera bientôt disponible");
+  };
+
+  const handleVote = (startupId: string) => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour voter");
+      navigate('/auth');
+      return;
+    }
+    
+    toast.success("Votre vote a été pris en compte");
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -79,7 +110,7 @@ const AIEcosystem = () => {
       <main className="container mx-auto pt-28 pb-16 px-4 relative z-10">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Découvrir des <span className="gradient-text">Startups IA</span>
+            <span className="gradient-text">Hub IA Français</span>
           </h1>
           <p className="text-xl text-white/80 max-w-3xl mx-auto">
             Explorez les meilleures startups IA françaises, votez pour vos préférées et suivez les derniers lancements
@@ -92,21 +123,22 @@ const AIEcosystem = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50" />
             <Input
               type="text"
-              placeholder="Rechercher une startup IA..."
+              placeholder="Rechercher une startup ou un produit IA..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 bg-black/20 border-startupia-turquoise/30 focus-visible:ring-startupia-turquoise/50"
             />
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Select defaultValue={sortOrder} onValueChange={value => setSortOrder(value)}>
-              <SelectTrigger className="bg-black/20 border-startupia-turquoise/30 w-[180px]">
+              <SelectTrigger className="bg-black/20 border-startupia-turquoise/30 min-w-[130px]">
                 <SelectValue placeholder="Trier par" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="trending">🔥 Tendance</SelectItem>
+                  <SelectItem value="votes">👍 Plus votés</SelectItem>
                   <SelectItem value="newest">⏱️ Récent</SelectItem>
                   <SelectItem value="alphabetical">🔤 Alphabétique</SelectItem>
                 </SelectGroup>
@@ -115,7 +147,7 @@ const AIEcosystem = () => {
             
             <Button
               variant="outline"
-              className="border-startupia-turquoise text-white flex items-center"
+              className="border-startupia-turquoise text-white flex items-center whitespace-nowrap"
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="mr-2" size={16} />
@@ -124,10 +156,19 @@ const AIEcosystem = () => {
 
             <Button
               variant="default"
-              className="bg-startupia-turquoise hover:bg-startupia-turquoise/90"
+              className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black whitespace-nowrap"
+              onClick={handleAddStartup}
             >
               <BadgePlus className="mr-2" size={16} />
-              Poster ma startup
+              Ajouter un projet
+            </Button>
+
+            <Button
+              variant="outline"
+              className="border-startupia-turquoise/30 text-white ml-auto md:ml-0"
+              onClick={() => setViewMode(viewMode === 'grid' ? 'directory' : 'grid')}
+            >
+              {viewMode === 'grid' ? 'Vue détaillée' : 'Vue grille'}
             </Button>
           </div>
         </div>
@@ -203,23 +244,39 @@ const AIEcosystem = () => {
           </TabsList>
           
           <TabsContent value="all" className="mt-6">
-            {filteredStartups.length > 0 ? (
-              renderStartupGrid(filteredStartups)
+            {viewMode === 'directory' ? (
+              <DirectoryView searchQuery={searchQuery} showFilters={false} />
             ) : (
-              <div className="text-center py-16">
-                <p className="text-white/70 text-xl">Aucune startup ne correspond à votre recherche</p>
-              </div>
+              <>
+                {filteredStartups.length > 0 ? (
+                  renderStartupGrid(filteredStartups, handleVote, user !== null)
+                ) : (
+                  <div className="text-center py-16">
+                    <p className="text-white/70 text-xl">Aucune startup ne correspond à votre recherche</p>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
           
           <TabsContent value="featured" className="mt-6">
-            {/* Filter for featured startups (for demo, just use high impact score) */}
-            {renderStartupGrid(filteredStartups.filter(s => s.aiImpactScore >= 4))}
+            {viewMode === 'directory' ? (
+              <DirectoryView searchQuery="" showFilters={false} />
+            ) : (
+              renderStartupGrid(
+                filteredStartups.filter(s => s.aiImpactScore >= 4),
+                handleVote,
+                user !== null
+              )
+            )}
           </TabsContent>
           
           <TabsContent value="recent" className="mt-6">
-            {/* For demo, just use the first few startups */}
-            {renderStartupGrid(filteredStartups.slice(0, 4))}
+            {viewMode === 'directory' ? (
+              <DirectoryView searchQuery="" showFilters={false} />
+            ) : (
+              renderStartupGrid(filteredStartups.slice(0, 4), handleVote, user !== null)
+            )}
           </TabsContent>
         </Tabs>
       </main>
@@ -230,7 +287,11 @@ const AIEcosystem = () => {
 };
 
 // Helper function to render the startup grid with Product Hunt style
-const renderStartupGrid = (startups: typeof mockStartups) => {
+const renderStartupGrid = (
+  startups: typeof mockStartups, 
+  onVote: (id: string) => void,
+  canVote: boolean
+) => {
   if (startups.length === 0) {
     return (
       <div className="text-center py-16">
@@ -241,7 +302,7 @@ const renderStartupGrid = (startups: typeof mockStartups) => {
 
   return (
     <div className="space-y-4">
-      {startups.map((startup, index) => (
+      {startups.map((startup) => (
         <Card 
           key={startup.id} 
           className="p-4 bg-black/30 border border-startupia-turquoise/20 hover:border-startupia-turquoise/50 transition-all hover:bg-black/40"
@@ -274,8 +335,13 @@ const renderStartupGrid = (startups: typeof mockStartups) => {
                 
                 {/* Vote counter */}
                 <div className="flex flex-col items-center">
-                  <Button variant="ghost" className="hover:bg-startupia-turquoise/20 space-x-1">
-                    <TrendingUp size={18} />
+                  <Button 
+                    variant="ghost" 
+                    className="hover:bg-startupia-turquoise/20 space-x-1"
+                    onClick={() => onVote(startup.id)}
+                    disabled={!canVote}
+                  >
+                    <ThumbsUp size={18} />
                     <span>{50 + Math.floor(Math.random() * 200)}</span>
                   </Button>
                 </div>
@@ -299,7 +365,11 @@ const renderStartupGrid = (startups: typeof mockStartups) => {
                 )}
                 
                 <div className="ml-auto">
-                  <Button variant="outline" className="border-startupia-turquoise hover:bg-startupia-turquoise/20">
+                  <Button 
+                    variant="outline" 
+                    className="border-startupia-turquoise hover:bg-startupia-turquoise/20"
+                    onClick={() => window.location.href = `/startup/${startup.id}`}
+                  >
                     Découvrir
                   </Button>
                 </div>

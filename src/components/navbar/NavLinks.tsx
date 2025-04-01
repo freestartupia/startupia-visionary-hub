@@ -17,11 +17,7 @@ const navLinks: NavLink[] = [
   { 
     path: '/ecosystem', 
     label: "Hub IA Français",
-    matches: ['/ecosystem', '/startups', '/radar']
-  },
-  { 
-    path: '/products', 
-    label: "Lancements de produits" 
+    matches: ['/ecosystem', '/startups', '/radar', '/products']
   },
   { 
     path: '/cofounder', 

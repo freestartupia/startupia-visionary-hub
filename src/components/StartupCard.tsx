@@ -1,15 +1,22 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { Star } from "lucide-react";
+import { Star, ThumbsUp } from "lucide-react";
 import { Startup } from "@/types/startup";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface StartupCardProps {
   startup: Startup;
 }
 
 const StartupCard = ({ startup }: StartupCardProps) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
   // Generate stars for AI Impact Score
   const renderStars = (score: number) => {
     return Array(5)
@@ -23,6 +30,19 @@ const StartupCard = ({ startup }: StartupCardProps) => {
           }`}
         />
       ));
+  };
+
+  const handleVote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast.error("Vous devez être connecté pour voter");
+      navigate('/auth');
+      return;
+    }
+    
+    toast.success(`Vous avez upvoté ${startup.name}`);
   };
 
   return (
@@ -49,7 +69,15 @@ const StartupCard = ({ startup }: StartupCardProps) => {
             </div>
           </div>
           <div className="flex items-center">
-            {renderStars(startup.aiImpactScore)}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hover:bg-startupia-turquoise/20 mr-2"
+              onClick={handleVote}
+            >
+              <ThumbsUp size={16} className="mr-1" />
+              <span>{50 + Math.floor(Math.random() * 50)}</span>
+            </Button>
           </div>
         </div>
         <CardContent className="p-4">

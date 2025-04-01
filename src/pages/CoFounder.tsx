@@ -27,6 +27,7 @@ const CoFounder = () => {
   const projects = profiles.filter(profile => profile.profileType === 'project-owner');
 
   const handleCreateProfileClick = () => {
+    console.log("Button clicked");
     if (!user) {
       // Show toast and provide a direct way to navigate to auth page
       toast("Connexion requise", { 
@@ -87,13 +88,12 @@ const CoFounder = () => {
         {!showProfileForm ? (
           <div className="max-w-6xl mx-auto">
             <div className="flex justify-center mb-10">
-              <Button 
+              <button 
                 onClick={handleCreateProfileClick}
-                type="button"
-                className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black button-glow py-6 px-8 text-lg cursor-pointer"
+                className="inline-flex items-center justify-center bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black button-glow py-6 px-8 text-lg cursor-pointer rounded-md"
               >
-                Créer mon profil de co-fondateur <ArrowRight className="ml-2" />
-              </Button>
+                Créer mon profil de co-fondateur <ArrowRight className="ml-2 size-4" />
+              </button>
             </div>
 
             <div className="mb-16">

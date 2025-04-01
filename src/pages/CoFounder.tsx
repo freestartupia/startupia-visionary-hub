@@ -28,6 +28,7 @@ const CoFounder = () => {
 
   const handleCreateProfileClick = () => {
     if (!user) {
+      // Show toast and provide a direct way to navigate to auth page
       toast("Connexion requise", { 
         description: "Vous devez être connecté pour créer un profil",
         action: {
@@ -38,6 +39,7 @@ const CoFounder = () => {
       return;
     }
     
+    // If user is authenticated, show the profile form
     setShowProfileForm(true);
   };
 

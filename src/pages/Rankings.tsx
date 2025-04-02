@@ -2,22 +2,15 @@
 import React from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { mockStartups } from '@/data/mockStartups';
 import { mockProductLaunches } from '@/data/mockProductLaunches';
-import StartupCard from '@/components/StartupCard';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Rocket, TrendingUp, Award, ExternalLink } from 'lucide-react';
 import { incrementValue, supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
-import ProductList from '@/components/productLaunch/ProductList';
-import RankingsList from '@/components/rankings/RankingsList';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import SEO from '@/components/SEO';
+import RankingsHeader from '@/components/rankings/RankingsHeader';
+import RankingsTabContent from '@/components/rankings/RankingsTabContent';
 
 const Rankings = () => {
   const { toast } = useToast();
@@ -85,12 +78,6 @@ const Rankings = () => {
     { id: 4, name: 'Antoine Bernard', avatar: 'https://i.pravatar.cc/150?img=8', points: 132, badge: '👨‍💻 Contributeur' }
   ];
 
-  const handleToolClick = (toolId: number) => {
-    // In production, this would track affiliate link clicks
-    console.log(`Tool ${toolId} affiliate link clicked`);
-    // Could also track with analytics or increment in database
-  };
-
   return (
     <div className="min-h-screen bg-black text-white">
       <SEO 
@@ -104,14 +91,10 @@ const Rankings = () => {
       <Navbar />
       
       <main className="container mx-auto pt-24 pb-16 px-4 relative z-10">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Classements & <span className="text-startupia-turquoise">Tendances</span>
-          </h1>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            Découvrez les startups et outils IA français qui font l'actualité
-          </p>
-        </div>
+        <RankingsHeader 
+          title="Classements & Tendances" 
+          subtitle="Découvrez les startups et outils IA français qui font l'actualité"
+        />
         
         <Tabs defaultValue="weekly" className="mb-10">
           <div className="flex justify-center mb-6">
@@ -122,101 +105,36 @@ const Rankings = () => {
             </TabsList>
           </div>
 
-          {/* The content will be the same for all tabs in this demo */}
-          <TabsContent value="weekly" className="space-y-10">
-            <section>
-              <div className="flex items-center gap-2 mb-6">
-                <Trophy className="text-startupia-gold" />
-                <h2 className="text-2xl font-bold">Top Startups les plus votées</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {topStartups.map((startup, index) => (
-                  <div key={startup.id} className="relative">
-                    {index === 0 && (
-                      <div className="absolute -top-4 -left-4 z-10">
-                        <Badge variant="outline" className="bg-startupia-gold text-black border-none px-3 py-1 flex items-center gap-1">
-                          <Trophy size={14} />
-                          <span>N°1</span>
-                        </Badge>
-                      </div>
-                    )}
-                    <StartupCard startup={startup} />
-                  </div>
-                ))}
-              </div>
-              
-              <div className="flex justify-center mt-6">
-                <Link to="/ecosystem" className="text-startupia-turquoise hover:underline inline-flex items-center">
-                  Voir toutes les startups 
-                  <ExternalLink className="ml-1 h-4 w-4" />
-                </Link>
-              </div>
-            </section>
-            
-            <section>
-              <div className="flex items-center gap-2 mb-6">
-                <Rocket className="text-startupia-turquoise" />
-                <h2 className="text-2xl font-bold">Nouvelles startups prometteuses</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {newStartups.map((startup) => (
-                  <StartupCard key={startup.id} startup={startup} />
-                ))}
-              </div>
-            </section>
-            
-            
-            <section>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="text-startupia-turquoise" />
-                  <h2 className="text-2xl font-bold">Top Outils IA</h2>
-                </div>
-                <Link to="/tools" className="text-startupia-turquoise hover:underline flex items-center">
-                  Voir tous les outils
-                  <ExternalLink className="ml-1 h-4 w-4" />
-                </Link>
-              </div>
-              
-              <Card className="bg-black/50 border-startupia-turquoise/20">
-                <CardContent className="pt-6">
-                  <RankingsList items={topAIToolsWithAffiliates} showDescription={true} />
-                  
-                  <div className="mt-6 flex justify-center">
-                    <Button asChild variant="outline" className="border-startupia-turquoise text-startupia-turquoise">
-                      <Link to="/tools">
-                        Explorer tous les outils IA
-                        <ExternalLink className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-            
-            <section>
-              <div className="flex items-center gap-2 mb-6">
-                <Award className="text-startupia-gold" />
-                <h2 className="text-2xl font-bold">Top Contributeurs</h2>
-              </div>
-              <Card className="bg-black/50 border-startupia-turquoise/20">
-                <CardContent>
-                  <RankingsList items={topContributors} />
-                </CardContent>
-              </Card>
-            </section>
-          </TabsContent>
-
-          <TabsContent value="monthly">
-            <div className="text-center py-10">
-              <p className="text-white/70 mb-4">Même contenu que l'onglet "Cette semaine" pour la démo</p>
-            </div>
+          {/* Weekly content */}
+          <TabsContent value="weekly">
+            <RankingsTabContent 
+              topStartups={topStartups}
+              newStartups={newStartups}
+              topAIToolsWithAffiliates={topAIToolsWithAffiliates}
+              topContributors={topContributors}
+            />
           </TabsContent>
           
+          {/* Monthly content */}
+          <TabsContent value="monthly">
+            <RankingsTabContent 
+              topStartups={topStartups}
+              newStartups={newStartups}
+              topAIToolsWithAffiliates={topAIToolsWithAffiliates}
+              topContributors={topContributors}
+              isDemo={true}
+            />
+          </TabsContent>
+          
+          {/* All time content */}
           <TabsContent value="alltime">
-            <div className="text-center py-10">
-              <p className="text-white/70 mb-4">Même contenu que l'onglet "Cette semaine" pour la démo</p>
-            </div>
+            <RankingsTabContent 
+              topStartups={topStartups}
+              newStartups={newStartups}
+              topAIToolsWithAffiliates={topAIToolsWithAffiliates}
+              topContributors={topContributors}
+              isDemo={true}
+            />
           </TabsContent>
         </Tabs>
       </main>

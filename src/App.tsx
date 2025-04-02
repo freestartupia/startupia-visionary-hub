@@ -20,7 +20,6 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Tools from "./pages/Tools";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Navbar from "./components/navbar/Navbar";
 import UserProfile from "./pages/UserProfile";
 import CofounderProfileEdit from "./pages/CofounderProfileEdit";
 
@@ -34,7 +33,6 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <Navbar />
             <div className="min-h-screen pt-16 w-full">
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -46,6 +44,7 @@ const App = () => (
                 <Route path="/cofounder/create" element={<CofounderProfileEdit />} />
                 <Route path="/cofounder/edit/:id" element={<CofounderProfileEdit />} />
                 <Route path="/community" element={<Community />} />
+                <Route path="/community/post/:postId" element={<Community />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/rankings" element={<Rankings />} />
                 <Route path="/tools" element={<Tools />} />

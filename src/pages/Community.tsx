@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,19 +9,40 @@ import ServicesMarketplace from '@/components/community/ServicesMarketplace';
 import ResourcesLibrary from '@/components/community/ResourcesLibrary';
 import CollaborativeProjects from '@/components/community/CollaborativeProjects';
 import CommunityFeed from '@/components/community/CommunityFeed';
+import ForumPostDetail from '@/components/community/ForumPostDetail';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
 import SEO from '@/components/SEO';
 
 const Community = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { postId } = useParams<{ postId?: string }>();
   const [activeTab, setActiveTab] = useState('forum');
+  
+  // Vérifier si nous sommes sur une page de post individuel
+  const isPostDetail = location.pathname.includes('/post/');
+  
   const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
+
+  // Extraire l'onglet de l'URL si présent
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && ['forum', 'services', 'resources', 'projects', 'feed'].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [location]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    
+    // Mettre à jour l'URL sans recharger la page
+    navigate({
+      pathname: '/community',
+      search: `?tab=${value}`
+    }, { replace: true });
   };
 
   return (
@@ -45,35 +67,39 @@ const Community = () => {
           </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-6xl mx-auto">
-          <TabsList className="grid grid-cols-5 mb-8">
-            <TabsTrigger value="forum">Forum IA</TabsTrigger>
-            <TabsTrigger value="services">Services</TabsTrigger>
-            <TabsTrigger value="resources">Formations</TabsTrigger>
-            <TabsTrigger value="projects">Projets</TabsTrigger>
-            <TabsTrigger value="feed">Fil d'actu</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="forum" className="mt-0">
-            <ForumSection requireAuth={true} />
-          </TabsContent>
-          
-          <TabsContent value="services" className="mt-0">
-            <ServicesMarketplace requireAuth={true} />
-          </TabsContent>
-          
-          <TabsContent value="resources" className="mt-0">
-            <ResourcesLibrary requireAuth={true} />
-          </TabsContent>
-          
-          <TabsContent value="projects" className="mt-0">
-            <CollaborativeProjects requireAuth={true} />
-          </TabsContent>
-          
-          <TabsContent value="feed" className="mt-0">
-            <CommunityFeed requireAuth={true} />
-          </TabsContent>
-        </Tabs>
+        {isPostDetail ? (
+          <ForumPostDetail />
+        ) : (
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-6xl mx-auto">
+            <TabsList className="grid grid-cols-5 mb-8">
+              <TabsTrigger value="forum">Forum IA</TabsTrigger>
+              <TabsTrigger value="services">Services</TabsTrigger>
+              <TabsTrigger value="resources">Formations</TabsTrigger>
+              <TabsTrigger value="projects">Projets</TabsTrigger>
+              <TabsTrigger value="feed">Fil d'actu</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="forum" className="mt-0">
+              <ForumSection requireAuth={true} />
+            </TabsContent>
+            
+            <TabsContent value="services" className="mt-0">
+              <ServicesMarketplace requireAuth={true} />
+            </TabsContent>
+            
+            <TabsContent value="resources" className="mt-0">
+              <ResourcesLibrary requireAuth={true} />
+            </TabsContent>
+            
+            <TabsContent value="projects" className="mt-0">
+              <CollaborativeProjects requireAuth={true} />
+            </TabsContent>
+            
+            <TabsContent value="feed" className="mt-0">
+              <CommunityFeed requireAuth={true} />
+            </TabsContent>
+          </Tabs>
+        )}
       </main>
 
       <Footer />

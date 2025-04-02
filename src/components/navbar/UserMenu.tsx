@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface UserMenuProps {
   isMobile?: boolean;
@@ -22,31 +23,44 @@ interface UserMenuProps {
 export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
   const { user, signOut } = useAuth();
   const [notificationCount, setNotificationCount] = useState(0);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
-  // Fetch notifications count when user is logged in
+  // Fetch user profile and notifications count when user is logged in
   useEffect(() => {
     if (!user) return;
 
-    const fetchNotifications = async () => {
+    const fetchUserData = async () => {
       try {
-        const { data, error } = await supabase
+        // Fetch user profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (!profileError && profileData) {
+          setUserProfile(profileData);
+        }
+
+        // Fetch notifications
+        const { data: notifData, error: notifError } = await supabase
           .from('match_notifications')
           .select('id')
           .eq('recipient_id', user.id)
           .eq('status', 'pending');
 
-        if (error) {
-          console.error('Error fetching notifications:', error);
+        if (notifError) {
+          console.error('Error fetching notifications:', notifError);
           return;
         }
 
-        setNotificationCount(data?.length || 0);
+        setNotificationCount(notifData?.length || 0);
       } catch (error) {
-        console.error('Error in notification fetch:', error);
+        console.error('Error in user data fetch:', error);
       }
     };
 
-    fetchNotifications();
+    fetchUserData();
 
     // Set up realtime subscription for new notifications
     const channel = supabase
@@ -57,7 +71,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
         table: 'match_notifications',
         filter: `recipient_id=eq.${user.id}`,
       }, () => {
-        fetchNotifications();
+        fetchUserData();
       })
       .subscribe();
 
@@ -69,12 +83,37 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
   const handleSignOut = async () => {
     await signOut();
   };
+
+  const getDisplayName = () => {
+    if (userProfile?.first_name && userProfile?.last_name) {
+      return `${userProfile.first_name} ${userProfile.last_name}`;
+    }
+    return user?.email?.split('@')[0] || 'Utilisateur';
+  };
+  
+  const getInitials = () => {
+    if (userProfile?.first_name && userProfile?.last_name) {
+      return `${userProfile.first_name[0]}${userProfile.last_name[0]}`.toUpperCase();
+    }
+    return user?.email?.[0].toUpperCase() || 'U';
+  };
   
   if (isMobile) {
     return (
       <div className="border-t border-white/10 pt-4 mt-2">
         <div className="flex justify-between items-center px-4 py-2">
-          <span className="text-white/80 truncate">{user?.email}</span>
+          <div className="flex items-center">
+            <Avatar className="h-8 w-8 mr-3">
+              {userProfile?.avatar_url ? (
+                <AvatarImage src={userProfile.avatar_url} alt={getDisplayName()} />
+              ) : (
+                <AvatarFallback className="bg-black text-white">
+                  {getInitials()}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <span className="text-white/80 truncate">{getDisplayName()}</span>
+          </div>
           <div className="relative">
             <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10">
               <Bell size={18} />
@@ -97,9 +136,15 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
               Mon profil
             </Link>
           </Button>
-          <Button variant="ghost" className="w-full justify-start text-white/80 hover:text-white hover:bg-white/5">
-            <Settings size={16} className="mr-2" />
-            Paramètres
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-white/80 hover:text-white hover:bg-white/5"
+            asChild
+          >
+            <Link to="/profile?tab=settings">
+              <Settings size={16} className="mr-2" />
+              Paramètres
+            </Link>
           </Button>
           <Button 
             variant="ghost" 
@@ -117,36 +162,65 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
   return (
     <div className="flex items-center gap-4 ml-4">
       <div className="relative">
-        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-          <Bell size={20} />
-        </Button>
-        {notificationCount > 0 && (
-          <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500">
-            {notificationCount}
-          </Badge>
-        )}
+        <Link to="/profile">
+          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
+            <Bell size={20} />
+            {notificationCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500">
+                {notificationCount}
+              </Badge>
+            )}
+          </Button>
+        </Link>
       </div>
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full">
-            <User size={20} />
+          <Button variant="ghost" className="text-white hover:bg-white/10 rounded-full p-0 h-9 w-9">
+            <Avatar>
+              {userProfile?.avatar_url ? (
+                <AvatarImage src={userProfile.avatar_url} alt={getDisplayName()} />
+              ) : (
+                <AvatarFallback className="bg-black text-white border border-white/20">
+                  {getInitials()}
+                </AvatarFallback>
+              )}
+            </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 bg-black/90 backdrop-blur-lg border border-white/10 text-white">
           <DropdownMenuLabel className="font-normal">
-            <div className="font-medium truncate">{user?.email}</div>
+            <div className="flex items-center space-x-2">
+              <Avatar className="h-8 w-8">
+                {userProfile?.avatar_url ? (
+                  <AvatarImage src={userProfile.avatar_url} alt={getDisplayName()} />
+                ) : (
+                  <AvatarFallback className="bg-black text-white border border-white/20">
+                    {getInitials()}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <div>
+                <p className="font-medium truncate">{getDisplayName()}</p>
+                <p className="text-xs text-white/60 truncate">{user?.email}</p>
+              </div>
+            </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-white/10" />
           <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer">
             <Link to="/profile" className="flex w-full">
               <User className="mr-2 h-4 w-4" />
               <span>Profil</span>
+              {notificationCount > 0 && (
+                <Badge className="ml-2 bg-red-500">{notificationCount}</Badge>
+              )}
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer">
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Paramètres</span>
+            <Link to="/profile?tab=settings" className="flex w-full">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Paramètres</span>
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-white/10" />
           <DropdownMenuItem onClick={handleSignOut} className="text-rose-500 hover:bg-rose-500/10 cursor-pointer">

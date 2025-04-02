@@ -30,6 +30,7 @@ export type Database = {
           role: string
           sector: string
           seeking_roles: string[] | null
+          user_id: string
           vision: string
           website_url: string | null
         }
@@ -53,6 +54,7 @@ export type Database = {
           role: string
           sector: string
           seeking_roles?: string[] | null
+          user_id: string
           vision: string
           website_url?: string | null
         }
@@ -76,6 +78,7 @@ export type Database = {
           role?: string
           sector?: string
           seeking_roles?: string[] | null
+          user_id?: string
           vision?: string
           website_url?: string | null
         }

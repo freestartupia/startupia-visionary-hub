@@ -8,7 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { ThumbsUp, ArrowLeft, MessageCircle, Eye, Calendar, Send } from 'lucide-react';
 import { ForumPost, ForumReply } from '@/types/community';
-import { getForumPost, addReplyToPost, togglePostLike, toggleReplyLike, incrementPostViews } from '@/services/forumService';
+import { 
+  getForumPost, 
+  addReplyToPost, 
+  togglePostLike, 
+  toggleReplyLike, 
+  incrementPostViews 
+} from '@/services/forumService';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import Navbar from '@/components/navbar/Navbar';
 import CoFounderSearch from '@/components/CoFounderSearch';
 import CoFounderProfile from '@/components/CoFounderProfile';
 import ProjectsList from '@/components/ProjectsList';
@@ -76,6 +77,8 @@ const CoFounder = () => {
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
       <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+      
+      <Navbar />
       
       <main className="container mx-auto pt-28 pb-16 px-4">
         <div className="text-center mb-10">

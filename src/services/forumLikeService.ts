@@ -72,8 +72,8 @@ export const togglePostLike = async (postId: string): Promise<{ liked: boolean, 
     }
     
     return { 
-      liked: data.liked, 
-      newCount: data.new_count 
+      liked: data.liked as boolean, 
+      newCount: data.new_count as number 
     };
   } catch (error) {
     console.error("Error in togglePostLike:", error);
@@ -109,8 +109,8 @@ export const toggleReplyLike = async (replyId: string): Promise<{ liked: boolean
     }
     
     return { 
-      liked: data.liked, 
-      newCount: data.new_count 
+      liked: data.liked as boolean, 
+      newCount: data.new_count as number 
     };
   } catch (error) {
     console.error("Error in toggleReplyLike:", error);

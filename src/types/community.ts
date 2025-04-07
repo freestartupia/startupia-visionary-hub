@@ -60,6 +60,7 @@ export interface ForumPost {
   replies: ForumReply[];
   views: number;
   isPinned?: boolean;
+  isLiked?: boolean;
 }
 
 export interface ForumReply {
@@ -71,7 +72,10 @@ export interface ForumReply {
   createdAt: string;
   updatedAt?: string;
   likes: number;
-  parentId?: string; // For nested replies
+  parentId?: string;
+  replyParentId?: string;
+  isLiked?: boolean;
+  nestedReplies?: ForumReply[];
 }
 
 export interface ServiceListing {

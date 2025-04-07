@@ -67,6 +67,10 @@ export const togglePostLike = async (postId: string): Promise<{ liked: boolean, 
       throw error;
     }
     
+    if (!data) {
+      throw new Error("No data returned from toggle_post_like");
+    }
+    
     return { 
       liked: data.liked, 
       newCount: data.new_count 
@@ -98,6 +102,10 @@ export const toggleReplyLike = async (replyId: string): Promise<{ liked: boolean
       console.error("Error toggling reply like:", error);
       toast.error("Une erreur est survenue");
       throw error;
+    }
+    
+    if (!data) {
+      throw new Error("No data returned from toggle_reply_like");
     }
     
     return { 

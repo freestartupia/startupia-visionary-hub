@@ -2,17 +2,23 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface LikeResponse {
+  liked: boolean;
+  newCount: number;
+}
+
 // Function to check if a user has liked a post
 export const getPostLikeStatus = async (postId: string, userId: string): Promise<boolean> => {
   try {
-    // Use RPC call instead of directly accessing the forum_post_likes table
-    const { data, error } = await supabase.rpc('check_post_like', {
-      post_id_param: postId,
-      user_id_param: userId
-    });
-    
-    if (error) {
-      console.error("Error checking post like status:", error);
+    const { data, error } = await supabase
+      .from('forum_post_likes')
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') { // PGRST116 is the error code for "no rows returned"
+      console.error("Error checking like status:", error);
       return false;
     }
     
@@ -26,13 +32,14 @@ export const getPostLikeStatus = async (postId: string, userId: string): Promise
 // Function to check if a user has liked a reply
 export const getReplyLikeStatus = async (replyId: string, userId: string): Promise<boolean> => {
   try {
-    // Use RPC call instead of directly accessing the forum_reply_likes table
-    const { data, error } = await supabase.rpc('check_reply_like', {
-      reply_id_param: replyId,
-      user_id_param: userId
-    });
-    
-    if (error) {
+    const { data, error } = await supabase
+      .from('forum_reply_likes')
+      .select('id')
+      .eq('reply_id', replyId)
+      .eq('user_id', userId)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') {
       console.error("Error checking reply like status:", error);
       return false;
     }
@@ -44,8 +51,8 @@ export const getReplyLikeStatus = async (replyId: string, userId: string): Promi
   }
 };
 
-// Function to toggle like/unlike a post
-export const togglePostLike = async (postId: string): Promise<{ liked: boolean, newCount: number }> => {
+// Function to toggle like on a post
+export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
   try {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     
@@ -55,34 +62,86 @@ export const togglePostLike = async (postId: string): Promise<{ liked: boolean, 
       throw userError || new Error("User not authenticated");
     }
     
-    // Use an RPC to handle the toggle operation in a single call
-    const { data, error } = await supabase.rpc('toggle_post_like', {
-      post_id_param: postId,
-      user_id_param: userData.user.id
-    });
+    const userId = userData.user.id;
     
-    if (error) {
-      console.error("Error toggling post like:", error);
-      toast.error("Une erreur est survenue");
-      throw error;
+    // Check if user already liked the post
+    const { data: existingLike, error: likeError } = await supabase
+      .from('forum_post_likes')
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+      
+    if (likeError && likeError.code !== 'PGRST116') {
+      console.error("Error checking existing like:", likeError);
+      throw likeError;
     }
     
-    if (!data) {
-      throw new Error("No data returned from toggle_post_like");
+    if (existingLike) {
+      // Unlike: Remove like from database
+      const { error: unlikeError } = await supabase
+        .from('forum_post_likes')
+        .delete()
+        .eq('id', existingLike.id);
+        
+      if (unlikeError) {
+        console.error("Error unliking post:", unlikeError);
+        throw unlikeError;
+      }
+      
+      // Decrement likes count
+      const { data: updateData, error: updateError } = await supabase.rpc(
+        'decrement_post_likes', 
+        { post_id: postId }
+      );
+      
+      if (updateError) {
+        console.error("Error decrementing likes:", updateError);
+        throw updateError;
+      }
+      
+      return {
+        liked: false,
+        newCount: updateData.new_count
+      };
+    } else {
+      // Like: Add new like to database
+      const { error: addLikeError } = await supabase
+        .from('forum_post_likes')
+        .insert({
+          post_id: postId,
+          user_id: userId
+        });
+        
+      if (addLikeError) {
+        console.error("Error liking post:", addLikeError);
+        throw addLikeError;
+      }
+      
+      // Increment likes count
+      const { data: updateData, error: updateError } = await supabase.rpc(
+        'increment_post_likes', 
+        { post_id: postId }
+      );
+      
+      if (updateError) {
+        console.error("Error incrementing likes:", updateError);
+        throw updateError;
+      }
+      
+      return {
+        liked: true,
+        newCount: updateData.new_count
+      };
     }
-    
-    return { 
-      liked: data.liked as boolean, 
-      newCount: data.new_count as number 
-    };
   } catch (error) {
     console.error("Error in togglePostLike:", error);
     throw error;
   }
 };
 
-// Function to toggle like/unlike a reply
-export const toggleReplyLike = async (replyId: string): Promise<{ liked: boolean, newCount: number }> => {
+// Function to toggle like on a reply
+export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> => {
   try {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     
@@ -92,26 +151,78 @@ export const toggleReplyLike = async (replyId: string): Promise<{ liked: boolean
       throw userError || new Error("User not authenticated");
     }
     
-    // Use an RPC to handle the toggle operation in a single call
-    const { data, error } = await supabase.rpc('toggle_reply_like', {
-      reply_id_param: replyId,
-      user_id_param: userData.user.id
-    });
+    const userId = userData.user.id;
     
-    if (error) {
-      console.error("Error toggling reply like:", error);
-      toast.error("Une erreur est survenue");
-      throw error;
+    // Check if user already liked the reply
+    const { data: existingLike, error: likeError } = await supabase
+      .from('forum_reply_likes')
+      .select('id')
+      .eq('reply_id', replyId)
+      .eq('user_id', userId)
+      .single();
+      
+    if (likeError && likeError.code !== 'PGRST116') {
+      console.error("Error checking existing reply like:", likeError);
+      throw likeError;
     }
     
-    if (!data) {
-      throw new Error("No data returned from toggle_reply_like");
+    if (existingLike) {
+      // Unlike: Remove like from database
+      const { error: unlikeError } = await supabase
+        .from('forum_reply_likes')
+        .delete()
+        .eq('id', existingLike.id);
+        
+      if (unlikeError) {
+        console.error("Error unliking reply:", unlikeError);
+        throw unlikeError;
+      }
+      
+      // Decrement likes count
+      const { data: updateData, error: updateError } = await supabase.rpc(
+        'decrement_reply_likes', 
+        { reply_id: replyId }
+      );
+      
+      if (updateError) {
+        console.error("Error decrementing reply likes:", updateError);
+        throw updateError;
+      }
+      
+      return {
+        liked: false,
+        newCount: updateData.new_count
+      };
+    } else {
+      // Like: Add new like to database
+      const { error: addLikeError } = await supabase
+        .from('forum_reply_likes')
+        .insert({
+          reply_id: replyId,
+          user_id: userId
+        });
+        
+      if (addLikeError) {
+        console.error("Error liking reply:", addLikeError);
+        throw addLikeError;
+      }
+      
+      // Increment likes count
+      const { data: updateData, error: updateError } = await supabase.rpc(
+        'increment_reply_likes', 
+        { reply_id: replyId }
+      );
+      
+      if (updateError) {
+        console.error("Error incrementing reply likes:", updateError);
+        throw updateError;
+      }
+      
+      return {
+        liked: true,
+        newCount: updateData.new_count
+      };
     }
-    
-    return { 
-      liked: data.liked as boolean, 
-      newCount: data.new_count as number 
-    };
   } catch (error) {
     console.error("Error in toggleReplyLike:", error);
     throw error;

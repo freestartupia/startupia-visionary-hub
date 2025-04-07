@@ -7,6 +7,7 @@ import { ForumPost } from '@/types/community';
 import { getForumPosts, togglePostLike } from '@/services/forumService';
 import CreateForumPost from './CreateForumPost';
 import ForumPostList from './forum/ForumPostList';
+import ForumSearch from './forum/ForumSearch';
 
 interface ForumSectionProps {
   requireAuth?: boolean;
@@ -14,7 +15,9 @@ interface ForumSectionProps {
 
 const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
   const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<ForumPost[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -22,11 +25,40 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     fetchPosts();
   }, []);
 
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredPosts(posts);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = posts.filter(post => {
+      // Search in post title, content, author name, and category
+      const matchesPost = 
+        post.title.toLowerCase().includes(query) ||
+        post.content.toLowerCase().includes(query) ||
+        post.authorName.toLowerCase().includes(query) ||
+        post.category.toLowerCase().includes(query) ||
+        (post.tags && post.tags.some(tag => tag.toLowerCase().includes(query)));
+        
+      // Search in replies content and author names
+      const matchesReplies = post.replies && post.replies.some(reply => 
+        reply.content.toLowerCase().includes(query) ||
+        reply.authorName.toLowerCase().includes(query)
+      );
+      
+      return matchesPost || matchesReplies;
+    });
+    
+    setFilteredPosts(filtered);
+  }, [searchQuery, posts]);
+
   const fetchPosts = async () => {
     try {
       setIsLoading(true);
       const fetchedPosts = await getForumPosts();
       setPosts(fetchedPosts);
+      setFilteredPosts(fetchedPosts);
     } catch (error) {
       console.error('Erreur lors du chargement des posts:', error);
       toast.error('Erreur lors du chargement des discussions');
@@ -48,8 +80,19 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
       const result = await togglePostLike(postId);
       
       // Mettre à jour l'état local
-      setPosts(prevPosts => 
-        prevPosts.map(post => 
+      const updatedPosts = posts.map(post => 
+        post.id === postId ? {
+          ...post,
+          likes: result.newCount,
+          isLiked: result.liked
+        } : post
+      );
+      
+      setPosts(updatedPosts);
+      
+      // Also update filtered posts
+      setFilteredPosts(prevFiltered => 
+        prevFiltered.map(post => 
           post.id === postId ? {
             ...post,
             likes: result.newCount,
@@ -63,15 +106,31 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     }
   };
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <h2 className="text-2xl font-bold">Forum IA</h2>
-        <CreateForumPost onPostCreated={fetchPosts} />
+        <div className="flex flex-col md:flex-row gap-4">
+          <ForumSearch onSearch={handleSearch} />
+          <CreateForumPost onPostCreated={fetchPosts} />
+        </div>
       </div>
 
+      {searchQuery && (
+        <div className="text-sm text-gray-400">
+          {filteredPosts.length === 0
+            ? "Aucun résultat trouvé"
+            : `${filteredPosts.length} résultat${filteredPosts.length > 1 ? 's' : ''} trouvé${filteredPosts.length > 1 ? 's' : ''}`
+          }
+        </div>
+      )}
+
       <ForumPostList
-        posts={posts}
+        posts={filteredPosts}
         isLoading={isLoading}
         onLikePost={handleLikePost}
         onPostCreated={fetchPosts}

@@ -1,115 +1,77 @@
 
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ProjectStage } from '@/types/cofounders';
 
 interface ProfileDetailsProps {
-  form: UseFormReturn<any>;
+  projectName: string;
+  setProjectName: (value: string) => void;
+  projectStage: ProjectStage | '';
+  setProjectStage: (value: ProjectStage | '') => void;
+  vision: string;
+  setVision: (value: string) => void;
 }
 
-const ProfileDetails: React.FC<ProfileDetailsProps> = ({ form }) => {
+const ProfileDetails: React.FC<ProfileDetailsProps> = ({
+  projectName,
+  setProjectName,
+  projectStage,
+  setProjectStage,
+  vision,
+  setVision,
+}) => {
   return (
-    <div className="space-y-6">
-      {form.watch('profileType') === 'project-owner' && (
-        <>
-          <FormField
-            control={form.control}
-            name="projectName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nom du projet</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nom de votre startup/projet" {...field} className="bg-black/20 border-white/20" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Détails du projet</h3>
 
-          <FormField
-            control={form.control}
-            name="projectStage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Stade du projet</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="bg-black/20 border-white/20">
-                      <SelectValue placeholder="Sélectionner un stade" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Idée">Idée</SelectItem>
-                    <SelectItem value="Prototype">Prototype</SelectItem>
-                    <SelectItem value="MVP">MVP</SelectItem>
-                    <SelectItem value="Beta">Beta</SelectItem>
-                    <SelectItem value="Lancé">Lancé</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </>
-      )}
+      <div className="space-y-2">
+        <Label htmlFor="projectName">Nom du projet</Label>
+        <Input
+          id="projectName"
+          value={projectName}
+          onChange={(e) => setProjectName(e.target.value)}
+          placeholder="Nom de votre projet ou startup"
+        />
+      </div>
 
-      <FormField
-        control={form.control}
-        name="objective"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Objectif</FormLabel>
-            <Select 
-              onValueChange={field.onChange} 
-              defaultValue={field.value}
-            >
-              <FormControl>
-                <SelectTrigger className="bg-black/20 border-white/20">
-                  <SelectValue placeholder="Sélectionner un objectif" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="Créer une startup">Créer une startup</SelectItem>
-                <SelectItem value="Trouver un associé">Trouver un associé</SelectItem>
-                <SelectItem value="Rejoindre un projet">Rejoindre un projet</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="projectStage">Stade du projet</Label>
+        <Select
+          value={projectStage}
+          onValueChange={(value) => setProjectStage(value as ProjectStage)}
+        >
+          <SelectTrigger id="projectStage">
+            <SelectValue placeholder="Sélectionner un stade" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Sélectionner un stade</SelectItem>
+            <SelectItem value="Idée">Idée</SelectItem>
+            <SelectItem value="MVP">MVP</SelectItem>
+            <SelectItem value="Beta">Beta</SelectItem>
+            <SelectItem value="Lancé">Lancé</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      <FormField
-        control={form.control}
-        name="availability"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Disponibilité</FormLabel>
-            <Select 
-              onValueChange={field.onChange} 
-              defaultValue={field.value}
-            >
-              <FormControl>
-                <SelectTrigger className="bg-black/20 border-white/20">
-                  <SelectValue placeholder="Sélectionner une disponibilité" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="Temps plein">Temps plein</SelectItem>
-                <SelectItem value="Mi-temps">Mi-temps</SelectItem>
-                <SelectItem value="Soirs et weekends">Soirs et weekends</SelectItem>
-                <SelectItem value="Remote">Remote</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="space-y-2">
+        <Label htmlFor="vision">Vision</Label>
+        <Textarea
+          id="vision"
+          value={vision}
+          onChange={(e) => setVision(e.target.value)}
+          placeholder="Décrivez votre vision à long terme pour ce projet"
+          rows={3}
+        />
+      </div>
     </div>
   );
 };

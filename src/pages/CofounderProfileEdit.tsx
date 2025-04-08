@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +6,7 @@ import { getCofounderProfile, updateCofounderProfile, createCofounderProfile } f
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save } from 'lucide-react';
-import { CofounderProfile, ProfileType, Role, Sector, Objective, Availability, Region, AITool } from '@/types/cofounders';
+import { CofounderProfile, ProfileType, Role, Sector, Objective, Availability, Region, AITool, ProjectStage } from '@/types/cofounders';
 import { 
   Form,
   FormControl,
@@ -132,7 +131,8 @@ const CofounderProfileEdit = () => {
         availability: data.availability as Availability,
         region: data.region as Region,
         seekingRoles: data.seekingRoles as Role[],
-        aiTools: data.aiTools as AITool[] // Cast aiTools to AITool[] type
+        aiTools: data.aiTools as AITool[],
+        projectStage: data.projectStage as ProjectStage | undefined
       };
 
       if (isNewProfile) {

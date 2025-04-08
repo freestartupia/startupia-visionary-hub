@@ -11,24 +11,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ProjectStage } from '@/types/cofounders';
+import { UseFormReturn } from 'react-hook-form';
 
 interface ProfileDetailsProps {
-  projectName: string;
-  setProjectName: (value: string) => void;
-  projectStage: ProjectStage | '';
-  setProjectStage: (value: ProjectStage | '') => void;
-  vision: string;
-  setVision: (value: string) => void;
+  form: UseFormReturn<any, any, undefined>;
 }
 
-const ProfileDetails: React.FC<ProfileDetailsProps> = ({
-  projectName,
-  setProjectName,
-  projectStage,
-  setProjectStage,
-  vision,
-  setVision,
-}) => {
+const ProfileDetails: React.FC<ProfileDetailsProps> = ({ form }) => {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Détails du projet</h3>
@@ -37,8 +26,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         <Label htmlFor="projectName">Nom du projet</Label>
         <Input
           id="projectName"
-          value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
+          {...form.register('projectName')}
           placeholder="Nom de votre projet ou startup"
         />
       </div>
@@ -46,8 +34,8 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       <div className="space-y-2">
         <Label htmlFor="projectStage">Stade du projet</Label>
         <Select
-          value={projectStage}
-          onValueChange={(value) => setProjectStage(value as ProjectStage)}
+          value={form.watch('projectStage')}
+          onValueChange={(value) => form.setValue('projectStage', value as ProjectStage)}
         >
           <SelectTrigger id="projectStage">
             <SelectValue placeholder="Sélectionner un stade" />
@@ -66,8 +54,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         <Label htmlFor="vision">Vision</Label>
         <Textarea
           id="vision"
-          value={vision}
-          onChange={(e) => setVision(e.target.value)}
+          {...form.register('vision')}
           placeholder="Décrivez votre vision à long terme pour ce projet"
           rows={3}
         />

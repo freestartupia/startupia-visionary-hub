@@ -67,6 +67,8 @@ export type Region =
   | "Remote"
   | "Autre";
 
+export type ProjectStage = 'Idée' | 'MVP' | 'Beta' | 'Lancé';
+
 export type CofounderProfile = {
   id: string;
   name: string;
@@ -87,7 +89,7 @@ export type CofounderProfile = {
   dateCreated: string;
   hasAIBadge: boolean;
   projectName?: string;
-  projectStage?: 'Idée' | 'MVP' | 'Beta' | 'Lancé';
+  projectStage?: ProjectStage;
   matches: string[]; // IDs of profiles that matched with this one
 };
 

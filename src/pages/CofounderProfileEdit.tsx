@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -5,12 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getCofounderProfile, updateCofounderProfile, createCofounderProfile } from '@/services/cofounderService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Trash2 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { ArrowLeft, Save } from 'lucide-react';
 import { CofounderProfile, ProfileType, Role, Sector, Objective, Availability, Region } from '@/types/cofounders';
 import { 
   Form,
@@ -19,11 +15,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription
 } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import ProfileBasicInfo from '@/components/profile/cofounder/ProfileBasicInfo';
+import ProfileDetails from '@/components/profile/cofounder/ProfileDetails';
+import ProfileLinks from '@/components/profile/cofounder/ProfileLinks';
+import DeleteProfileButton from '@/components/profile/cofounder/DeleteProfileButton';
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -58,7 +57,6 @@ const CofounderProfileEdit = () => {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -98,11 +96,11 @@ const CofounderProfileEdit = () => {
           form.reset({
             ...fetchedProfile,
             profileType: fetchedProfile.profileType as ProfileType,
-            role: fetchedProfile.role as string,
-            sector: fetchedProfile.sector as string,
-            objective: fetchedProfile.objective as string,
-            availability: fetchedProfile.availability as string,
-            region: fetchedProfile.region as string,
+            role: fetchedProfile.role,
+            sector: fetchedProfile.sector,
+            objective: fetchedProfile.objective,
+            availability: fetchedProfile.availability,
+            region: fetchedProfile.region,
             hasAIBadge: fetchedProfile.hasAIBadge || false
           });
         }
@@ -132,7 +130,8 @@ const CofounderProfileEdit = () => {
         sector: data.sector as Sector,
         objective: data.objective as Objective,
         availability: data.availability as Availability,
-        region: data.region as Region
+        region: data.region as Region,
+        seekingRoles: data.seekingRoles as Role[] // Cast seekingRoles to Role[] type
       };
 
       if (isNewProfile) {
@@ -158,37 +157,6 @@ const CofounderProfileEdit = () => {
       });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDeleteProfile = async () => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce profil? Cette action est irréversible.")) {
-      return;
-    }
-    
-    setDeleting(true);
-    try {
-      await fetch(`/api/cofounder/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      toast({
-        title: "Profil supprimé",
-        description: "Votre profil a été supprimé avec succès.",
-      });
-      navigate('/profile?tab=cofounder');
-    } catch (error) {
-      console.error('Erreur lors de la suppression du profil:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le profil",
-        variant: "destructive",
-      });
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -221,238 +189,14 @@ const CofounderProfileEdit = () => {
                 {isNewProfile ? "Créer un profil cofondateur" : "Modifier votre profil cofondateur"}
               </h1>
               
-              {!isNewProfile && (
-                <Button 
-                  variant="destructive" 
-                  onClick={() => {
-                    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce profil? Cette action est irréversible.")) {
-                      setDeleting(true);
-                      fetch(`/api/cofounder/${id}`, {
-                        method: 'DELETE',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                      })
-                        .then(() => {
-                          toast({
-                            title: "Profil supprimé",
-                            description: "Votre profil a été supprimé avec succès.",
-                          });
-                          navigate('/profile?tab=cofounder');
-                        })
-                        .catch((error) => {
-                          console.error('Erreur lors de la suppression du profil:', error);
-                          toast({
-                            title: "Erreur",
-                            description: "Impossible de supprimer le profil",
-                            variant: "destructive",
-                          });
-                        })
-                        .finally(() => {
-                          setDeleting(false);
-                        });
-                    }
-                  }}
-                  disabled={deleting}
-                >
-                  {deleting && <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-black mr-2"></div>}
-                  <Trash2 size={16} className="mr-2" />
-                  Supprimer ce profil
-                </Button>
-              )}
+              {!isNewProfile && <DeleteProfileButton id={id as string} onSuccess={() => navigate('/profile?tab=cofounder')} />}
             </div>
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nom complet</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Votre nom" {...field} className="bg-black/20 border-white/20" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="profileType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Type de profil</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="bg-black/20 border-white/20">
-                                <SelectValue placeholder="Sélectionner un type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="collaborator">Collaborateur</SelectItem>
-                              <SelectItem value="project-owner">Porteur de projet</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription className="text-white/60">
-                            Vous cherchez à rejoindre un projet ou vous en avez un à proposer?
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Votre rôle</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ex: Développeur, Designer, CTO..." {...field} className="bg-black/20 border-white/20" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="sector"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Secteur d'activité</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="bg-black/20 border-white/20">
-                                <SelectValue placeholder="Sélectionner un secteur" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Santé">Santé</SelectItem>
-                              <SelectItem value="Education">Education</SelectItem>
-                              <SelectItem value="Finance">Finance</SelectItem>
-                              <SelectItem value="Retail">Retail</SelectItem>
-                              <SelectItem value="Marketing">Marketing</SelectItem>
-                              <SelectItem value="Agriculture">Agriculture</SelectItem>
-                              <SelectItem value="Autre">Autre</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="space-y-6">
-                    {form.watch('profileType') === 'project-owner' && (
-                      <>
-                        <FormField
-                          control={form.control}
-                          name="projectName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nom du projet</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Nom de votre startup/projet" {...field} className="bg-black/20 border-white/20" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="projectStage"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Stade du projet</FormLabel>
-                              <Select 
-                                onValueChange={field.onChange} 
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger className="bg-black/20 border-white/20">
-                                    <SelectValue placeholder="Sélectionner un stade" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="Idée">Idée</SelectItem>
-                                  <SelectItem value="Prototype">Prototype</SelectItem>
-                                  <SelectItem value="MVP">MVP</SelectItem>
-                                  <SelectItem value="Beta">Beta</SelectItem>
-                                  <SelectItem value="Lancé">Lancé</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </>
-                    )}
-
-                    <FormField
-                      control={form.control}
-                      name="objective"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Objectif</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="bg-black/20 border-white/20">
-                                <SelectValue placeholder="Sélectionner un objectif" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Créer une startup">Créer une startup</SelectItem>
-                              <SelectItem value="Trouver un associé">Trouver un associé</SelectItem>
-                              <SelectItem value="Rejoindre un projet">Rejoindre un projet</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="availability"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Disponibilité</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="bg-black/20 border-white/20">
-                                <SelectValue placeholder="Sélectionner une disponibilité" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Temps plein">Temps plein</SelectItem>
-                              <SelectItem value="Mi-temps">Mi-temps</SelectItem>
-                              <SelectItem value="Soirs et weekends">Soirs et weekends</SelectItem>
-                              <SelectItem value="Remote">Remote</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <ProfileBasicInfo form={form} />
+                  <ProfileDetails form={form} />
                 </div>
 
                 <div className="space-y-6">
@@ -463,10 +207,10 @@ const CofounderProfileEdit = () => {
                       <FormItem>
                         <FormLabel>Pitch</FormLabel>
                         <FormControl>
-                          <Textarea 
+                          <textarea 
                             placeholder="Décrivez brièvement votre projet ou vos compétences..." 
                             {...field} 
-                            className="bg-black/20 border-white/20 min-h-[100px]" 
+                            className="bg-black/20 border-white/20 min-h-[100px] w-full rounded-md border px-3 py-2" 
                           />
                         </FormControl>
                         <FormMessage />
@@ -481,10 +225,10 @@ const CofounderProfileEdit = () => {
                       <FormItem>
                         <FormLabel>Vision</FormLabel>
                         <FormControl>
-                          <Textarea 
+                          <textarea 
                             placeholder="Partagez votre vision à long terme..." 
                             {...field} 
-                            className="bg-black/20 border-white/20 min-h-[100px]" 
+                            className="bg-black/20 border-white/20 min-h-[100px] w-full rounded-md border px-3 py-2" 
                           />
                         </FormControl>
                         <FormMessage />
@@ -493,88 +237,7 @@ const CofounderProfileEdit = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="linkedinUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>LinkedIn URL</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://linkedin.com/in/username" {...field} className="bg-black/20 border-white/20" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="websiteUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Site web URL</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://monsite.com" {...field} className="bg-black/20 border-white/20" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="portfolioUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Portfolio/Github URL</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://github.com/username" {...field} className="bg-black/20 border-white/20" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="region"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Région</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Paris, Lyon, Remote..." {...field} className="bg-black/20 border-white/20" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="hasAIBadge"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border border-white/20 p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Badge IA</FormLabel>
-                        <FormDescription className="text-white/60">
-                          Activez cette option si vous avez une expertise en Intelligence Artificielle
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                <ProfileLinks form={form} />
                 
                 <Button 
                   type="submit" 

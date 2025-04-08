@@ -102,7 +102,7 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
       
       return {
         liked: false,
-        newCount: updateData.new_count
+        newCount: updateData?.new_count || 0
       };
     } else {
       // Like: Add new like to database
@@ -131,7 +131,7 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
       
       return {
         liked: true,
-        newCount: updateData.new_count
+        newCount: updateData?.new_count || 0
       };
     }
   } catch (error) {
@@ -191,7 +191,7 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
       
       return {
         liked: false,
-        newCount: updateData.new_count
+        newCount: updateData?.new_count || 0
       };
     } else {
       // Like: Add new like to database
@@ -220,7 +220,7 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
       
       return {
         liked: true,
-        newCount: updateData.new_count
+        newCount: updateData?.new_count || 0
       };
     }
   } catch (error) {

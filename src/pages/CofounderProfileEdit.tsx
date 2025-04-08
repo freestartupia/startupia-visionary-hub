@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { CofounderProfile, ProfileType } from '@/types/cofounders';
+import { CofounderProfile, ProfileType, Role, Sector, Objective, Availability, Region } from '@/types/cofounders';
 import { 
   Form,
   FormControl,
@@ -96,10 +95,14 @@ const CofounderProfileEdit = () => {
       try {
         const fetchedProfile = await getCofounderProfile(id as string);
         if (fetchedProfile) {
-          // Reset form with fetched profile data
           form.reset({
             ...fetchedProfile,
             profileType: fetchedProfile.profileType as ProfileType,
+            role: fetchedProfile.role as string,
+            sector: fetchedProfile.sector as string,
+            objective: fetchedProfile.objective as string,
+            availability: fetchedProfile.availability as string,
+            region: fetchedProfile.region as string,
             hasAIBadge: fetchedProfile.hasAIBadge || false
           });
         }
@@ -123,14 +126,23 @@ const CofounderProfileEdit = () => {
     setSaving(true);
 
     try {
+      const profileData: Partial<CofounderProfile> = {
+        ...data,
+        role: data.role as Role,
+        sector: data.sector as Sector,
+        objective: data.objective as Objective,
+        availability: data.availability as Availability,
+        region: data.region as Region
+      };
+
       if (isNewProfile) {
-        await createCofounderProfile(data);
+        await createCofounderProfile(profileData);
         toast({
           title: "Profil créé",
           description: "Votre profil a été créé avec succès.",
         });
       } else {
-        await updateCofounderProfile(data);
+        await updateCofounderProfile(profileData);
         toast({
           title: "Profil mis à jour",
           description: "Votre profil a été mis à jour avec succès.",
@@ -156,7 +168,6 @@ const CofounderProfileEdit = () => {
     
     setDeleting(true);
     try {
-      // Use the cofounder service to delete the profile
       await fetch(`/api/cofounder/${id}`, {
         method: 'DELETE',
         headers: {
@@ -192,7 +203,6 @@ const CofounderProfileEdit = () => {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-hero-pattern text-white">
-        {/* Background elements */}
         <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
         
         <div className="container mx-auto px-4 pt-32 pb-16 relative z-10">
@@ -214,7 +224,35 @@ const CofounderProfileEdit = () => {
               {!isNewProfile && (
                 <Button 
                   variant="destructive" 
-                  onClick={handleDeleteProfile}
+                  onClick={() => {
+                    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce profil? Cette action est irréversible.")) {
+                      setDeleting(true);
+                      fetch(`/api/cofounder/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                      })
+                        .then(() => {
+                          toast({
+                            title: "Profil supprimé",
+                            description: "Votre profil a été supprimé avec succès.",
+                          });
+                          navigate('/profile?tab=cofounder');
+                        })
+                        .catch((error) => {
+                          console.error('Erreur lors de la suppression du profil:', error);
+                          toast({
+                            title: "Erreur",
+                            description: "Impossible de supprimer le profil",
+                            variant: "destructive",
+                          });
+                        })
+                        .finally(() => {
+                          setDeleting(false);
+                        });
+                    }
+                  }}
                   disabled={deleting}
                 >
                   {deleting && <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-black mr-2"></div>}
@@ -227,7 +265,6 @@ const CofounderProfileEdit = () => {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Informations de base */}
                   <div className="space-y-6">
                     <FormField
                       control={form.control}
@@ -316,7 +353,6 @@ const CofounderProfileEdit = () => {
                     />
                   </div>
                   
-                  {/* Détails du projet ou des compétences */}
                   <div className="space-y-6">
                     {form.watch('profileType') === 'project-owner' && (
                       <>
@@ -419,7 +455,6 @@ const CofounderProfileEdit = () => {
                   </div>
                 </div>
 
-                {/* Pitch et vision */}
                 <div className="space-y-6">
                   <FormField
                     control={form.control}
@@ -458,7 +493,6 @@ const CofounderProfileEdit = () => {
                   />
                 </div>
 
-                {/* Liens et region */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-6">
                     <FormField
@@ -521,7 +555,6 @@ const CofounderProfileEdit = () => {
                   </div>
                 </div>
 
-                {/* Badge IA */}
                 <FormField
                   control={form.control}
                   name="hasAIBadge"

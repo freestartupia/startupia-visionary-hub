@@ -7,7 +7,7 @@ import { getCofounderProfile, updateCofounderProfile, createCofounderProfile } f
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save } from 'lucide-react';
-import { CofounderProfile, ProfileType, Role, Sector, Objective, Availability, Region } from '@/types/cofounders';
+import { CofounderProfile, ProfileType, Role, Sector, Objective, Availability, Region, AITool } from '@/types/cofounders';
 import { 
   Form,
   FormControl,
@@ -131,7 +131,8 @@ const CofounderProfileEdit = () => {
         objective: data.objective as Objective,
         availability: data.availability as Availability,
         region: data.region as Region,
-        seekingRoles: data.seekingRoles as Role[] // Cast seekingRoles to Role[] type
+        seekingRoles: data.seekingRoles as Role[],
+        aiTools: data.aiTools as AITool[] // Cast aiTools to AITool[] type
       };
 
       if (isNewProfile) {

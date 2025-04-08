@@ -1,8 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ForumReply } from "@/types/community";
 import { mapReplyFromDB } from "@/utils/forumMappers";
 import { toast } from "sonner";
+import { getReplyLikeStatus } from "./forum/replyLikeService";
 
 // Function to get replies for a specific post
 export const getRepliesForPost = async (postId: string): Promise<ForumReply[]> => {
@@ -24,9 +24,6 @@ export const getRepliesForPost = async (postId: string): Promise<ForumReply[]> =
     // Get current user for like status
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id;
-    
-    // Import like status check function
-    const { getReplyLikeStatus } = await import('./forumLikeService');
     
     // Process each reply to add nested replies and like status
     const processedReplies = await Promise.all(replies.map(async (reply) => {

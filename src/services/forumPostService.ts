@@ -1,8 +1,9 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ForumPost, ForumCategory } from "@/types/community";
 import { mapPostFromDB } from "@/utils/forumMappers";
 import { toast } from "sonner";
+import { getPostLikeStatus } from "./forum/postLikeService";
+import { getRepliesForPost } from "./forumReplyService";
 
 // Function to get all forum posts
 export const getForumPosts = async (): Promise<ForumPost[]> => {
@@ -24,10 +25,6 @@ export const getForumPosts = async (): Promise<ForumPost[]> => {
     
     // Map posts to our TypeScript interface
     const posts = postsData.map(mapPostFromDB);
-    
-    // Fetch replies for each post (we'll use the replyService for this)
-    const { getRepliesForPost } = await import("./forumReplyService");
-    const { getPostLikeStatus } = await import("./forumLikeService");
     
     const postsWithReplies = await Promise.all(posts.map(async (post) => {
       // Get replies for this post
@@ -72,11 +69,10 @@ export const getForumPost = async (postId: string): Promise<ForumPost> => {
     const userId = userData.user?.id;
     
     // Get all replies for this post
-    const { getRepliesForPost } = await import("./forumReplyService");
     const replies = await getRepliesForPost(postId);
     
     // Check if user liked the post
-    const { getPostLikeStatus } = await import("./forumLikeService");
+    const { getPostLikeStatus } = await import("./forum/postLikeService");
     let isLiked = false;
     if (userId) {
       isLiked = await getPostLikeStatus(postId, userId);

@@ -59,14 +59,14 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
       }
       
       // Decrement likes count
-      const updateData = await safeRpcCall<{ new_count: number }>(
+      const { data, error } = await safeRpcCall<{ new_count: number }, { reply_id: string }>(
         'decrement_reply_likes', 
         { reply_id: replyId }
       );
       
       return {
         liked: false,
-        newCount: updateData.new_count || 0
+        newCount: data?.new_count || 0
       };
     } else {
       // Like: Add new like to database
@@ -83,14 +83,14 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
       }
       
       // Increment likes count
-      const updateData = await safeRpcCall<{ new_count: number }>(
+      const { data, error } = await safeRpcCall<{ new_count: number }, { reply_id: string }>(
         'increment_reply_likes', 
         { reply_id: replyId }
       );
       
       return {
         liked: true,
-        newCount: updateData.new_count || 0
+        newCount: data?.new_count || 0
       };
     }
   } catch (error) {

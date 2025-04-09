@@ -1,6 +1,25 @@
 
 import { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+// Define the interface for like operation responses
+export interface LikeResponse {
+  liked: boolean;
+  newCount: number;
+}
+
+// Utility function to check authentication
+export async function checkAuthentication(): Promise<string> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !userData.user) {
+    console.error("User not authenticated:", userError);
+    throw userError || new Error("User not authenticated");
+  }
+  
+  return userData.user.id;
+}
 
 /**
  * A type-safe wrapper for RPC calls

@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { PlusCircle } from 'lucide-react';
 import { ForumCategory } from '@/types/community';
-import { createForumPost } from '@/services/forumService';
+import { useCreateForumPost } from '@/hooks/use-forum-query';
 import { toast } from 'sonner';
 
 interface CreateForumPostProps {
@@ -37,6 +37,7 @@ const CreateForumPost: React.FC<CreateForumPostProps> = ({ onPostCreated }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const createPostMutation = useCreateForumPost();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,13 +59,13 @@ const CreateForumPost: React.FC<CreateForumPostProps> = ({ onPostCreated }) => {
       const userName = `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || user.email || 'Utilisateur';
       const avatarUrl = user.user_metadata?.avatar_url;
       
-      await createForumPost(
+      await createPostMutation.mutate({
         title,
         content,
         category,
-        userName,
-        avatarUrl
-      );
+        authorName: userName,
+        authorAvatar: avatarUrl
+      });
       
       // Réinitialiser le formulaire
       setTitle('');

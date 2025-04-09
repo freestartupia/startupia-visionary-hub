@@ -44,7 +44,7 @@ export const useTogglePostLike = () => {
   
   return useMutation({
     mutationFn: async ({ postId, userId }: { postId: string, userId: string }) => {
-      return togglePostLike(postId, userId);
+      return togglePostLike(postId);
     },
     onMutate: async ({ postId }) => {
       // Annuler les requêtes en cours
@@ -58,9 +58,9 @@ export const useTogglePostLike = () => {
         queryClient.setQueryData<ForumPost>(forumKeys.post(postId), {
           ...previousPost,
           isLiked: !previousPost.isLiked,
-          likeCount: previousPost.isLiked 
-            ? Math.max(0, previousPost.likeCount - 1) 
-            : previousPost.likeCount + 1
+          likes: previousPost.isLiked 
+            ? Math.max(0, previousPost.likes - 1) 
+            : previousPost.likes + 1
         });
       }
       
@@ -86,7 +86,21 @@ export const useCreateForumPost = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: createForumPost,
+    mutationFn: (postData: { 
+      title: string, 
+      content: string, 
+      category: string, 
+      authorName: string, 
+      authorAvatar?: string 
+    }) => {
+      return createForumPost(
+        postData.title,
+        postData.content,
+        postData.category as any,
+        postData.authorName,
+        postData.authorAvatar
+      );
+    },
     onSuccess: () => {
       toast.success("Votre discussion a été publiée");
       queryClient.invalidateQueries({ queryKey: forumKeys.posts() });

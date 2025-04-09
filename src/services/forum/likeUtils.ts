@@ -31,6 +31,10 @@ export const safeRpcCall = async <T>(
     throw error;
   }
   
-  // Handle potentially null data
-  return (data as T) || ({ liked: false, newCount: 0 } as unknown as T);
+  // Handle potentially null data by providing a default value
+  if (data === null) {
+    return { liked: false, newCount: 0 } as unknown as T;
+  }
+  
+  return data as T;
 };

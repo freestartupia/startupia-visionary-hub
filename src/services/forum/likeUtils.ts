@@ -29,9 +29,9 @@ export const preparePostId = (postId: string): string => {
 };
 
 // Safe RPC call utility function
-export async function safeRpcCall<T, P extends Record<string, any>>(
+export async function safeRpcCall<T>(
   functionName: string,
-  params: P
+  params: Record<string, any>
 ): Promise<{ data: T | null; error: Error | null }> {
   try {
     const { data, error } = await supabase.rpc(functionName, params);

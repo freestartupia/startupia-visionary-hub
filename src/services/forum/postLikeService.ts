@@ -66,10 +66,10 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
         throw unlikeError;
       }
       
-      // Decrement likes count
-      const { data, error } = await safeRpcCall<{ new_count: number }, { post_id: string }>(
+      // Decrement likes count using RPC function
+      const { data, error } = await safeRpcCall<{ new_count: number }>(
         'toggle_post_like', 
-        { post_id: postId, user_id: userId }
+        { post_id: postId }
       );
       
       return {
@@ -92,10 +92,10 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
         throw addLikeError;
       }
       
-      // Increment likes count
-      const { data, error } = await safeRpcCall<{ new_count: number }, { post_id: string }>(
+      // Increment likes count using RPC function
+      const { data, error } = await safeRpcCall<{ new_count: number }>(
         'toggle_post_like', 
-        { post_id: postId, user_id: userId }
+        { post_id: postId }
       );
       
       return {

@@ -16,7 +16,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="md:hidden fixed top-[60px] left-0 right-0 max-h-[calc(100vh-60px)] overflow-y-auto glass-card mt-2 mx-4 p-4 animate-fade-in backdrop-blur-lg z-40">
+    <div className="md:hidden fixed top-[60px] left-0 right-0 max-h-[calc(100vh-60px)] overflow-y-auto bg-black border border-white/10 mt-2 mx-4 p-4 animate-fade-in backdrop-blur-lg z-40">
       <NavLinks isMobile onMobileItemClick={onClose} />
       
       <div className="mt-6 pt-4 border-t border-white/10">

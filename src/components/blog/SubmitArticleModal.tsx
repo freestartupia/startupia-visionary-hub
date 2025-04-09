@@ -99,7 +99,7 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
           <div>
             <Label htmlFor="category">Catégorie</Label>
             <select id="category" className="w-full rounded-md border border-input bg-black/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground">
-              <option value="">Sélectionner une catégorie</option>
+              <option value="non_specifie">Sélectionner une catégorie</option>
               <option value="Actualités">Actualités</option>
               <option value="Growth">Growth</option>
               <option value="Technique">Technique</option>

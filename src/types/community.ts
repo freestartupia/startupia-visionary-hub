@@ -130,3 +130,10 @@ export interface CommunityActivity {
   targetId: string; // ID of the related content
   targetType: 'forum' | 'service' | 'resource' | 'project';
 }
+
+export interface LikeResponse {
+  success: boolean;
+  message: string;
+  liked: boolean;
+  newCount: number;
+}

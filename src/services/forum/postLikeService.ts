@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LikeResponse, checkAuthentication, safeRpcCall } from "./likeUtils";
+import { LikeResponse, safeRpcCall } from "./likeUtils";
 
 // Function to check if a user has liked a post
 export const getPostLikeStatus = async (postId: string, userId: string): Promise<boolean> => {

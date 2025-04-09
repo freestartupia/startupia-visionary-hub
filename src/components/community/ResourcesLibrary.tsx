@@ -34,7 +34,7 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
       const { data, error } = await supabase
         .from('resource_listings')
         .select('*')
-        .order('votes', { ascending: false });
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Erreur lors de la récupération des formations:', error);

@@ -56,7 +56,9 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
     return matchesFormat && matchesSearch;
   });
   
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null): string => {
+    if (!name) return "??"; // Protection contre les noms null ou undefined
+    
     return name
       .split(' ')
       .map(n => n[0])
@@ -135,7 +137,7 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
                 <div className="flex justify-between items-start mb-2">
                   <Badge>{resource.format}</Badge>
                   <div className="flex items-center space-x-2">
-                    {resource.isPaid ? (
+                    {resource.is_paid ? (
                       <Badge variant="outline" className="text-yellow-300 border-yellow-300">
                         {resource.price}
                       </Badge>
@@ -144,7 +146,7 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
                         Gratuit
                       </Badge>
                     )}
-                    {resource.communityValidated && (
+                    {resource.community_validated && (
                       <Badge variant="secondary" className="flex items-center">
                         <Users className="h-3 w-3 mr-1" />
                         Validé
@@ -157,28 +159,28 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
               <CardContent className="flex-grow">
                 <p className="text-white/80 mb-4">{resource.description}</p>
                 <div className="text-white/80">
-                  <strong>Public cible:</strong> {resource.targetAudience}
+                  <strong>Public cible:</strong> {resource.target_audience}
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-4 border-t border-white/10 pt-4">
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={resource.authorAvatar} alt={resource.authorName} />
-                      <AvatarFallback>{getInitials(resource.authorName)}</AvatarFallback>
+                      <AvatarImage src={resource.author_avatar || undefined} alt={resource.author_name} />
+                      <AvatarFallback>{getInitials(resource.author_name)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <span className="text-sm font-medium">{resource.authorName}</span>
-                      <p className="text-xs text-white/60">{formatDate(resource.createdAt)}</p>
+                      <span className="text-sm font-medium">{resource.author_name}</span>
+                      <p className="text-xs text-white/60">{formatDate(resource.created_at)}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
                     <ThumbsUp className="h-4 w-4 mr-1 text-white/60" />
-                    <span className="text-sm text-white/60">{resource.votes}</span>
+                    <span className="text-sm text-white/60">{resource.votes || 0}</span>
                   </div>
                 </div>
                 <Button className="w-full" asChild>
-                  <a href={resource.accessLink} target="_blank" rel="noopener noreferrer">
+                  <a href={resource.access_link} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Accéder à la ressource
                   </a>

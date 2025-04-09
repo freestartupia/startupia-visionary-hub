@@ -1,4 +1,3 @@
-
 export type ForumCategory = 
   | 'Général'
   | 'Tech & Dev IA'
@@ -18,15 +17,7 @@ export type ServiceCategory =
   | 'Conseil'
   | 'Autre';
 
-export type ResourceFormat =
-  | 'Vidéo'
-  | 'Article'
-  | 'E-book'
-  | 'Webinaire'
-  | 'Bootcamp'
-  | 'Cours'
-  | 'Podcast'
-  | 'Autre';
+export type ResourceFormat = 'Vidéo' | 'Article' | 'E-book' | 'Webinaire' | 'Bootcamp' | 'Cours' | 'Podcast' | 'Autre';
 
 export type ProjectStatus =
   | 'Idée'
@@ -98,16 +89,16 @@ export interface ResourceListing {
   title: string;
   description: string;
   format: ResourceFormat;
-  targetAudience: string;
-  accessLink: string;
-  isPaid: boolean;
-  price?: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar?: string;
-  createdAt: string;
-  communityValidated: boolean;
-  votes: number;
+  target_audience: string; // Change snake_case pour correspondre à la DB
+  access_link: string; // Change snake_case pour correspondre à la DB
+  is_paid: boolean; // Change snake_case pour correspondre à la DB
+  price: string | null;
+  author_id: string | null; // Change snake_case pour correspondre à la DB
+  author_name: string;
+  author_avatar: string | null;
+  created_at: string;
+  community_validated: boolean | null; // Change snake_case pour correspondre à la DB
+  votes: number | null;
 }
 
 export interface CollaborativeProject {

@@ -22,6 +22,7 @@ import Tools from "./pages/Tools";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserProfile from "./pages/UserProfile";
 import CofounderProfileEdit from "./pages/CofounderProfileEdit";
+import CommunityAIChatbot from "./components/chatbot/CommunityAIChatbot";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
                 <Route path="/profile" element={<UserProfile />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <CommunityAIChatbot />
             </div>
           </TooltipProvider>
         </AuthProvider>

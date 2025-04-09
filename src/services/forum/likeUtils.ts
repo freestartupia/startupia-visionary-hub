@@ -1,13 +1,94 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
 
 export interface LikeResponse {
   success: boolean;
   message: string;
   isLiked?: boolean;
   likeCount?: number;
+  liked?: boolean;
+  newCount?: number;
 }
+
+// Function to check authentication
+export const checkAuthentication = async (): Promise<string | null> => {
+  try {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !userData.user) {
+      return null;
+    }
+    
+    return userData.user.id;
+  } catch (error) {
+    console.error("Authentication error:", error);
+    return null;
+  }
+};
+
+// Function to like a post
+export const likePost = async (postId: string): Promise<LikeResponse> => {
+  try {
+    const userId = await checkAuthentication();
+    
+    if (!userId) {
+      return {
+        success: false,
+        message: "Authentication required",
+        liked: false
+      };
+    }
+    
+    const result = await handleToggleLike(supabase, 'forum_post_likes', 'post_id', postId, userId);
+    
+    // Determine if the post is now liked based on the result
+    return {
+      ...result,
+      liked: result.isLiked
+    };
+    
+  } catch (error) {
+    console.error("Error in likePost:", error);
+    return {
+      success: false,
+      message: "Error toggling like",
+      liked: false
+    };
+  }
+};
+
+// Function to like a reply
+export const likeReply = async (replyId: string): Promise<LikeResponse> => {
+  try {
+    const userId = await checkAuthentication();
+    
+    if (!userId) {
+      return {
+        success: false,
+        message: "Authentication required",
+        liked: false
+      };
+    }
+    
+    const result = await handleToggleLike(supabase, 'forum_reply_likes', 'reply_id', replyId, userId);
+    
+    // Determine if the reply is now liked based on the result
+    return {
+      ...result,
+      liked: result.isLiked
+    };
+    
+  } catch (error) {
+    console.error("Error in likeReply:", error);
+    return {
+      success: false,
+      message: "Error toggling like",
+      liked: false
+    };
+  }
+};
 
 export const handleToggleLike = async (
   supabase: SupabaseClient,

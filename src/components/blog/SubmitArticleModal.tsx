@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import { toast as sonnerToast } from 'sonner';
 
 interface SubmitArticleModalProps {
   open: boolean;
@@ -29,7 +29,7 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
 
   // Redirect to authentication page if not logged in
   const handleAuthRequired = () => {
-    toast.error("Vous devez être connecté pour soumettre un article");
+    sonnerToast.error("Vous devez être connecté pour soumettre un article");
     onOpenChange(false);
     navigate('/auth');
   };

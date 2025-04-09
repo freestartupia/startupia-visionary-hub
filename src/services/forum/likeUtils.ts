@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 export interface LikeResponse {
   success: boolean;
@@ -36,12 +35,8 @@ export const safeRpcCall = async <T>(
   }
 };
 
-// Fonction générique pour liker/unliker une entité
-export const likeEntity = async (
-  entityId: string,
-  entityType: 'post' | 'reply',
-  tableName: string
-): Promise<LikeResponse> => {
+// Fonction générique pour liker/unliker un post
+export const likePost = async (postId: string): Promise<LikeResponse> => {
   try {
     const userId = await checkAuthentication();
     
@@ -56,58 +51,130 @@ export const likeEntity = async (
     
     // Vérifier si l'utilisateur a déjà liké
     const { data: existingLike, error: likeError } = await supabase
-      .from(tableName)
+      .from('forum_post_likes')
       .select('id')
-      .eq(`${entityType}_id`, entityId)
+      .eq('post_id', postId)
       .eq('user_id', userId)
       .single();
       
     if (likeError && likeError.code !== 'PGRST116') {
-      console.error(`Error checking existing ${entityType} like:`, likeError);
+      console.error(`Error checking existing post like:`, likeError);
       throw likeError;
     }
     
     if (existingLike) {
       // Unlike: Remove like
       const { error: unlikeError } = await supabase
-        .from(tableName)
+        .from('forum_post_likes')
         .delete()
         .eq('id', existingLike.id);
         
       if (unlikeError) {
-        console.error(`Error unliking ${entityType}:`, unlikeError);
+        console.error(`Error unliking post:`, unlikeError);
         throw unlikeError;
       }
       
       return {
         success: true,
-        message: `${entityType} unliked successfully`,
+        message: `Post unliked successfully`,
         liked: false,
         newCount: 0 // Placeholder, will be updated by the caller
       };
     } else {
       // Like: Add new like
       const { error: addLikeError } = await supabase
-        .from(tableName)
+        .from('forum_post_likes')
         .insert({
-          [`${entityType}_id`]: entityId,
+          post_id: postId,
           user_id: userId
         });
         
       if (addLikeError) {
-        console.error(`Error liking ${entityType}:`, addLikeError);
+        console.error(`Error liking post:`, addLikeError);
         throw addLikeError;
       }
       
       return {
         success: true,
-        message: `${entityType} liked successfully`,
+        message: `Post liked successfully`,
         liked: true,
         newCount: 0 // Placeholder, will be updated by the caller
       };
     }
   } catch (error) {
-    console.error(`Error in like${entityType}:`, error);
+    console.error(`Error in likePost:`, error);
+    throw error;
+  }
+};
+
+// Fonction générique pour liker/unliker une réponse
+export const likeReply = async (replyId: string): Promise<LikeResponse> => {
+  try {
+    const userId = await checkAuthentication();
+    
+    if (!userId) {
+      return {
+        success: false,
+        message: "Authentication required",
+        liked: false,
+        newCount: 0
+      };
+    }
+    
+    // Vérifier si l'utilisateur a déjà liké
+    const { data: existingLike, error: likeError } = await supabase
+      .from('forum_reply_likes')
+      .select('id')
+      .eq('reply_id', replyId)
+      .eq('user_id', userId)
+      .single();
+      
+    if (likeError && likeError.code !== 'PGRST116') {
+      console.error(`Error checking existing reply like:`, likeError);
+      throw likeError;
+    }
+    
+    if (existingLike) {
+      // Unlike: Remove like
+      const { error: unlikeError } = await supabase
+        .from('forum_reply_likes')
+        .delete()
+        .eq('id', existingLike.id);
+        
+      if (unlikeError) {
+        console.error(`Error unliking reply:`, unlikeError);
+        throw unlikeError;
+      }
+      
+      return {
+        success: true,
+        message: `Reply unliked successfully`,
+        liked: false,
+        newCount: 0 // Placeholder, will be updated by the caller
+      };
+    } else {
+      // Like: Add new like
+      const { error: addLikeError } = await supabase
+        .from('forum_reply_likes')
+        .insert({
+          reply_id: replyId,
+          user_id: userId
+        });
+        
+      if (addLikeError) {
+        console.error(`Error liking reply:`, addLikeError);
+        throw addLikeError;
+      }
+      
+      return {
+        success: true,
+        message: `Reply liked successfully`,
+        liked: true,
+        newCount: 0 // Placeholder, will be updated by the caller
+      };
+    }
+  } catch (error) {
+    console.error(`Error in likeReply:`, error);
     throw error;
   }
 };

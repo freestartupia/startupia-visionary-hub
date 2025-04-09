@@ -62,7 +62,7 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
         </div>
         
         <div className="flex gap-4">
-          <AuthRequired forActiveParticipation={requireAuth}>
+          <AuthRequired forActiveParticipation={true}>
             <button 
               onClick={(e) => onLikePost(e, post.id)}
               className={`flex items-center gap-1 ${post.isLiked ? "text-startupia-turquoise" : "text-white/60 hover:text-white"}`}

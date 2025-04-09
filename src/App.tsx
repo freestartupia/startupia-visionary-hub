@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { HelmetProvider } from "react-helmet-async";
+import ScrollToTop from "./components/ScrollToTop";
 import Index from "./pages/Index";
 import StartupIndex from "./pages/StartupIndex";
 import StartupDetails from "./pages/StartupDetails";
@@ -32,6 +33,7 @@ const App = () => (
       <HelmetProvider>
         <AuthProvider>
           <TooltipProvider>
+            <ScrollToTop />
             <Toaster />
             <Sonner />
             <div className="min-h-screen pt-16 w-full">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Heart, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CollaborativeProject, ProjectStatus } from '@/types/community';
-import { mockProjects } from '@/data/mockCommunityData';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -36,10 +34,10 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
   const fetchProjects = async () => {
     setIsLoading(true);
     try {
-      // Try to fetch from Supabase first
       const { data, error } = await supabase
         .from('collaborative_projects')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching projects:', error);
@@ -49,12 +47,12 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
       if (data && data.length > 0) {
         setProjects(data as CollaborativeProject[]);
       } else {
-        // Fallback to mock data if no projects in database
-        setProjects(mockProjects);
+        setProjects([]);
+        console.log('No projects found in the database');
       }
     } catch (err) {
-      console.log('Falling back to mock data');
-      setProjects(mockProjects);
+      console.error('Error fetching projects:', err);
+      setProjects([]);
     } finally {
       setIsLoading(false);
     }
@@ -72,21 +70,17 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
     }
 
     try {
-      // First, find the project in the local state
       const projectIndex = projects.findIndex(p => p.id === projectId);
       if (projectIndex === -1) return;
 
-      // Clone the projects array and update the likes count
       const updatedProjects = [...projects];
       updatedProjects[projectIndex] = {
         ...updatedProjects[projectIndex],
         likes: (updatedProjects[projectIndex].likes || 0) + 1
       };
 
-      // Update the UI immediately
       setProjects(updatedProjects);
       
-      // Then update in the database if we're connected to Supabase
       try {
         const { error } = await supabase
           .from('collaborative_projects')

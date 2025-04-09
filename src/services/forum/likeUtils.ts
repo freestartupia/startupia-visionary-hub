@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { LikeResponse } from "@/types/community";
+import type { LikeResponse } from "@/types/community";
 
 // Fonction utilitaire pour vérifier l'authentification
 export const checkAuthentication = async (): Promise<string | null> => {

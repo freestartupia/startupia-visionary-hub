@@ -14,9 +14,9 @@ const ProductHero: React.FC<ProductHeroProps> = ({ searchTerm, setSearchTerm, on
   return (
     <div className="relative pt-28 pb-16 px-4 bg-gradient-to-b from-black/60 to-transparent">
       <div className="container mx-auto text-center text-white">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">
+        <h2 className="text-4xl md:text-5xl font-bold mb-4">
           Lancez votre <span className="gradient-text">produit IA</span>
-        </h1>
+        </h2>
         <p className="text-xl text-white/80 max-w-2xl mx-auto mb-8">
           Découvrez les derniers produits IA créés par la communauté Startupia
           ou présentez votre propre lancement

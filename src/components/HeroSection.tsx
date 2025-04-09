@@ -21,7 +21,7 @@ const HeroSection = () => {
           <span className="font-medium text-startupia-turquoise">Plus de 500 startups IA françaises répertoriées</span>
         </div>
 
-        {/* Main Title */}
+        {/* Main Title - Ensuring this is H1 */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 max-w-5xl mx-auto leading-tight">
           Découvrez, rejoignez et investissez dans les startups IA françaises
         </h1>
@@ -41,7 +41,7 @@ const HeroSection = () => {
           </div>
         </div>
 
-        {/* Value Proposition Cards */}
+        {/* Value Proposition Cards - Using h3 for card titles */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           <div className="glass-card p-4 hover-scale flex flex-col items-center">
             <div className="w-12 h-12 flex items-center justify-center rounded-full bg-startupia-turquoise/20 text-startupia-turquoise mb-3">

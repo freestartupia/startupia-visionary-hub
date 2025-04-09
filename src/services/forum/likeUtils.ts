@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface LikeResponse {
@@ -83,7 +84,7 @@ export const toggleLike = async (
       // Décrémenter le nombre de likes dans la table principale
       const { error: decrementError } = await supabase
         .from(table)
-        .update({ likes: supabase.raw('likes - 1') })
+        .update({ likes: supabase.rpc('decrement', { x: 1 }) })
         .eq('id', itemId);
 
       if (decrementError) {
@@ -94,9 +95,14 @@ export const toggleLike = async (
       return { success: true, message: "Unliked avec succès.", liked: false };
     } else {
       // L'utilisateur n'a pas encore aimé, donc on like
+      const insertData = {
+        [idColumn]: itemId,
+        user_id: userId
+      };
+
       const { error: insertError } = await supabase
         .from(likeTable)
-        .insert([{ [idColumn]: itemId, user_id: userId }]);
+        .insert([insertData]);
 
       if (insertError) {
         console.error("Erreur lors du like:", insertError);
@@ -106,7 +112,7 @@ export const toggleLike = async (
       // Incrémenter le nombre de likes dans la table principale
       const { error: incrementError } = await supabase
         .from(table)
-        .update({ likes: supabase.raw('likes + 1') })
+        .update({ likes: supabase.rpc('increment', { x: 1 }) })
         .eq('id', itemId);
 
       if (incrementError) {

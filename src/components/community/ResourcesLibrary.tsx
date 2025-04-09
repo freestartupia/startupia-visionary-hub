@@ -190,9 +190,10 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 col-span-full">
-          <p className="text-white/60">Aucune ressource trouvée pour ce format ou cette recherche.</p>
-          <Button variant="outline" className="mt-4" onClick={handleShareResource}>
+        <div className="text-center py-12">
+          <h3 className="text-xl font-medium mb-4">Aucune formation disponible</h3>
+          <p className="text-white/60 mb-6">Soyez le premier à partager une ressource avec la communauté !</p>
+          <Button onClick={handleShareResource}>
             Partager une ressource
           </Button>
         </div>

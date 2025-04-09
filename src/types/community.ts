@@ -1,3 +1,4 @@
+
 export type ForumCategory = 
   | 'Général'
   | 'Tech & Dev IA'
@@ -89,15 +90,15 @@ export interface ResourceListing {
   title: string;
   description: string;
   format: ResourceFormat;
-  target_audience: string; // Change snake_case pour correspondre à la DB
-  access_link: string; // Change snake_case pour correspondre à la DB
-  is_paid: boolean; // Change snake_case pour correspondre à la DB
+  target_audience: string;
+  access_link: string;
+  is_paid: boolean;
   price: string | null;
-  author_id: string | null; // Change snake_case pour correspondre à la DB
+  author_id: string | null;
   author_name: string;
   author_avatar: string | null;
   created_at: string;
-  community_validated: boolean | null; // Change snake_case pour correspondre à la DB
+  community_validated: boolean | null;
   votes: number | null;
 }
 

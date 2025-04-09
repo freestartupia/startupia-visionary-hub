@@ -28,10 +28,18 @@ export const getReplyLikeStatus = async (replyId: string, userId: string): Promi
 // Function to toggle like on a reply
 export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> => {
   try {
-    const userId = await checkAuthentication().catch(error => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    
+    if (!userId) {
       toast.error("Vous devez être connecté pour liker une réponse");
-      throw error;
-    });
+      return {
+        success: false,
+        message: "Authentication required",
+        liked: false,
+        newCount: 0
+      };
+    }
     
     // Check if user already liked the reply
     const { data: existingLike, error: likeError } = await supabase
@@ -60,11 +68,13 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
       
       // Decrement likes count
       const { data, error } = await safeRpcCall<{ new_count: number }, { reply_id: string }>(
-        'decrement_reply_likes', 
-        { reply_id: replyId }
+        'toggle_reply_like', 
+        { reply_id: replyId, user_id: userId }
       );
       
       return {
+        success: true,
+        message: "Reply unliked successfully",
         liked: false,
         newCount: data?.new_count || 0
       };
@@ -84,11 +94,13 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
       
       // Increment likes count
       const { data, error } = await safeRpcCall<{ new_count: number }, { reply_id: string }>(
-        'increment_reply_likes', 
-        { reply_id: replyId }
+        'toggle_reply_like', 
+        { reply_id: replyId, user_id: userId }
       );
       
       return {
+        success: true,
+        message: "Reply liked successfully",
         liked: true,
         newCount: data?.new_count || 0
       };

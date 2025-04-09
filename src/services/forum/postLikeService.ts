@@ -28,10 +28,18 @@ export const getPostLikeStatus = async (postId: string, userId: string): Promise
 // Function to toggle like on a post
 export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
   try {
-    const userId = await checkAuthentication().catch(error => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    
+    if (!userId) {
       toast.error("Vous devez être connecté pour liker un post");
-      throw error;
-    });
+      return {
+        success: false,
+        message: "Authentication required",
+        liked: false,
+        newCount: 0
+      };
+    }
     
     // Check if user already liked the post
     const { data: existingLike, error: likeError } = await supabase
@@ -60,11 +68,13 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
       
       // Decrement likes count
       const { data, error } = await safeRpcCall<{ new_count: number }, { post_id: string }>(
-        'decrement_post_likes', 
-        { post_id: postId }
+        'toggle_post_like', 
+        { post_id: postId, user_id: userId }
       );
       
       return {
+        success: true,
+        message: "Post unliked successfully",
         liked: false,
         newCount: data?.new_count || 0
       };
@@ -84,11 +94,13 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
       
       // Increment likes count
       const { data, error } = await safeRpcCall<{ new_count: number }, { post_id: string }>(
-        'increment_post_likes', 
-        { post_id: postId }
+        'toggle_post_like', 
+        { post_id: postId, user_id: userId }
       );
       
       return {
+        success: true,
+        message: "Post liked successfully",
         liked: true,
         newCount: data?.new_count || 0
       };

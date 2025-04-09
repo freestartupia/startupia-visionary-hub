@@ -1,24 +1,26 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, ExternalLink, Calendar, Linkedin } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { mockServiceListings } from '@/data/mockCommunityData';
 import { ServiceCategory, ServiceListing } from '@/types/community';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ServicesMarketplaceProps {
   requireAuth?: boolean;
 }
 
 const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth = false }) => {
-  const [services, setServices] = useState<ServiceListing[]>(mockServiceListings);
+  const [services, setServices] = useState<ServiceListing[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | 'all'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -27,9 +29,49 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
     'Automatisation', 'Stratégie IA', 'Formation', 'Conseil', 'Autre'
   ];
   
-  const filteredServices = selectedCategory === 'all' 
-    ? services 
-    : services.filter(service => service.category === selectedCategory);
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('service_listings')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching services:', error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        setServices(data as ServiceListing[]);
+      } else {
+        setServices([]);
+        console.log('No services found in the database');
+      }
+    } catch (err) {
+      console.error('Error fetching services:', err);
+      setServices([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+  
+  const filteredServices = services
+    .filter(service => selectedCategory === 'all' || service.category === selectedCategory)
+    .filter(service => 
+      searchTerm === '' || 
+      service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (service.expertise && service.expertise.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase())))
+    );
     
   const getInitials = (name: string) => {
     return name
@@ -57,6 +99,14 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
     toast.success("Fonctionnalité en développement");
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4 justify-between">
@@ -65,6 +115,8 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
           <Input
             placeholder="Rechercher un service..."
             className="pl-10"
+            value={searchTerm}
+            onChange={handleSearch}
           />
         </div>
         <Button className="flex items-center gap-2" onClick={handleProposeService}>
@@ -101,7 +153,7 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
               <CardContent className="flex-grow">
                 <p className="text-white/80 mb-4">{service.description}</p>
                 <div className="flex flex-wrap gap-1 mb-4">
-                  {service.expertise.map((skill) => (
+                  {service.expertise && service.expertise.map((skill) => (
                     <Badge key={skill} variant="outline" className="text-xs">
                       {skill}
                     </Badge>
@@ -120,26 +172,30 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
                   <span className="font-medium">{service.providerName}</span>
                 </div>
                 <div className="flex gap-2 w-full">
-                  <Button variant="outline" className="flex-1" asChild>
-                    <a href={service.linkedinUrl} target="_blank" rel="noopener noreferrer">
-                      <Linkedin className="h-4 w-4 mr-2" />
-                      LinkedIn
-                    </a>
-                  </Button>
-                  <Button className="flex-1" asChild>
-                    <a href={service.contactLink} target="_blank" rel="noopener noreferrer">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Contacter
-                    </a>
-                  </Button>
+                  {service.linkedinUrl && (
+                    <Button variant="outline" className="flex-1" asChild>
+                      <a href={service.linkedinUrl} target="_blank" rel="noopener noreferrer">
+                        <Linkedin className="h-4 w-4 mr-2" />
+                        LinkedIn
+                      </a>
+                    </Button>
+                  )}
+                  {service.contactLink && (
+                    <Button className="flex-1" asChild>
+                      <a href={service.contactLink} target="_blank" rel="noopener noreferrer">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Contacter
+                      </a>
+                    </Button>
+                  )}
                 </div>
               </CardFooter>
             </Card>
           ))
         ) : (
           <div className="text-center py-12 col-span-full">
-            <p className="text-white/60">Aucun service trouvé pour cette catégorie.</p>
-            <Button variant="outline" className="mt-4">
+            <p className="text-white/60">Aucun service trouvé.</p>
+            <Button variant="outline" className="mt-4" onClick={handleProposeService}>
               Proposer un service
             </Button>
           </div>

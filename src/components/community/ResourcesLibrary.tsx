@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, ExternalLink, ThumbsUp, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -7,18 +7,19 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ResourceFormat, ResourceListing } from '@/types/community';
-import { mockResources } from '@/data/mockCommunityData';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 interface ResourcesLibraryProps {
   requireAuth?: boolean;
 }
 
 const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false }) => {
-  const [resources, setResources] = useState<ResourceListing[]>(mockResources);
   const [selectedFormat, setSelectedFormat] = useState<ResourceFormat | 'all'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -27,10 +28,34 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
     'Bootcamp', 'Cours', 'Podcast', 'Autre'
   ];
   
-  const filteredResources = selectedFormat === 'all' 
-    ? resources 
-    : resources.filter(resource => resource.format === selectedFormat);
+  // Utiliser React Query pour récupérer les formations depuis Supabase
+  const { data: resources = [], isLoading, error } = useQuery({
+    queryKey: ['resources'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('resource_listings')
+        .select('*')
+        .order('votes', { ascending: false });
+      
+      if (error) {
+        console.error('Erreur lors de la récupération des formations:', error);
+        throw error;
+      }
+      
+      return data as ResourceListing[];
+    }
+  });
+  
+  // Filtrer les ressources en fonction du format sélectionné et du terme de recherche
+  const filteredResources = resources.filter(resource => {
+    const matchesFormat = selectedFormat === 'all' || resource.format === selectedFormat;
+    const matchesSearch = searchTerm === '' || 
+      resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      resource.description.toLowerCase().includes(searchTerm.toLowerCase());
     
+    return matchesFormat && matchesSearch;
+  });
+  
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -57,6 +82,10 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
     toast.success("Fonctionnalité en développement");
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4 justify-between">
@@ -65,6 +94,8 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
           <Input
             placeholder="Rechercher une formation ou ressource..."
             className="pl-10"
+            value={searchTerm}
+            onChange={handleSearch}
           />
         </div>
         <Button className="flex items-center gap-2" onClick={handleShareResource}>
@@ -85,9 +116,20 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
         ))}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredResources.length > 0 ? (
-          filteredResources.map((resource) => (
+      {isLoading ? (
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
+        </div>
+      ) : error ? (
+        <div className="text-center py-12">
+          <p className="text-white/60">Une erreur est survenue lors du chargement des ressources.</p>
+          <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+            Réessayer
+          </Button>
+        </div>
+      ) : filteredResources.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredResources.map((resource) => (
             <Card key={resource.id} className="glass-card hover-scale transition-transform duration-300 flex flex-col h-full">
               <CardHeader>
                 <div className="flex justify-between items-start mb-2">
@@ -143,16 +185,16 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
                 </Button>
               </CardFooter>
             </Card>
-          ))
-        ) : (
-          <div className="text-center py-12 col-span-full">
-            <p className="text-white/60">Aucune ressource trouvée pour ce format.</p>
-            <Button variant="outline" className="mt-4">
-              Partager une ressource
-            </Button>
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12 col-span-full">
+          <p className="text-white/60">Aucune ressource trouvée pour ce format ou cette recherche.</p>
+          <Button variant="outline" className="mt-4" onClick={handleShareResource}>
+            Partager une ressource
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface SubmitArticleModalProps {
   open: boolean;
@@ -21,6 +24,15 @@ interface SubmitArticleModalProps {
 
 const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to authentication page if not logged in
+  const handleAuthRequired = () => {
+    toast.error("Vous devez être connecté pour soumettre un article");
+    onOpenChange(false);
+    navigate('/auth');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +42,33 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
     });
     onOpenChange(false);
   };
+
+  // If user is not authenticated, show a message and option to login
+  if (!user) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px] bg-black border border-startupia-turquoise/30">
+          <DialogHeader>
+            <DialogTitle className="text-white">Authentification requise</DialogTitle>
+            <DialogDescription>
+              Vous devez être connecté pour soumettre un article sur Startupia.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center p-4">
+            <p className="text-white/70 mb-4 text-center">
+              Créez un compte ou connectez-vous pour partager vos connaissances avec la communauté.
+            </p>
+            <Button 
+              onClick={handleAuthRequired}
+              className="bg-startupia-turquoise text-black hover:bg-startupia-deep-turquoise"
+            >
+              Se connecter / S'inscrire
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

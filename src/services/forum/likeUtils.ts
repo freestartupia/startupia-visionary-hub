@@ -2,6 +2,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { LikeResponse } from "@/types/community";
 
+export type { LikeResponse };
+
 // Fonction utilitaire pour vérifier l'authentification
 export const checkAuthentication = async (): Promise<string | null> => {
   const { data } = await supabase.auth.getSession();

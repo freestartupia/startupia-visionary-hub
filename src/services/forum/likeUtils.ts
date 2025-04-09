@@ -1,12 +1,14 @@
 
-import { LikeResponse } from '@/types/community';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-export type EntityType = 'post' | 'reply' | 'resource' | 'project';
+// Import LikeResponse from types/community
+import type { LikeResponse } from "@/types/community";
 
-// Export the LikeResponse type
-export { LikeResponse };
+// Export the type
+export type { LikeResponse };
+
+export type EntityType = 'post' | 'reply';
 
 // Add the checkAuthentication function
 export const checkAuthentication = async (): Promise<string | null> => {
@@ -36,6 +38,7 @@ export const safeRpcCall = async <T>(
   }
 };
 
+// Simplified likeEntity function that only handles post and reply types
 export const likeEntity = async (
   entityId: string,
   userId: string | undefined,
@@ -53,32 +56,11 @@ export const likeEntity = async (
   }
 
   try {
-    let table: string;
-    let column: string;
-
-    switch (entityType) {
-      case 'post':
-        table = 'forum_post_likes';
-        column = 'post_id';
-        break;
-      case 'reply':
-        table = 'forum_reply_likes';
-        column = 'reply_id';
-        break;
-      case 'resource':
-        table = 'resource_likes';
-        column = 'resource_id';
-        break;
-      case 'project':
-        table = 'project_likes';
-        column = 'project_id';
-        break;
-      default:
-        throw new Error(`Type d'entité non supporté: ${entityType}`);
-    }
-
-    // Check if already liked - use explicit table names instead of dynamic ones
+    let isLiked = false;
+    
+    // Handle Post likes
     if (entityType === 'post') {
+      // Check if already liked
       const { data: existingLike } = await supabase
         .from('forum_post_likes')
         .select('id')
@@ -92,13 +74,18 @@ export const likeEntity = async (
           .from('forum_post_likes')
           .delete()
           .eq('id', existingLike.id);
+        isLiked = false;
       } else {
         // Like: add a new like
         await supabase
           .from('forum_post_likes')
           .insert({ post_id: entityId, user_id: userId });
+        isLiked = true;
       }
-    } else if (entityType === 'reply') {
+    } 
+    // Handle Reply likes
+    else if (entityType === 'reply') {
+      // Check if already liked
       const { data: existingLike } = await supabase
         .from('forum_reply_likes')
         .select('id')
@@ -112,68 +99,23 @@ export const likeEntity = async (
           .from('forum_reply_likes')
           .delete()
           .eq('id', existingLike.id);
+        isLiked = false;
       } else {
         // Like: add a new like
         await supabase
           .from('forum_reply_likes')
           .insert({ reply_id: entityId, user_id: userId });
-      }
-    } else if (entityType === 'resource') {
-      const { data: existingLike } = await supabase
-        .from('resource_likes')
-        .select('id')
-        .eq('resource_id', entityId)
-        .eq('user_id', userId)
-        .single();
-
-      if (existingLike) {
-        // Unlike: remove the like
-        await supabase
-          .from('resource_likes')
-          .delete()
-          .eq('id', existingLike.id);
-      } else {
-        // Like: add a new like
-        await supabase
-          .from('resource_likes')
-          .insert({ resource_id: entityId, user_id: userId });
-      }
-    } else if (entityType === 'project') {
-      const { data: existingLike } = await supabase
-        .from('project_likes')
-        .select('id')
-        .eq('project_id', entityId)
-        .eq('user_id', userId)
-        .single();
-
-      if (existingLike) {
-        // Unlike: remove the like
-        await supabase
-          .from('project_likes')
-          .delete()
-          .eq('id', existingLike.id);
-      } else {
-        // Like: add a new like
-        await supabase
-          .from('project_likes')
-          .insert({ project_id: entityId, user_id: userId });
+        isLiked = true;
       }
     }
 
-    // Determine the new like status
-    const liked = entityType === 'post' 
-      ? await getPostLikeStatus(entityId, userId)
-      : entityType === 'reply'
-      ? await getReplyLikeStatus(entityId, userId)
-      : false; // Add similar functions for resources and projects if needed
-
     // Calculate new count based on like status
-    const newCount = liked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+    const newCount = isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
 
     return {
       success: true,
-      message: liked ? 'Contenu liké avec succès' : 'Like retiré avec succès',
-      liked,
+      message: isLiked ? 'Contenu liké avec succès' : 'Like retiré avec succès',
+      liked: isLiked,
       newCount
     };
   } catch (error) {
@@ -189,24 +131,44 @@ export const likeEntity = async (
 };
 
 // Helper functions for checking like status
-async function getPostLikeStatus(postId: string, userId: string): Promise<boolean> {
-  const { data } = await supabase
-    .from('forum_post_likes')
-    .select('id')
-    .eq('post_id', postId)
-    .eq('user_id', userId)
-    .single();
-  
-  return !!data;
-}
+export const getPostLikeStatus = async (postId: string, userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('forum_post_likes')
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') { // PGRST116 is the error code for "no rows returned"
+      console.error("Error checking like status:", error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error("Error in getPostLikeStatus:", error);
+    return false;
+  }
+};
 
-async function getReplyLikeStatus(replyId: string, userId: string): Promise<boolean> {
-  const { data } = await supabase
-    .from('forum_reply_likes')
-    .select('id')
-    .eq('reply_id', replyId)
-    .eq('user_id', userId)
-    .single();
-  
-  return !!data;
-}
+export const getReplyLikeStatus = async (replyId: string, userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('forum_reply_likes')
+      .select('id')
+      .eq('reply_id', replyId)
+      .eq('user_id', userId)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') {
+      console.error("Error checking reply like status:", error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error("Error in getReplyLikeStatus:", error);
+    return false;
+  }
+};

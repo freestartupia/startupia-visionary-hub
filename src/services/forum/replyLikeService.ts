@@ -65,17 +65,18 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
         throw unlikeError;
       }
       
-      // Decrement likes count using RPC function
-      const { data, error } = await safeRpcCall<{ new_count: number }>(
-        'toggle_reply_like', 
-        { reply_id: replyId, user_id: userId }
-      );
+      // Get the current like count to return
+      const { data: replyData } = await supabase
+        .from('forum_replies')
+        .select('likes')
+        .eq('id', replyId)
+        .single();
       
       return {
         success: true,
         message: "Reply unliked successfully",
         liked: false,
-        newCount: data?.new_count || 0
+        newCount: replyData?.likes || 0
       };
     } else {
       // Like: Add new like to database
@@ -91,17 +92,18 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
         throw addLikeError;
       }
       
-      // Increment likes count using RPC function
-      const { data, error } = await safeRpcCall<{ new_count: number }>(
-        'toggle_reply_like', 
-        { reply_id: replyId, user_id: userId }
-      );
+      // Get the current like count to return
+      const { data: replyData } = await supabase
+        .from('forum_replies')
+        .select('likes')
+        .eq('id', replyId)
+        .single();
       
       return {
         success: true,
         message: "Reply liked successfully",
         liked: true,
-        newCount: data?.new_count || 0
+        newCount: (replyData?.likes || 0) + 1
       };
     }
   } catch (error) {

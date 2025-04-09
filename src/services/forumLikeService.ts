@@ -1,5 +1,5 @@
 
 // Re-export all like-related services for backward compatibility
-export { LikeResponse } from './forum/likeUtils';
+export type { LikeResponse } from './types/community';
 export { getPostLikeStatus, togglePostLike } from './forum/postLikeService';
 export { getReplyLikeStatus, toggleReplyLike } from './forum/replyLikeService';

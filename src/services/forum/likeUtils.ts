@@ -1,12 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-
-export interface LikeResponse {
-  success: boolean;
-  message: string;
-  liked: boolean;
-  newCount: number;
-}
+import { LikeResponse } from "@/types/community";
 
 // Fonction utilitaire pour vérifier l'authentification
 export const checkAuthentication = async (): Promise<string | null> => {

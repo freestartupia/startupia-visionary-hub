@@ -1,49 +1,58 @@
 
-import { PostgrestError } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
 
-// Define the interface for like operation responses
+// LikeResponse interface for consistent return types
 export interface LikeResponse {
-  liked: boolean;
-  newCount: number;
+  success: boolean;
+  message: string;
+  likeCount?: number;
+  liked?: boolean;
 }
 
-// Utility function to check authentication
-export async function checkAuthentication(): Promise<string> {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  
-  if (userError || !userData.user) {
-    console.error("User not authenticated:", userError);
-    throw userError || new Error("User not authenticated");
+// Authentication check utility
+export const checkAuthentication = (user: User | null): LikeResponse | null => {
+  if (!user) {
+    return {
+      success: false,
+      message: "Vous devez être connecté pour effectuer cette action"
+    };
   }
-  
-  return userData.user.id;
-}
+  return null;
+};
 
-/**
- * A type-safe wrapper for RPC calls
- * @param functionName Name of the Postgres function to call
- * @param params Parameters to pass to the function
- * @returns Result of the RPC call
- */
-export async function safeRpcCall<T, P extends Record<string, any>>(
-  functionName: string, 
-  params: P
-): Promise<{ data: T | null; error: PostgrestError | null }> {
-  return supabase.rpc(functionName, params);
-}
-
-/**
- * Converts query string parameters to the correct types for RPC calls
- * @param postId Post ID from URL
- * @returns Properly typed post ID for RPC calls
- */
-export function preparePostId(postId: string | undefined): string {
-  if (!postId) {
-    throw new Error("Post ID is required");
-  }
-  
-  // Return the post ID as a string, which is compatible with the RPC function
+// Prepare post ID for database operations
+export const preparePostId = (postId: string): string => {
   return postId;
+};
+
+// Fetch current like status
+export async function fetchLikeStatus(postId: string, userId: string, type: string = 'post') {
+  const { data, error } = await supabase
+    .from(type === 'post' ? 'post_likes' : 'reply_likes')
+    .select('*')
+    .eq(type === 'post' ? 'post_id' : 'reply_id', postId)
+    .eq('user_id', userId)
+    .single();
+
+  if (error && error.code !== 'PGSQL_ERROR') {
+    console.error('Error fetching like status:', error);
+  }
+
+  return { data, error };
+}
+
+// Count likes for a post or reply
+export async function countLikes(id: string, type: string = 'post') {
+  const { count, error } = await supabase
+    .from(type === 'post' ? 'post_likes' : 'reply_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq(type === 'post' ? 'post_id' : 'reply_id', id);
+
+  if (error) {
+    console.error('Error counting likes:', error);
+    return 0;
+  }
+
+  return count || 0;
 }

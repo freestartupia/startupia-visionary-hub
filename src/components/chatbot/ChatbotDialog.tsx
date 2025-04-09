@@ -39,7 +39,7 @@ export const ChatbotButton = () => {
         <DrawerTrigger asChild>
           <Button 
             onClick={handleOpen}
-            className="fixed bottom-4 right-4 rounded-full w-14 h-14 shadow-lg bg-startupia-turquoise hover:bg-startupia-turquoise/90 p-0 flex items-center justify-center"
+            className="fixed bottom-4 right-4 rounded-full w-14 h-14 shadow-lg bg-startupia-turquoise hover:bg-startupia-turquoise/90 p-0 flex items-center justify-center z-50"
           >
             <MessageCircle size={24} />
             {unreadCount > 0 && (
@@ -49,7 +49,7 @@ export const ChatbotButton = () => {
             )}
           </Button>
         </DrawerTrigger>
-        <DrawerContent className="h-[85vh]">
+        <DrawerContent className="h-[85vh] z-50">
           <ChatContent isMobile={true} onClose={() => setOpen(false)} />
         </DrawerContent>
       </Drawer>
@@ -60,7 +60,7 @@ export const ChatbotButton = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       <Button
         onClick={handleOpen}
-        className="fixed bottom-4 right-4 rounded-full w-14 h-14 shadow-lg bg-startupia-turquoise hover:bg-startupia-turquoise/90 p-0 flex items-center justify-center"
+        className="fixed bottom-4 right-4 rounded-full w-14 h-14 shadow-lg bg-startupia-turquoise hover:bg-startupia-turquoise/90 p-0 flex items-center justify-center z-50"
       >
         <MessageCircle size={24} />
         {unreadCount > 0 && (
@@ -69,7 +69,7 @@ export const ChatbotButton = () => {
           </span>
         )}
       </Button>
-      <DialogContent className="sm:max-w-[400px] h-[500px] p-0 bg-black border-white/20 overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-[400px] h-[500px] p-0 bg-black border-white/20 overflow-hidden flex flex-col z-50">
         <ChatContent onClose={() => setOpen(false)} />
       </DialogContent>
     </Dialog>

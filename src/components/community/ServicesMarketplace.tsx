@@ -5,7 +5,7 @@ import { ServiceCategory, ServiceListing } from '@/types/community';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { fetchServices } from '@/services/serviceListingService';
+import { mockServiceListings } from '@/data/mockCommunityData';
 import ServiceCard from './services/ServiceCard';
 import ServiceFilters from './services/ServiceFilters';
 import EmptyServiceState from './services/EmptyServiceState';
@@ -28,21 +28,14 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
   ];
   
   useEffect(() => {
-    loadServices();
-  }, []);
-
-  const loadServices = async () => {
-    setIsLoading(true);
-    try {
-      const servicesData = await fetchServices();
-      setServices(servicesData);
-    } catch (err) {
-      console.error('Error loading services:', err);
-      setServices([]);
-    } finally {
+    // Simuler un chargement pour l'effet
+    const timer = setTimeout(() => {
+      setServices(mockServiceListings);
       setIsLoading(false);
-    }
-  };
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);

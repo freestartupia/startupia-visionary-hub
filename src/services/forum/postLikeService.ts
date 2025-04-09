@@ -52,7 +52,9 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
       .single();
     
     return {
-      ...likeResponse,
+      success: likeResponse.success,
+      message: likeResponse.message,
+      liked: likeResponse.liked || false,
       newCount: likeResponse.liked 
         ? (postData?.likes || 0) + 1 
         : (postData?.likes || 0)

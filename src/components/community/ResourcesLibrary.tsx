@@ -1,11 +1,10 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ResourceFormat, ResourceListing } from '@/types/community';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { mockResources } from '@/data/mockCommunityData';
 import ResourceFilters from './resource/ResourceFilters';
 import ResourceCard from './resource/ResourceCard';
 import LoadingState from './resource/LoadingState';
@@ -19,6 +18,7 @@ interface ResourcesLibraryProps {
 const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false }) => {
   const [selectedFormat, setSelectedFormat] = useState<ResourceFormat | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -27,23 +27,8 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
     'Bootcamp', 'Cours', 'Podcast', 'Autre'
   ];
   
-  // Utiliser React Query pour récupérer les formations depuis Supabase
-  const { data: resources = [], isLoading, error } = useQuery({
-    queryKey: ['resources'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('resource_listings')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Erreur lors de la récupération des formations:', error);
-        throw error;
-      }
-      
-      return data as ResourceListing[];
-    }
-  });
+  // Utiliser les données mock au lieu de React Query
+  const resources = mockResources;
   
   // Filtrer les ressources en fonction du format sélectionné et du terme de recherche
   const filteredResources = resources.filter(resource => {
@@ -89,10 +74,6 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
 
   if (isLoading) {
     return <LoadingState />;
-  }
-
-  if (error) {
-    return <ErrorState />;
   }
 
   return (

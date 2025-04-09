@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LikeResponse, safeRpcCall } from "./likeUtils";
+import { LikeResponse, checkAuthentication, safeRpcCall } from "./likeUtils";
 
 // Function to check if a user has liked a post
 export const getPostLikeStatus = async (postId: string, userId: string): Promise<boolean> => {
@@ -28,8 +28,7 @@ export const getPostLikeStatus = async (postId: string, userId: string): Promise
 // Function to toggle like on a post
 export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
   try {
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData.user?.id;
+    const userId = await checkAuthentication();
     
     if (!userId) {
       toast.error("Vous devez être connecté pour liker un post");
@@ -69,7 +68,7 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
       // Decrement likes count using RPC function
       const { data, error } = await safeRpcCall<{ new_count: number }>(
         'toggle_post_like', 
-        { post_id: postId }
+        { post_id: postId, user_id: userId }
       );
       
       return {
@@ -95,7 +94,7 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
       // Increment likes count using RPC function
       const { data, error } = await safeRpcCall<{ new_count: number }>(
         'toggle_post_like', 
-        { post_id: postId }
+        { post_id: postId, user_id: userId }
       );
       
       return {

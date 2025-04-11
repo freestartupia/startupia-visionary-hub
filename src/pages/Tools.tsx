@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { ExternalLink, Star } from 'lucide-react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
 import SEO from '@/components/SEO';
+import ToolsCategoryFilter from '@/components/tools/ToolsCategoryFilter';
 
 // Définition du type pour les outils
 interface Tool {
@@ -18,6 +19,8 @@ interface Tool {
 }
 
 const Tools = () => {
+  const [selectedCategory, setSelectedCategory] = useState('Tous');
+
   // Données des outils recommandés
   const tools: Tool[] = [
     {
@@ -70,7 +73,7 @@ const Tools = () => {
       name: 'Synthesia',
       description: 'Outil de création de vidéos avec des avatars IA parlants, idéal pour les formations et présentations.',
       imageUrl: 'https://play-lh.googleusercontent.com/kcTwutt7y4hROROJkBK71CmzodD9n9IZvmYWsJUHGRsVWbHJm0qBBpYdFLhcRFNYg70',
-      category: 'Vidéo',
+      category: 'Audio/Vidéo',
       rating: 4.5,
       link: 'https://www.synthesia.io'
     },
@@ -103,6 +106,14 @@ const Tools = () => {
     },
   ];
 
+  // Filtrer les outils en fonction de la catégorie sélectionnée
+  const filteredTools = useMemo(() => {
+    if (selectedCategory === 'Tous') {
+      return tools;
+    }
+    return tools.filter(tool => tool.category === selectedCategory);
+  }, [selectedCategory, tools]);
+
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
       <SEO 
@@ -118,15 +129,21 @@ const Tools = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-12 relative z-10">
-        <header className="mb-12 text-center">
+        <header className="mb-10 text-center">
           <h1 className="text-4xl font-bold mb-4">Outils IA Recommandés</h1>
           <p className="text-xl text-white/80 max-w-2xl mx-auto">
             Notre sélection des meilleurs outils d'intelligence artificielle pour améliorer votre productivité et stimuler votre créativité.
           </p>
         </header>
         
+        {/* Category Filter */}
+        <ToolsCategoryFilter 
+          selectedCategory={selectedCategory}
+          onCategorySelect={setSelectedCategory}
+        />
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tools.map((tool) => (
+          {filteredTools.map((tool) => (
             <Card key={tool.id} className="bg-black/30 border-startupia-turquoise/20 hover:border-startupia-turquoise/40 transition-all duration-300 overflow-hidden">
               <CardContent className="p-0">
                 <div className="aspect-video w-full bg-black/50 flex items-center justify-center p-6">

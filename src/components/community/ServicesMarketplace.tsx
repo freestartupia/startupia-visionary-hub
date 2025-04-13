@@ -9,6 +9,8 @@ import { mockServiceListings } from '@/data/mockCommunityData';
 import ServiceCard from './services/ServiceCard';
 import ServiceFilters from './services/ServiceFilters';
 import EmptyServiceState from './services/EmptyServiceState';
+import ProposeServiceModal from './services/ProposeServiceModal';
+import { fetchServices } from '@/services/serviceListingService';
 
 interface ServicesMarketplaceProps {
   requireAuth?: boolean;
@@ -19,6 +21,7 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -28,10 +31,28 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
   ];
   
   useEffect(() => {
-    // Simuler un chargement pour l'effet
+    const loadServices = async () => {
+      try {
+        // Try to fetch from Supabase first
+        const serviceData = await fetchServices();
+        
+        if (serviceData.length > 0) {
+          setServices(serviceData);
+        } else {
+          // Fallback to mock data if no services found
+          setServices(mockServiceListings);
+        }
+      } catch (error) {
+        console.error("Error loading services:", error);
+        // Fallback to mock data on error
+        setServices(mockServiceListings);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     const timer = setTimeout(() => {
-      setServices(mockServiceListings);
-      setIsLoading(false);
+      loadServices();
     }, 1000);
     
     return () => clearTimeout(timer);
@@ -73,7 +94,13 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
       return;
     }
     
-    toast.success("Fonctionnalité en développement");
+    setIsModalOpen(true);
+  };
+
+  const handleServiceSuccess = (newService: ServiceListing) => {
+    // In a real application, we would refresh the data from Supabase
+    // For now, we'll just add the new service to our local state
+    setServices([newService, ...services]);
   };
 
   if (isLoading) {
@@ -122,6 +149,13 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
           <EmptyServiceState handleProposeService={handleProposeService} />
         )}
       </div>
+
+      <ProposeServiceModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleServiceSuccess}
+        categories={categories}
+      />
     </div>
   );
 };

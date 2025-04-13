@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Heart, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import ProposeProjectModal from './project/ProposeProjectModal';
 
 interface CollaborativeProjectsProps {
   requireAuth?: boolean;
@@ -20,6 +22,7 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
   const [selectedStatus, setSelectedStatus] = useState<ProjectStatus | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -116,7 +119,11 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
       return;
     }
     
-    toast.success("Fonctionnalité en développement");
+    setIsModalOpen(true);
+  };
+
+  const handleProjectSuccess = (newProject: CollaborativeProject) => {
+    setProjects([newProject, ...projects]);
   };
   
   const getInitials = (name: string) => {
@@ -274,6 +281,13 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
           </div>
         )}
       </div>
+      
+      <ProposeProjectModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleProjectSuccess}
+        statuses={statuses}
+      />
     </div>
   );
 };

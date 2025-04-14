@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
+import { useMediaQuery } from '@/hooks/use-mobile';
 
 interface ProfileCardProps {
   profile: CofounderProfile;
@@ -21,6 +22,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery('(max-width: 640px)');
 
   // Fetch user avatar from profiles table if this is the current user's profile
   useEffect(() => {
@@ -87,12 +89,12 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
   return (
     <>
       <div 
-        className="glass-card p-6 rounded-lg flex flex-col h-full cursor-pointer hover:border-startupia-turquoise/50 transition-all"
+        className="glass-card p-4 sm:p-6 rounded-lg flex flex-col h-full cursor-pointer hover:border-startupia-turquoise/50 transition-all"
         onClick={() => setShowDetail(true)}
       >
         {/* Header with photo and name */}
         <div className="flex items-center mb-4">
-          <Avatar className="w-16 h-16">
+          <Avatar className="w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0">
             {userAvatar ? (
               <AvatarImage 
                 src={userAvatar} 
@@ -110,24 +112,24 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
               {getInitials(profile.name)}
             </AvatarFallback>
           </Avatar>
-          <div className="ml-3">
-            <div className="flex items-center">
-              <h3 className="font-semibold text-lg">{profile.name}</h3>
+          <div className="ml-3 min-w-0">
+            <div className="flex items-center flex-wrap gap-2">
+              <h3 className="font-semibold text-base sm:text-lg truncate">{profile.name}</h3>
               {profile.hasAIBadge && (
-                <Badge className="ml-2 bg-gradient-to-r from-startupia-gold to-startupia-light-gold text-black text-xs">
+                <Badge className="bg-gradient-to-r from-startupia-gold to-startupia-light-gold text-black text-xs">
                   <Award size={12} className="mr-1" />
                   Expertise IA
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-white/70">{profile.role}</p>
+            <p className="text-xs sm:text-sm text-white/70 truncate">{profile.role}</p>
           </div>
         </div>
         
         {/* Profile type badge */}
         <Badge 
           variant="outline" 
-          className={`self-start mb-3 ${
+          className={`self-start mb-3 text-xs ${
             profile.profileType === 'project-owner'
               ? 'border-startupia-gold/50 text-startupia-gold'
               : 'border-startupia-purple/50 text-startupia-purple'
@@ -139,54 +141,57 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
         {/* Project name if applicable */}
         {profile.profileType === 'project-owner' && profile.projectName && (
           <div className="mb-3">
-            <h4 className="font-medium text-sm text-white/50">Projet</h4>
-            <p className="text-white font-medium">{profile.projectName}</p>
+            <h4 className="font-medium text-xs sm:text-sm text-white/50">Projet</h4>
+            <p className="text-white font-medium text-sm truncate">{profile.projectName}</p>
             {profile.projectStage && (
-              <Badge variant="secondary" className="mt-1 bg-black/20 text-white/70">
+              <Badge variant="secondary" className="mt-1 bg-black/20 text-white/70 text-xs">
                 {profile.projectStage}
               </Badge>
             )}
           </div>
         )}
         
-        {/* Pitch */}
-        <p className="text-white/80 mb-4 flex-grow">{profile.pitch}</p>
+        {/* Pitch - limit to 3 lines with ellipsis */}
+        <p className="text-xs sm:text-sm text-white/80 mb-4 flex-grow overflow-hidden line-clamp-3">
+          {profile.pitch}
+        </p>
         
         {/* Skills and Tags */}
-        <div className="mb-4">
+        <div className="mb-4 flex flex-wrap gap-2">
           {/* Sector */}
-          <Badge variant="outline" className="mr-2 mb-2 border-startupia-turquoise/30 text-startupia-turquoise">
+          <Badge variant="outline" className="border-startupia-turquoise/30 text-startupia-turquoise text-xs">
             {profile.sector}
           </Badge>
           
-          {/* AI Tools */}
-          {profile.aiTools.slice(0, 3).map((tool) => (
-            <Badge key={tool} variant="outline" className="mr-2 mb-2 border-white/20">
+          {/* AI Tools - limit to 2 on mobile, 3 on desktop */}
+          {profile.aiTools.slice(0, isMobile ? 2 : 3).map((tool) => (
+            <Badge key={tool} variant="outline" className="border-white/20 text-xs">
               {tool}
             </Badge>
           ))}
           
           {/* More badge if many tools */}
-          {profile.aiTools.length > 3 && (
-            <Badge variant="outline" className="mr-2 mb-2 bg-white/5">
-              +{profile.aiTools.length - 3}
+          {profile.aiTools.length > (isMobile ? 2 : 3) && (
+            <Badge variant="outline" className="bg-white/5 text-xs">
+              +{profile.aiTools.length - (isMobile ? 2 : 3)}
             </Badge>
           )}
         </div>
         
         {/* Info and location */}
-        <div className="flex justify-between items-center mb-4 text-sm">
-          <div className="text-white/60">{profile.availability}</div>
-          <div className="text-white/60">{profile.region}</div>
+        <div className="flex justify-between items-center mb-4 text-xs">
+          <div className="text-white/60 truncate max-w-[60%]">{profile.availability}</div>
+          <div className="text-white/60 truncate">{profile.region}</div>
         </div>
         
         {/* Action buttons */}
-        <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex space-x-2 mt-auto" onClick={(e) => e.stopPropagation()}>
           <Button 
             onClick={handleMatchRequest}
-            className="flex-1 bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black"
+            className="flex-1 bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black text-xs sm:text-sm px-2 sm:px-4"
+            size={isMobile ? "sm" : "default"}
           >
-            <MessageCircle size={16} className="mr-2" />
+            <MessageCircle size={isMobile ? 14 : 16} className="mr-1" />
             Contact
           </Button>
           
@@ -194,12 +199,13 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
             <Button 
               variant="outline" 
               className="px-2 border-white/20"
+              size={isMobile ? "sm" : "default"}
               onClick={(e) => {
                 e.stopPropagation();
                 window.open(profile.linkedinUrl, '_blank');
               }}
             >
-              <ExternalLink size={16} />
+              <ExternalLink size={isMobile ? 14 : 16} />
             </Button>
           )}
         </div>

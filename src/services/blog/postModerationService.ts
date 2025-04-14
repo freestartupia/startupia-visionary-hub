@@ -1,8 +1,35 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { BlogPost } from '@/types/blog';
-import { checkUserHasRole } from '@/services/roleService';
 import { mapDbPostToBlogPost } from './mappers';
+
+// Helper function to check if user is admin or moderator without using checkUserHasRole
+const checkAdminOrModeratorRole = async (): Promise<boolean> => {
+  try {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !userData.user) {
+      console.error('User not authenticated:', userError);
+      return false;
+    }
+    
+    // Direct query to user_roles table
+    const { data: roles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userData.user.id);
+      
+    if (rolesError) {
+      console.error('Error checking user roles:', rolesError);
+      return false;
+    }
+    
+    return roles.some(role => role.role === 'admin' || role.role === 'moderator');
+  } catch (error) {
+    console.error('Error checking admin role:', error);
+    return false;
+  }
+};
 
 /**
  * Gets blog posts by status (pending/published/rejected)
@@ -11,10 +38,9 @@ import { mapDbPostToBlogPost } from './mappers';
 export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 'rejected'): Promise<BlogPost[]> => {
   try {
     // Check if user has admin or moderator role
-    const isAdmin = await checkUserHasRole('admin');
-    const isModerator = await checkUserHasRole('moderator');
+    const isAdminOrModerator = await checkAdminOrModeratorRole();
     
-    if (!isAdmin && !isModerator) {
+    if (!isAdminOrModerator) {
       console.error('Unauthorized access to moderation functions');
       return [];
     }
@@ -29,7 +55,7 @@ export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 're
       
     if (error) {
       console.error(`Error fetching ${status} blog posts:`, error);
-      throw error;
+      return [];
     }
     
     console.log(`Found ${data?.length || 0} ${status} blog posts`, data);
@@ -37,7 +63,7 @@ export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 're
     return (data || []).map(mapDbPostToBlogPost);
   } catch (error) {
     console.error(`Error fetching ${status} blog posts:`, error);
-    throw error;
+    return [];
   }
 };
 
@@ -51,20 +77,10 @@ export const updateBlogPostStatus = async (
   adminReason?: string
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !userData.user) {
-      return { 
-        success: false, 
-        error: 'Vous devez être connecté pour modérer un article' 
-      };
-    }
-
     // Check if user has admin or moderator role
-    const isAdmin = await checkUserHasRole('admin');
-    const isModerator = await checkUserHasRole('moderator');
+    const isAdminOrModerator = await checkAdminOrModeratorRole();
     
-    if (!isAdmin && !isModerator) {
+    if (!isAdminOrModerator) {
       return { 
         success: false, 
         error: 'Vous n\'avez pas les permissions pour modérer des articles' 

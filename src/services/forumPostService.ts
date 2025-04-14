@@ -1,6 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { ForumPost, PopulatedForumPost } from '@/types/community';
 import { getPostLikeStatus } from './forum/postLikeService';
+import { ForumPostDB } from '@/types/forumTypes';
 
 const formatPostDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -21,13 +23,34 @@ const formatPostDate = (dateStr: string): string => {
   }
 };
 
-const populatePostWithLikeInfo = async (post: ForumPost): Promise<PopulatedForumPost> => {
-  const { liked, count } = await getPostLikeStatus(post.id);
+const mapDbPostToForumPost = (postData: ForumPostDB): ForumPost => {
+  return {
+    id: postData.id,
+    title: postData.title,
+    content: postData.content,
+    category: postData.category,
+    authorId: postData.author_id,
+    authorName: postData.author_name,
+    authorAvatar: postData.author_avatar || null,
+    tags: postData.tags || [],
+    createdAt: postData.created_at,
+    updatedAt: postData.updated_at || null,
+    likes: postData.likes || 0,
+    views: postData.views || 0,
+    isPinned: postData.is_pinned || false,
+    replies: [],
+    isLiked: false
+  };
+};
+
+const populatePostWithLikeInfo = async (postData: ForumPostDB): Promise<PopulatedForumPost> => {
+  const { liked, count } = await getPostLikeStatus(postData.id);
+  const post = mapDbPostToForumPost(postData);
 
   return {
     ...post,
     userHasLiked: liked,
-    formattedCreatedAt: formatPostDate(post.created_at)
+    formattedCreatedAt: formatPostDate(post.createdAt)
   };
 };
 
@@ -44,7 +67,7 @@ export const getForumPosts = async (): Promise<PopulatedForumPost[]> => {
     }
 
     const populatedPosts = await Promise.all(data.map(async (post) => {
-      return await populatePostWithLikeInfo(post);
+      return await populatePostWithLikeInfo(post as ForumPostDB);
     }));
 
     return populatedPosts;
@@ -56,9 +79,41 @@ export const getForumPosts = async (): Promise<PopulatedForumPost[]> => {
 
 export const createForumPost = async (title: string, content: string, userId: string): Promise<{ data: ForumPost | null, error: any }> => {
   try {
-    const { data, error } = await supabase
+    // Get user info to include author name and avatar
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error("Error getting user data:", userError);
+      return { data: null, error: userError };
+    }
+    
+    // Get user profile to get name
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, avatar_url')
+      .eq('id', userId)
+      .single();
+      
+    if (profileError) {
+      console.error("Error getting profile data:", profileError);
+    }
+    
+    const authorName = profileData 
+      ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
+      : 'Utilisateur StartupIA';
+    
+    const newPost = {
+      title,
+      content,
+      author_id: userId,
+      author_name: authorName,
+      author_avatar: profileData?.avatar_url || null,
+      category: 'general' // Default category
+    };
+
+    const { data: postData, error } = await supabase
       .from('forum_posts')
-      .insert([{ title, content, user_id: userId }])
+      .insert(newPost)
       .select()
       .single();
 
@@ -67,7 +122,8 @@ export const createForumPost = async (title: string, content: string, userId: st
       return { data: null, error };
     }
 
-    return { data, error: null };
+    const post = mapDbPostToForumPost(postData as ForumPostDB);
+    return { data: post, error: null };
   } catch (error) {
     console.error("Error creating forum post:", error);
     return { data: null, error: error };
@@ -87,7 +143,7 @@ export const getForumPostById = async (postId: string): Promise<PopulatedForumPo
       return null;
     }
 
-    return await populatePostWithLikeInfo(data);
+    return await populatePostWithLikeInfo(data as ForumPostDB);
   } catch (error) {
     console.error("Error fetching forum post:", error);
     return null;

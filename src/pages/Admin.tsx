@@ -20,6 +20,7 @@ const Admin = () => {
   const [publishedPosts, setPublishedPosts] = useState<BlogPost[]>([]);
   const [rejectedPosts, setRejectedPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -27,16 +28,26 @@ const Admin = () => {
 
   const fetchPosts = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
+      console.log("Fetching blog posts for moderation...");
+      
       const pending = await getBlogPostsByStatus('pending');
+      console.log("Pending posts:", pending);
+      
       const published = await getBlogPostsByStatus('published');
+      console.log("Published posts:", published);
+      
       const rejected = await getBlogPostsByStatus('rejected');
+      console.log("Rejected posts:", rejected);
       
       setPendingPosts(pending);
       setPublishedPosts(published);
       setRejectedPosts(rejected);
     } catch (error) {
       console.error('Error fetching posts:', error);
+      setError('Erreur lors du chargement des articles');
       toast.error('Erreur lors du chargement des articles');
     } finally {
       setIsLoading(false);
@@ -73,6 +84,26 @@ const Admin = () => {
     }
   };
 
+  const renderLoading = () => (
+    <div className="flex justify-center py-8">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
+    </div>
+  );
+
+  const renderError = () => (
+    <div className="p-6 bg-red-900/20 rounded-lg border border-red-700 mb-4">
+      <p className="text-red-400">{error}</p>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        className="mt-2 border-red-700 text-red-400 hover:bg-red-900/30"
+        onClick={fetchPosts}
+      >
+        Réessayer
+      </Button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-black text-white">
       <SEO 
@@ -85,6 +116,8 @@ const Admin = () => {
       <main className="container mx-auto pt-24 pb-16 px-4">
         <h1 className="text-3xl font-bold mb-6">Administration</h1>
         
+        {error && renderError()}
+        
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
           <TabsList className="grid grid-cols-4 w-full max-w-2xl">
             <TabsTrigger value="pending">En attente ({pendingPosts.length})</TabsTrigger>
@@ -96,9 +129,7 @@ const Admin = () => {
           <TabsContent value="pending" className="space-y-4">
             <h2 className="text-2xl font-semibold">Articles en attente de modération</h2>
             {isLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
-              </div>
+              renderLoading()
             ) : pendingPosts.length === 0 ? (
               <p className="text-white/70">Aucun article en attente de modération.</p>
             ) : (

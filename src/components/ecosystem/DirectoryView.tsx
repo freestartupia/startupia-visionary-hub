@@ -149,7 +149,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     };
     
     checkUserVotes();
-  }, [user]);
+  }, [user, startupVotes]);
   
   useEffect(() => {
     if (!searchQuery.trim()) {

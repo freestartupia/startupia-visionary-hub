@@ -33,12 +33,12 @@ const StartupCard = ({ startup }: StartupCardProps) => {
         if (user) {
           const { data: userUpvote, error: userError } = await supabase
             .from('post_upvotes')
-            .select('id')
+            .select('id, is_upvote')
             .eq('post_id', startup.id)
             .eq('user_id', user.id)
             .single();
             
-          if (!userError && userUpvote) {
+          if (!userError && userUpvote && userUpvote.is_upvote) {
             setIsUpvoted(true);
           }
         }
@@ -99,7 +99,8 @@ const StartupCard = ({ startup }: StartupCardProps) => {
           .from('post_upvotes')
           .insert({
             post_id: startup.id,
-            user_id: user.id
+            user_id: user.id,
+            is_upvote: true
           });
           
         if (error) {
@@ -111,6 +112,16 @@ const StartupCard = ({ startup }: StartupCardProps) => {
         setUpvoteCount(prev => prev + 1);
         setIsUpvoted(true);
         toast.success(`Vous avez upvoté ${startup.name}`);
+      }
+      
+      // Update the startup's upvote count in the database
+      const { error } = await supabase
+        .from('startups')
+        .update({ upvotes_count: isUpvoted ? upvoteCount - 1 : upvoteCount + 1 })
+        .eq('id', startup.id);
+        
+      if (error) {
+        console.error('Error updating startup upvote count:', error);
       }
     } catch (error) {
       console.error('Error toggling upvote:', error);

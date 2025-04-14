@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from "@/types/startup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -131,7 +130,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
   };
 
   return (
-    <div className="mb-16">
+    <div className="mb-16 w-full max-w-5xl mx-auto">
       {showFilters && (
         <div className="mt-4 mb-8">
           {/* Retirer l'appel à StartupFilters qui n'existe pas dans ce fichier */}
@@ -141,7 +140,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
       <Tabs 
         value={activeCategory} 
         onValueChange={setActiveCategory}
-        className="mb-8"
+        className="mb-8 w-full"
       >
         <TabsList className="inline-flex h-10 items-center justify-start space-x-1 overflow-x-auto w-full">
           <TabsTrigger value="all" className="data-[state=active]:bg-startupia-turquoise/20">
@@ -211,11 +210,11 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     }
   
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {startups.map((startup, index) => (
-          <Link to={`/startup/${startup.id}`} key={startup.id} className="block hover:no-underline">
+          <Link to={`/startup/${startup.id}`} key={startup.id} className="block hover:no-underline w-full">
             <Card className="hover:border-startupia-turquoise/50 transition-all duration-300 border border-startupia-turquoise/20 bg-black/30 w-full">
-              <div className="flex items-start gap-4 p-5">
+              <div className="flex items-center gap-6 p-5">
                 <div className="flex-shrink-0 relative">
                   <div className="w-16 h-16 rounded-md bg-startupia-turquoise/10 flex items-center justify-center overflow-hidden">
                     {startup.logoUrl ? (
@@ -230,9 +229,9 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                 </div>
                 
                 <div className="flex-grow">
-                  <div className="mb-2">
+                  <div className="mb-1">
                     <h3 className="text-xl font-bold text-white">{startup.name}</h3>
-                    <p className="text-white/80 font-medium mb-2">{startup.shortDescription}</p>
+                    <p className="text-white/80 text-base mb-2">{startup.shortDescription}</p>
                     
                     <div className="flex flex-wrap gap-2 mb-3">
                       {startup.sector && (
@@ -253,7 +252,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                     </div>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2 text-sm text-white/60">
+                  <div className="flex items-center gap-4 text-sm text-white/60">
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-1" />
                       <span>{formatDate(startup.dateAdded)}</span>
@@ -274,15 +273,15 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                   </div>
                 </div>
                 
-                <div className="flex gap-3 items-center flex-shrink-0">
-                  <div className="flex flex-col items-center p-2">
-                    <MessageSquare className="mb-1 h-5 w-5 text-white/50" />
-                    <span className="text-sm font-semibold">{startup.viewCount || 0}</span>
+                <div className="flex items-center gap-6 flex-shrink-0">
+                  <div className="flex items-center gap-1 text-white/70">
+                    <MessageSquare className="h-5 w-5" />
+                    <span className="font-medium">{startup.viewCount || 0}</span>
                   </div>
                   
-                  <div className="flex flex-col items-center p-2">
-                    <ThumbsUp className="mb-1 h-5 w-5 text-white/50" />
-                    <span className="text-sm font-semibold">{startup.upvoteCount || 0}</span>
+                  <div className="flex items-center gap-1 text-white/70">
+                    <ThumbsUp className="h-5 w-5" />
+                    <span className="font-medium">{startup.upvoteCount || 0}</span>
                   </div>
                 </div>
               </div>

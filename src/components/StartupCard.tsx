@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Star, ThumbsUp } from "lucide-react";
 import { Startup } from "@/types/startup";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StartupCardProps {
   startup: Startup;
@@ -16,6 +17,41 @@ interface StartupCardProps {
 const StartupCard = ({ startup }: StartupCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [upvoteCount, setUpvoteCount] = useState(0);
+  const [isUpvoted, setIsUpvoted] = useState(false);
+  
+  // Fetch real upvote count and user's upvote status
+  useEffect(() => {
+    const fetchUpvoteData = async () => {
+      try {
+        // Get upvote count
+        const { data: upvotes, error: countError } = await supabase
+          .from('post_upvotes')
+          .select('id')
+          .eq('post_id', startup.id);
+          
+        if (!countError && upvotes) {
+          setUpvoteCount(upvotes.length);
+        }
+        
+        // Check if user has upvoted
+        if (user) {
+          const { data: userUpvote, error: userError } = await supabase
+            .from('post_upvotes')
+            .select('id')
+            .eq('post_id', startup.id)
+            .eq('user_id', user.id)
+            .single();
+            
+          setIsUpvoted(!!userUpvote && !userError);
+        }
+      } catch (error) {
+        console.error('Error fetching upvote data:', error);
+      }
+    };
+    
+    fetchUpvoteData();
+  }, [startup.id, user]);
   
   // Generate stars for AI Impact Score
   const renderStars = (score: number) => {
@@ -32,7 +68,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       ));
   };
 
-  const handleVote = (e: React.MouseEvent) => {
+  const handleVote = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -42,7 +78,35 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       return;
     }
     
-    toast.success(`Vous avez upvoté ${startup.name}`);
+    try {
+      if (isUpvoted) {
+        // Remove upvote
+        await supabase
+          .from('post_upvotes')
+          .delete()
+          .eq('post_id', startup.id)
+          .eq('user_id', user.id);
+          
+        setUpvoteCount(prev => Math.max(0, prev - 1));
+        setIsUpvoted(false);
+        toast.success(`Vote retiré pour ${startup.name}`);
+      } else {
+        // Add upvote
+        await supabase
+          .from('post_upvotes')
+          .insert({
+            post_id: startup.id,
+            user_id: user.id
+          });
+          
+        setUpvoteCount(prev => prev + 1);
+        setIsUpvoted(true);
+        toast.success(`Vous avez upvoté ${startup.name}`);
+      }
+    } catch (error) {
+      console.error('Error toggling upvote:', error);
+      toast.error("Erreur lors du vote");
+    }
   };
 
   return (
@@ -72,11 +136,11 @@ const StartupCard = ({ startup }: StartupCardProps) => {
             <Button
               variant="ghost"
               size="sm"
-              className="hover:bg-startupia-turquoise/20 mr-2"
+              className={`hover:bg-startupia-turquoise/20 mr-2 ${isUpvoted ? 'text-startupia-turquoise' : ''}`}
               onClick={handleVote}
             >
               <ThumbsUp size={16} className="mr-1" />
-              <span>{50 + Math.floor(Math.random() * 50)}</span>
+              <span>{upvoteCount}</span>
             </Button>
           </div>
         </div>

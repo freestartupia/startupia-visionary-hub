@@ -18,7 +18,8 @@ interface StartupCardProps {
 const StartupCard = ({ startup }: StartupCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [upvoteCount, setUpvoteCount] = useState(startup.upvoteCount || startup.upvotes_count || 0);
+  // Utiliser uniquement upvotes_count pour éviter la confusion
+  const [upvoteCount, setUpvoteCount] = useState(startup.upvotes_count || 0);
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [isDownvoted, setIsDownvoted] = useState(false);
   const [isVoting, setIsVoting] = useState(false);
@@ -27,12 +28,8 @@ const StartupCard = ({ startup }: StartupCardProps) => {
   useEffect(() => {
     const fetchVoteStatus = async () => {
       try {
-        // Normalize upvote count
-        if (typeof startup.upvotes_count === 'number') {
-          setUpvoteCount(startup.upvotes_count);
-        } else if (typeof startup.upvoteCount === 'number') {
-          setUpvoteCount(startup.upvoteCount);
-        }
+        // Toujours utiliser upvotes_count
+        setUpvoteCount(startup.upvotes_count || 0);
         
         // Check if user has voted for this startup
         if (user) {
@@ -55,7 +52,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     };
     
     fetchVoteStatus();
-  }, [startup.id, startup.upvotes_count, startup.upvoteCount, user]);
+  }, [startup.id, startup.upvotes_count, user]);
   
   const handleUpvote = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -77,6 +74,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       console.log("Réponse upvote:", response);
       
       if (response.success) {
+        // Mettre à jour le compte de votes en utilisant la valeur retournée de l'API
         setUpvoteCount(response.newCount);
         setIsUpvoted(response.upvoted);
         setIsDownvoted(false);
@@ -113,6 +111,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       console.log("Réponse downvote:", response);
       
       if (response.success) {
+        // Mettre à jour le compte de votes en utilisant la valeur retournée de l'API
         setUpvoteCount(response.newCount);
         setIsDownvoted(response.upvoted);
         setIsUpvoted(false);
@@ -143,15 +142,9 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       ));
   };
 
-  // Fonction pour afficher correctement le score de vote
+  // Afficher le nombre de votes réel, pas une indication +1/-1
   const getDisplayVoteCount = () => {
-    if (isDownvoted) {
-      return "-1";
-    } else if (isUpvoted) {
-      return "+1";
-    } else {
-      return upvoteCount;
-    }
+    return upvoteCount;
   };
 
   return (

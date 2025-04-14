@@ -22,6 +22,7 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
     }
     
     const userId = userData.user.id;
+    console.log(`Toggle vote: user=${userId}, startup=${startupId}, isUpvote=${isUpvote}`);
     
     // Get current vote count from the startup
     const { data: startupData, error: startupError } = await supabase
@@ -41,6 +42,7 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
     }
     
     const currentCount = startupData.upvotes_count || 0;
+    console.log(`Compte de votes actuel: ${currentCount}`);
     
     // Check for existing vote
     const { data: existingVote, error: voteError } = await supabase
@@ -59,6 +61,8 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
         newCount: currentCount
       };
     }
+    
+    console.log("Vote existant:", existingVote);
     
     // Si l'utilisateur a déjà voté et essaie de voter à nouveau avec le même type de vote
     if (existingVote && existingVote.is_upvote === isUpvote) {
@@ -98,12 +102,22 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
     
     console.log("Réponse de vote:", responseData);
     
+    // Récupérer le nouveau nombre de votes après le traitement
+    const { data: refreshedStartup } = await supabase
+      .from('startups')
+      .select('upvotes_count')
+      .eq('id', startupId)
+      .single();
+      
+    const finalCount = refreshedStartup?.upvotes_count || responseData.new_count;
+    console.log(`Nouveau compte de votes (après vérification): ${finalCount}`);
+    
     // Return the results from the database function
     return {
       success: true,
       message: responseData.message,
       upvoted: responseData.is_upvoted,
-      newCount: responseData.new_count
+      newCount: finalCount
     };
     
   } catch (error) {

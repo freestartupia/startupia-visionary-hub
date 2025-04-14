@@ -1,3 +1,4 @@
+
 export type FounderType = {
   name: string;
   linkedinUrl: string;
@@ -62,7 +63,7 @@ export type Startup = {
   sector: Sector;
   businessModel: BusinessModel;
   maturityLevel: MaturityLevel;
-  aiImpactScore: 1 | 2 | 3 | 4 | 5 | number; // Modifié pour accepter tous les types de nombre
+  aiImpactScore: 1 | 2 | 3 | 4 | 5 | number;
   tags: string[];
   websiteUrl: string;
   pitchDeckUrl?: string;
@@ -71,8 +72,7 @@ export type Startup = {
   dateAdded?: string; // ISO date string
   viewCount?: number;
   isFeatured?: boolean;
-  upvoteCount?: number; // Add this to match the usage
-  upvotes_count?: number; // Keep this for database compatibility
+  upvotes_count: number; // Utiliser uniquement ce champ pour la compatibilité avec la base de données
   fundingRounds?: FundingRound[];
 };
 

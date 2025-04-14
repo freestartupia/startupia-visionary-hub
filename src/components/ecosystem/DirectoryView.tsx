@@ -79,7 +79,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
               dateAdded: item.date_added,
               viewCount: item.view_count,
               isFeatured: item.is_featured,
-              upvoteCount: item.upvotes_count || 0,
+              upvotes_count: item.upvotes_count || 0,
             };
           });
           
@@ -91,7 +91,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
             votesState[startup.id] = { 
               upvoted: false, 
               downvoted: false,
-              count: startup.upvoteCount || 0
+              count: startup.upvotes_count || 0
             };
           });
           setStartupVotes(votesState);
@@ -191,13 +191,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
       return;
     }
     
-    if (!startupVotes[startupId]) {
-      setStartupVotes(prev => ({
-        ...prev,
-        [startupId]: { upvoted: false, downvoted: false, count: 0 }
-      }));
-    }
-    
     setProcessingVotes(prev => ({
       ...prev,
       [startupId]: true
@@ -212,11 +205,27 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
         setStartupVotes(prev => ({
           ...prev,
           [startupId]: {
-            upvoted: response.upvoted,
-            downvoted: !response.upvoted && response.message !== "Vote retiré",
+            upvoted: isUpvote,
+            downvoted: !isUpvote,
             count: response.newCount
           }
         }));
+        
+        setStartups(prev => 
+          prev.map(s => 
+            s.id === startupId 
+              ? {...s, upvotes_count: response.newCount} 
+              : s
+          )
+        );
+        
+        setFilteredStartups(prev => 
+          prev.map(s => 
+            s.id === startupId 
+              ? {...s, upvotes_count: response.newCount} 
+              : s
+          )
+        );
         
         toast.success(response.message);
       } else {
@@ -242,13 +251,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
   };
 
   const getDisplayVoteCount = (startup: Startup) => {
-    if (startupVotes[startup.id]?.downvoted) {
-      return "-1";
-    } else if (startupVotes[startup.id]?.upvoted) {
-      return "+1";
-    } else {
-      return startupVotes[startup.id]?.count || 0;
-    }
+    return startup.upvotes_count;
   };
 
   return (

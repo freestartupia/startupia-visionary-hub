@@ -4,6 +4,7 @@ import { ForumPost } from '@/types/community';
 import ForumPostItem from './ForumPostItem';
 import ForumEmptyState from './ForumEmptyState';
 import { useNavigate } from 'react-router-dom';
+import { ThumbsUp } from 'lucide-react';
 
 interface ForumPostListProps {
   posts: ForumPost[];
@@ -28,6 +29,16 @@ const ForumPostList: React.FC<ForumPostListProps> = ({
     navigate(`/community/post/${postId}`);
   };
 
+  // Sort posts by upvotes (descending) and then by creation date (oldest first for tie breakers)
+  const sortedPosts = [...posts].sort((a, b) => {
+    // First sort by upvotes (highest first)
+    const upvotesDiff = (b.upvotesCount || 0) - (a.upvotesCount || 0);
+    if (upvotesDiff !== 0) return upvotesDiff;
+    
+    // For equal upvotes, sort by creation date (oldest first)
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -42,7 +53,7 @@ const ForumPostList: React.FC<ForumPostListProps> = ({
 
   return (
     <div className="space-y-4">
-      {posts.map((post) => (
+      {sortedPosts.map((post) => (
         <ForumPostItem
           key={post.id}
           post={post}

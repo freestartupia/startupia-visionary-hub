@@ -1,26 +1,22 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UpvoteResponse } from "@/types/community";
 import { toast } from "sonner";
 
-// Function to check if a user has upvoted a post
+// Check if a post is upvoted by the current user
 export const checkPostUpvote = async (postId: string): Promise<boolean> => {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !userData.user) {
-      return false;
-    }
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return false;
     
     const { data, error } = await supabase
       .from('post_upvotes')
-      .select('id')
+      .select('*')
       .eq('post_id', postId)
       .eq('user_id', userData.user.id)
       .single();
       
-    if (error && error.code !== 'PGRST116') { // PGRST116 is the error code for "no rows returned"
-      console.error("Error checking upvote status:", error);
+    if (error && error.code !== 'PGRST116') {
+      console.error("Error checking post upvote:", error);
       return false;
     }
     
@@ -31,32 +27,75 @@ export const checkPostUpvote = async (postId: string): Promise<boolean> => {
   }
 };
 
-// Function to toggle upvote on a post
+// Toggle upvote on a post
 export const togglePostUpvote = async (postId: string): Promise<UpvoteResponse> => {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !userData.user) {
-      toast.error("Vous devez être connecté pour voter");
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
       return {
         success: false,
-        message: "Authentication required",
+        message: "Vous devez être connecté pour voter",
         upvoted: false,
         newCount: 0
       };
     }
-
-    // Check if the user has already upvoted the post
-    const { data, error } = await supabase
+    
+    // Check if user already upvoted this post
+    const { data: existingUpvote } = await supabase
       .from('post_upvotes')
-      .select('id')
+      .select('*')
       .eq('post_id', postId)
       .eq('user_id', userData.user.id)
       .single();
     
-    let isUpvoted = false;
+    let upvoted = false;
+    let message = "";
     
-    // Get current upvote count
+    // If already upvoted, remove the upvote
+    if (existingUpvote) {
+      const { error: deleteError } = await supabase
+        .from('post_upvotes')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', userData.user.id);
+        
+      if (deleteError) {
+        console.error("Error removing upvote:", deleteError);
+        return {
+          success: false,
+          message: "Impossible de supprimer votre vote",
+          upvoted: true,
+          newCount: 0
+        };
+      }
+      
+      message = "Vote retiré";
+      upvoted = false;
+    } 
+    // Otherwise, add an upvote
+    else {
+      const { error: insertError } = await supabase
+        .from('post_upvotes')
+        .insert({
+          post_id: postId,
+          user_id: userData.user.id
+        });
+        
+      if (insertError) {
+        console.error("Error adding upvote:", insertError);
+        return {
+          success: false,
+          message: "Impossible d'ajouter votre vote",
+          upvoted: false,
+          newCount: 0
+        };
+      }
+      
+      message = "Vote ajouté";
+      upvoted = true;
+    }
+    
+    // Get the updated upvote count
     const { data: postData, error: postError } = await supabase
       .from('forum_posts')
       .select('upvotes_count')
@@ -64,60 +103,28 @@ export const togglePostUpvote = async (postId: string): Promise<UpvoteResponse> 
       .single();
       
     if (postError) {
-      throw postError;
+      console.error("Error fetching updated post:", postError);
+      return {
+        success: true,
+        message,
+        upvoted,
+        newCount: upvoted ? 1 : 0
+      };
     }
-    
-    const currentUpvotes = postData?.upvotes_count || 0;
-    
-    if (data && !error) {
-      // If the user has already upvoted the post, remove the upvote
-      const { error: deleteError } = await supabase
-        .from('post_upvotes')
-        .delete()
-        .eq('id', data.id);
-        
-      if (deleteError) {
-        throw deleteError;
-      }
-      
-      isUpvoted = false;
-    } else {
-      // If the user hasn't upvoted the post, add an upvote
-      const { error: insertError } = await supabase
-        .from('post_upvotes')
-        .insert({ post_id: postId, user_id: userData.user.id });
-        
-      if (insertError) {
-        throw insertError;
-      }
-      
-      isUpvoted = true;
-    }
-    
-    // The trigger handles incrementing/decrementing the upvotes_count
-    // Retrieve the updated count
-    const { data: updatedPost, error: updateError } = await supabase
-      .from('forum_posts')
-      .select('upvotes_count')
-      .eq('id', postId)
-      .single();
-    
-    if (updateError) {
-      throw updateError;
-    }
-    
-    const newCount = updatedPost?.upvotes_count || 0;
     
     return {
       success: true,
-      message: isUpvoted ? "Post upvoté" : "Upvote retiré",
-      upvoted: isUpvoted,
-      newCount: newCount
+      message,
+      upvoted,
+      newCount: postData.upvotes_count
     };
-    
   } catch (error) {
     console.error("Error in togglePostUpvote:", error);
-    toast.error("Erreur lors de l'interaction avec le post");
-    throw error;
+    return {
+      success: false,
+      message: "Une erreur est survenue",
+      upvoted: false,
+      newCount: 0
+    };
   }
 };

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
@@ -5,7 +6,7 @@ import { mockStartups } from '@/data/mockStartups';
 import StartupCard from '@/components/StartupCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, TrendingUp, Rocket, Clock, BadgePlus } from 'lucide-react';
+import { Search, Filter, TrendingUp, Rocket, Clock, BadgePlus, ThumbsUp } from 'lucide-react';
 import { 
   Select,
   SelectContent,
@@ -86,6 +87,16 @@ const AIEcosystem = () => {
     }
     
     toast.info("Cette fonctionnalité sera bientôt disponible");
+  };
+
+  const handleVote = (startupId: string) => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour voter");
+      navigate('/auth');
+      return;
+    }
+    
+    toast.success("Votre vote a été pris en compte");
   };
 
   return (
@@ -244,11 +255,7 @@ const AIEcosystem = () => {
             ) : (
               <>
                 {filteredStartups.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filteredStartups.map((startup) => (
-                      <StartupCard key={startup.id} startup={startup} />
-                    ))}
-                  </div>
+                  renderStartupGrid(filteredStartups, handleVote, user !== null)
                 ) : (
                   <div className="text-center py-16">
                     <p className="text-white/70 text-xl">Aucune startup ne correspond à votre recherche</p>
@@ -262,11 +269,11 @@ const AIEcosystem = () => {
             {viewMode === 'directory' ? (
               <DirectoryView searchQuery="" showFilters={false} />
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredStartups.filter(s => s.aiImpactScore >= 4).map((startup) => (
-                  <StartupCard key={startup.id} startup={startup} />
-                ))}
-              </div>
+              renderStartupGrid(
+                filteredStartups.filter(s => s.aiImpactScore >= 4),
+                handleVote,
+                user !== null
+              )
             )}
           </TabsContent>
           
@@ -274,17 +281,109 @@ const AIEcosystem = () => {
             {viewMode === 'directory' ? (
               <DirectoryView searchQuery="" showFilters={false} />
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredStartups.slice(0, 4).map((startup) => (
-                  <StartupCard key={startup.id} startup={startup} />
-                ))}
-              </div>
+              renderStartupGrid(filteredStartups.slice(0, 4), handleVote, user !== null)
             )}
           </TabsContent>
         </Tabs>
       </main>
 
       <Footer />
+    </div>
+  );
+};
+
+// Helper function to render the startup grid with Product Hunt style
+const renderStartupGrid = (
+  startups: typeof mockStartups, 
+  onVote: (id: string) => void,
+  canVote: boolean
+) => {
+  if (startups.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-white/70 text-xl">Aucune startup ne correspond à cette sélection</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {startups.map((startup) => (
+        <Card 
+          key={startup.id} 
+          className="p-4 bg-black/30 border border-startupia-turquoise/20 hover:border-startupia-turquoise/50 transition-all hover:bg-black/40"
+        >
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-startupia-turquoise/10 flex items-center justify-center">
+                {startup.logoUrl ? (
+                  <img 
+                    src={startup.logoUrl} 
+                    alt={`${startup.name} logo`} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-startupia-turquoise">
+                    {startup.name.charAt(0)}
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div className="flex-grow">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-bold">{startup.name}</h2>
+                  <p className="text-sm text-white/70">{startup.shortDescription}</p>
+                </div>
+                
+                {/* Vote counter */}
+                <div className="flex flex-col items-center">
+                  <Button 
+                    variant="ghost" 
+                    className="hover:bg-startupia-turquoise/20 space-x-1"
+                    onClick={() => onVote(startup.id)}
+                    disabled={!canVote}
+                  >
+                    <ThumbsUp size={18} />
+                    <span>{50 + Math.floor(Math.random() * 200)}</span>
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <Badge className="bg-startupia-turquoise/20 border-none text-startupia-turquoise hover:bg-startupia-turquoise/30">
+                  {startup.sector}
+                </Badge>
+                
+                {startup.aiTools.slice(0, 2).map((tool) => (
+                  <Badge key={tool} variant="outline" className="bg-black/40 border-white/20">
+                    {tool}
+                  </Badge>
+                ))}
+                
+                {startup.aiTools.length > 2 && (
+                  <Badge variant="outline" className="bg-black/40 border-white/20">
+                    +{startup.aiTools.length - 2} autres
+                  </Badge>
+                )}
+                
+                <div className="ml-auto">
+                  <Button 
+                    variant="outline" 
+                    className="border-startupia-turquoise hover:bg-startupia-turquoise/20"
+                    onClick={() => window.location.href = `/startup/${startup.id}`}
+                  >
+                    Découvrir
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      ))}
     </div>
   );
 };

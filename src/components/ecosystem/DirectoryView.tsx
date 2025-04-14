@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from "@/types/startup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -5,8 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { ThumbsUp, MessageSquare, ExternalLink } from "lucide-react";
+import { ThumbsUp, MessageSquare, ExternalLink, ArrowUp, ArrowDown } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface DirectoryViewProps {
   searchQuery: string;
@@ -19,6 +23,8 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [sectors, setSectors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [startupVotes, setStartupVotes] = useState<Record<string, { upvoted: boolean, downvoted: boolean, count: number }>>({});
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchStartups = async () => {
@@ -79,6 +85,17 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           setStartups(transformedData);
           setFilteredStartups(transformedData);
           
+          // Initialize voting state
+          const votesState: Record<string, { upvoted: boolean, downvoted: boolean, count: number }> = {};
+          transformedData.forEach(startup => {
+            votesState[startup.id] = { 
+              upvoted: false, 
+              downvoted: false,
+              count: startup.upvoteCount || 0
+            };
+          });
+          setStartupVotes(votesState);
+          
           const uniqueSectors = Array.from(new Set(data.map(startup => startup.sector)));
           setSectors(uniqueSectors);
         }
@@ -92,6 +109,47 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
 
     fetchStartups();
   }, []);
+  
+  useEffect(() => {
+    // Check user's votes if logged in
+    const checkUserVotes = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('post_upvotes')
+          .select('post_id, is_upvote')
+          .eq('user_id', user.id);
+          
+        if (error) {
+          console.error('Error checking user votes:', error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          const newVotesState = { ...startupVotes };
+          
+          data.forEach(vote => {
+            if (newVotesState[vote.post_id]) {
+              if (vote.is_upvote) {
+                newVotesState[vote.post_id].upvoted = true;
+                newVotesState[vote.post_id].downvoted = false;
+              } else {
+                newVotesState[vote.post_id].upvoted = false;
+                newVotesState[vote.post_id].downvoted = true;
+              }
+            }
+          });
+          
+          setStartupVotes(newVotesState);
+        }
+      } catch (error) {
+        console.error('Error fetching user votes:', error);
+      }
+    };
+    
+    checkUserVotes();
+  }, [user]);
   
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -120,6 +178,106 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     
     setFilteredStartups(filtered);
   }, [activeCategory, startups]);
+
+  const handleVote = async (e: React.MouseEvent, startupId: string, isUpvote: boolean) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast.error("Vous devez être connecté pour voter");
+      return;
+    }
+    
+    // Get current vote state
+    const currentVoteState = startupVotes[startupId];
+    const alreadyVotedSameWay = isUpvote ? currentVoteState.upvoted : currentVoteState.downvoted;
+    
+    try {
+      // Apply optimistic update
+      setStartupVotes(prev => {
+        const newState = { ...prev };
+        
+        if (alreadyVotedSameWay) {
+          // Remove vote
+          newState[startupId] = {
+            upvoted: false,
+            downvoted: false,
+            count: isUpvote ? prev[startupId].count - 1 : prev[startupId].count + 1
+          };
+        } else {
+          // Add new vote or change vote
+          const wasOppositeVote = isUpvote ? prev[startupId].downvoted : prev[startupId].upvoted;
+          const countDelta = wasOppositeVote ? 2 : 1;
+          
+          newState[startupId] = {
+            upvoted: isUpvote,
+            downvoted: !isUpvote,
+            count: isUpvote 
+              ? prev[startupId].count + countDelta 
+              : prev[startupId].count - countDelta
+          };
+        }
+        
+        return newState;
+      });
+      
+      if (alreadyVotedSameWay) {
+        // Delete the vote
+        const { error } = await supabase
+          .from('post_upvotes')
+          .delete()
+          .eq('post_id', startupId)
+          .eq('user_id', user.id);
+          
+        if (error) throw error;
+        
+      } else {
+        // Check if there's an existing vote to be replaced
+        const { data } = await supabase
+          .from('post_upvotes')
+          .select('id')
+          .eq('post_id', startupId)
+          .eq('user_id', user.id);
+          
+        if (data && data.length > 0) {
+          // Update the vote
+          const { error } = await supabase
+            .from('post_upvotes')
+            .update({ is_upvote: isUpvote })
+            .eq('post_id', startupId)
+            .eq('user_id', user.id);
+            
+          if (error) throw error;
+        } else {
+          // Insert new vote
+          const { error } = await supabase
+            .from('post_upvotes')
+            .insert({
+              post_id: startupId,
+              user_id: user.id,
+              is_upvote: isUpvote
+            });
+            
+          if (error) throw error;
+        }
+      }
+      
+      // Update the startup's upvote count in the database
+      const { error } = await supabase
+        .from('startups')
+        .update({ upvotes_count: startupVotes[startupId].count })
+        .eq('id', startupId);
+        
+      if (error) throw error;
+      
+    } catch (error) {
+      console.error('Error toggling vote:', error);
+      toast.error("Erreur lors du vote");
+      
+      // Revert optimistic update on error
+      setStartupVotes(prev => ({ ...prev }));
+    }
+  };
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Date inconnue';
@@ -210,45 +368,66 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     return (
       <div className="space-y-4">
         {startups.map((startup, index) => (
-          <Link to={`/startup/${startup.id}`} key={startup.id} className="block hover:no-underline">
-            <Card className="hover:border-startupia-turquoise/50 transition-all duration-300 border border-startupia-turquoise/20 bg-black/30">
-              <div className="flex items-center p-5">
-                <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 mr-4 relative">
-                  <div className="w-full h-full rounded-full bg-startupia-turquoise/10 flex items-center justify-center overflow-hidden">
-                    {startup.logoUrl ? (
-                      <img src={startup.logoUrl} alt={`${startup.name} logo`} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-xl font-bold text-startupia-turquoise">{startup.name.charAt(0)}</span>
-                    )}
-                  </div>
-                  <div className="absolute -top-2 -left-2 flex items-center justify-center h-6 w-6 bg-startupia-turquoise text-black font-bold rounded-full text-xs">
-                    {index + 1}
-                  </div>
-                </div>
-                
-                <div className="flex-grow mr-8">
-                  <div className="mb-1.5">
-                    <div className="flex items-baseline justify-between">
-                      <h3 className="text-lg font-bold text-white">{startup.name}</h3>
+          <div key={startup.id} className="relative">
+            <Link to={`/startup/${startup.id}`} className="block hover:no-underline">
+              <Card className="hover:border-startupia-turquoise/50 transition-all duration-300 border border-startupia-turquoise/20 bg-black/30">
+                <div className="flex items-center p-5">
+                  <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 mr-4 relative">
+                    <div className="w-full h-full rounded-full bg-startupia-turquoise/10 flex items-center justify-center overflow-hidden">
+                      {startup.logoUrl ? (
+                        <img src={startup.logoUrl} alt={`${startup.name} logo`} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl font-bold text-startupia-turquoise">{startup.name.charAt(0)}</span>
+                      )}
                     </div>
-                    <p className="text-white/80 text-sm mb-1.5 line-clamp-1">{startup.shortDescription}</p>
-                    <p className="text-white/60 text-xs mb-2">
-                      {startup.sector}
-                    </p>
+                    <div className="absolute -top-2 -left-2 flex items-center justify-center h-6 w-6 bg-startupia-turquoise text-black font-bold rounded-full text-xs">
+                      {index + 1}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex-shrink-0 flex items-center gap-4">
-                  <div className="text-center">
-                    <div className="flex items-center px-2 py-1 rounded-md bg-startupia-turquoise/10">
-                      <ThumbsUp className="h-4 w-4 text-white mr-1.5" />
-                      <span className="font-medium text-white">{startup.upvoteCount || 0}</span>
+                  
+                  <div className="flex-grow mr-8">
+                    <div className="mb-1.5">
+                      <div className="flex items-baseline justify-between">
+                        <h3 className="text-lg font-bold text-white">{startup.name}</h3>
+                      </div>
+                      <p className="text-white/80 text-sm mb-1.5 line-clamp-1">{startup.shortDescription}</p>
+                      <p className="text-white/60 text-xs mb-2">
+                        {startup.sector}
+                      </p>
                     </div>
                   </div>
                 </div>
+              </Card>
+            </Link>
+            
+            {/* Vote buttons overlay - positioned absolutely to prevent navigation */}
+            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center z-10" 
+                 onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center bg-black/40 border border-startupia-turquoise/30 rounded-full overflow-hidden p-0.5">
+                <Button
+                  variant="ghost" 
+                  size="icon"
+                  className={`rounded-full p-1 hover:bg-startupia-turquoise/20 ${startupVotes[startup.id]?.upvoted ? 'text-startupia-turquoise' : 'text-white/70'}`}
+                  onClick={(e) => handleVote(e, startup.id, true)}
+                >
+                  <ArrowUp className="h-5 w-5" />
+                </Button>
+                
+                <span className="px-2 font-medium text-white">
+                  {startupVotes[startup.id]?.count || 0}
+                </span>
+                
+                <Button
+                  variant="ghost" 
+                  size="icon"
+                  className={`rounded-full p-1 hover:bg-startupia-turquoise/20 ${startupVotes[startup.id]?.downvoted ? 'text-startupia-turquoise' : 'text-white/70'}`}
+                  onClick={(e) => handleVote(e, startup.id, false)}
+                >
+                  <ArrowDown className="h-5 w-5" />
+                </Button>
               </div>
-            </Card>
-          </Link>
+            </div>
+          </div>
         ))}
       </div>
     );

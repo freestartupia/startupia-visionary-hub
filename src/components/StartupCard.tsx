@@ -18,8 +18,9 @@ interface StartupCardProps {
 const StartupCard = ({ startup }: StartupCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [upvoteCount, setUpvoteCount] = useState(0);
+  const [upvoteCount, setUpvoteCount] = useState(startup.upvoteCount || 0);
   const [isUpvoted, setIsUpvoted] = useState(false);
+  const [isVoting, setIsVoting] = useState(false);
   
   // Fetch real upvote count and user's upvote status
   useEffect(() => {
@@ -76,8 +77,17 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       return;
     }
     
+    // Prevent multiple rapid clicks
+    if (isVoting) return;
+    
     try {
-      // Apply optimistic update
+      setIsVoting(true);
+      
+      // Store previous values to restore on error
+      const previousUpvoteCount = upvoteCount;
+      const previousIsUpvoted = isUpvoted;
+      
+      // Apply optimistic update (only update UI)
       const newUpvoteCount = isUpvoted ? upvoteCount - 1 : upvoteCount + 1;
       setUpvoteCount(newUpvoteCount);
       setIsUpvoted(!isUpvoted);
@@ -92,7 +102,11 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       // Update with the server response
       setUpvoteCount(response.newCount);
       setIsUpvoted(response.upvoted);
-      toast.success(response.message);
+      
+      // Only show toast on successful toggle
+      if (response.message) {
+        toast.success(response.message);
+      }
       
     } catch (error) {
       console.error('Error toggling upvote:', error);
@@ -101,6 +115,9 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       // Revert optimistic update on error
       setUpvoteCount(startup.upvoteCount || 0);
       setIsUpvoted(false);
+    } finally {
+      // Allow voting again after a short delay
+      setTimeout(() => setIsVoting(false), 500);
     }
   };
 
@@ -133,6 +150,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
               size="sm"
               className={`hover:bg-startupia-turquoise/20 mr-2 ${isUpvoted ? 'text-startupia-turquoise' : ''}`}
               onClick={handleVote}
+              disabled={isVoting}
             >
               <ThumbsUp size={16} className="mr-1" />
               <span>{upvoteCount}</span>

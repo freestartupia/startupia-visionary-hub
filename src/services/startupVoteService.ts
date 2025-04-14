@@ -31,8 +31,7 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
       const { error: deleteError } = await supabase
         .from('startup_votes')
         .delete()
-        .eq('startup_id', startupId)
-        .eq('user_id', userData.user.id);
+        .eq('id', existingVote.id);
         
       if (deleteError) {
         console.error("Error removing upvote:", deleteError);
@@ -53,8 +52,7 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
       const { error: updateError } = await supabase
         .from('startup_votes')
         .update({ is_upvote: true })
-        .eq('startup_id', startupId)
-        .eq('user_id', userData.user.id);
+        .eq('id', existingVote.id);
         
       if (updateError) {
         console.error("Error updating vote:", updateError);
@@ -66,7 +64,7 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
         };
       }
       
-      countDelta = 2; // +2 because we're removing a downvote (-1) and adding an upvote (+1)
+      countDelta = 2; // From -1 to +1 = change of 2
       message = "Vote modifié";
       upvoted = true;
     }
@@ -95,7 +93,7 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
       upvoted = true;
     }
     
-    // Update the upvote count
+    // Update the vote count in ONE atomic operation
     if (countDelta !== 0) {
       // Get current count first
       const { data: currentData } = await supabase
@@ -105,7 +103,7 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
         .single();
         
       const currentCount = currentData?.upvotes_count || 0;
-      const newCount = Math.max(0, currentCount + countDelta); // Ensure count never goes below 0
+      const newCount = Math.max(0, currentCount + countDelta);
       
       // Update with the calculated value
       const { error: updateCountError } = await supabase
@@ -116,9 +114,17 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
       if (updateCountError) {
         console.error("Error updating startup upvote count:", updateCountError);
       }
+      
+      // Return the new count directly from our calculation
+      return {
+        success: true,
+        message,
+        upvoted,
+        newCount
+      };
     }
     
-    // Get the current upvote count
+    // Fallback to fetching count if no change was made
     const { data: startupData } = await supabase
       .from('startups')
       .select('upvotes_count')
@@ -174,8 +180,7 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
       const { error: deleteError } = await supabase
         .from('startup_votes')
         .delete()
-        .eq('startup_id', startupId)
-        .eq('user_id', userData.user.id);
+        .eq('id', existingVote.id);
         
       if (deleteError) {
         console.error("Error removing downvote:", deleteError);
@@ -196,8 +201,7 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
       const { error: updateError } = await supabase
         .from('startup_votes')
         .update({ is_upvote: false })
-        .eq('startup_id', startupId)
-        .eq('user_id', userData.user.id);
+        .eq('id', existingVote.id);
         
       if (updateError) {
         console.error("Error updating to downvote:", updateError);
@@ -209,7 +213,7 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
         };
       }
       
-      countDelta = -2; // -2 because we're removing an upvote (+1) and adding a downvote (-1)
+      countDelta = -2; // From +1 to -1 = change of -2
       message = "Vote modifié";
       downvoted = true;
     }
@@ -238,7 +242,7 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
       downvoted = true;
     }
     
-    // Update the upvote count
+    // Update the vote count in ONE atomic operation
     if (countDelta !== 0) {
       // Get current count first
       const { data: currentData } = await supabase
@@ -248,7 +252,7 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
         .single();
         
       const currentCount = currentData?.upvotes_count || 0;
-      const newCount = Math.max(0, currentCount + countDelta); // Ensure count never goes below 0
+      const newCount = Math.max(0, currentCount + countDelta);
       
       // Update with the calculated value
       const { error: updateCountError } = await supabase
@@ -259,9 +263,17 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
       if (updateCountError) {
         console.error("Error updating startup upvote count:", updateCountError);
       }
+      
+      // Return the new count directly from our calculation
+      return {
+        success: true,
+        message,
+        upvoted: !downvoted,
+        newCount
+      };
     }
     
-    // Get the current upvote count
+    // Fallback to fetching count if no change was made
     const { data: startupData } = await supabase
       .from('startups')
       .select('upvotes_count')

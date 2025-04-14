@@ -7,10 +7,12 @@ import { ArrowLeft } from 'lucide-react';
 import { ForumPost } from '@/types/community';
 import { 
   getForumPost, 
-  togglePostLike, 
-  toggleReplyLike, 
   incrementPostViews 
 } from '@/services/forumService';
+import { 
+  togglePostLike, 
+  toggleReplyLike 
+} from '@/services/forumLikeService';
 import { toast } from 'sonner';
 import PostContent from './forum/PostContent';
 import ReplyForm from './forum/ReplyForm';
@@ -83,7 +85,7 @@ const ForumPostDetail = () => {
         if (!prev) return null;
         return {
           ...prev,
-          likes: result.newCount,
+          likes: result.newCount || prev.likes,
           isLiked: result.liked
         };
       });
@@ -111,7 +113,7 @@ const ForumPostDetail = () => {
           if (reply.id === replyId) {
             return {
               ...reply,
-              likes: result.newCount,
+              likes: result.newCount || reply.likes,
               isLiked: result.liked
             };
           }
@@ -121,7 +123,7 @@ const ForumPostDetail = () => {
               if (nestedReply.id === replyId) {
                 return {
                   ...nestedReply,
-                  likes: result.newCount,
+                  likes: result.newCount || nestedReply.likes,
                   isLiked: result.liked
                 };
               }

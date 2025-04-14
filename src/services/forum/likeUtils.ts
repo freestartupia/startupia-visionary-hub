@@ -5,6 +5,8 @@ export interface LikeResponse {
   success: boolean;
   error?: string;
   liked?: boolean;
+  // Add newCount property to match what the UI is expecting
+  newCount?: number;
 }
 
 /**
@@ -71,7 +73,7 @@ export const safeRpcCall = async <T>(
  * Vérifie si l'utilisateur a aimé un élément
  */
 export const checkIfUserLiked = async (
-  table: string,
+  type: 'forum_post' | 'forum_reply',
   recordId: string
 ): Promise<boolean> => {
   try {
@@ -81,23 +83,52 @@ export const checkIfUserLiked = async (
       return false;
     }
     
-    const tableName = `${table}_likes`;
+    const tableName = `${type}_likes`;
+    const fieldName = `${type}_id`;
     
     const { data, error } = await supabase
       .from(tableName)
       .select('*')
       .eq('user_id', userId)
-      .eq(`${table.replace('_likes', '')}_id`, recordId)
+      .eq(fieldName, recordId)
       .single();
     
     if (error && error.code !== 'PGRST116') {
-      console.error(`Erreur lors de la vérification des likes pour ${table}:`, error);
+      console.error(`Erreur lors de la vérification des likes pour ${type}:`, error);
     }
     
     return !!data;
   } catch (error) {
-    console.error(`Erreur lors de la vérification des likes pour ${table}:`, error);
+    console.error(`Erreur lors de la vérification des likes pour ${type}:`, error);
     return false;
+  }
+};
+
+/**
+ * Obtient le nombre de likes pour un élément
+ */
+export const getLikeCount = async (
+  type: 'forum_post' | 'forum_reply',
+  recordId: string
+): Promise<number> => {
+  try {
+    const tableName = `${type}_likes`;
+    const fieldName = `${type}_id`;
+    
+    const { count, error } = await supabase
+      .from(tableName)
+      .select('*', { count: 'exact', head: true })
+      .eq(fieldName, recordId);
+    
+    if (error) {
+      console.error(`Erreur lors du comptage des likes pour ${type}:`, error);
+      return 0;
+    }
+    
+    return count || 0;
+  } catch (error) {
+    console.error(`Erreur lors du comptage des likes pour ${type}:`, error);
+    return 0;
   }
 };
 
@@ -105,7 +136,7 @@ export const checkIfUserLiked = async (
  * Ajoute un like à un élément
  */
 export const addLike = async (
-  table: string,
+  type: 'forum_post' | 'forum_reply',
   recordId: string
 ): Promise<LikeResponse> => {
   try {
@@ -115,24 +146,27 @@ export const addLike = async (
       return { success: false, error: 'Vous devez être connecté pour aimer un élément' };
     }
     
-    const tableName = `${table}_likes`;
-    const recordIdField = `${table.replace('_likes', '')}_id`;
+    const tableName = `${type}_likes`;
+    const fieldName = `${type}_id`;
     
     const { error } = await supabase
       .from(tableName)
       .insert({ 
         user_id: userId,
-        [recordIdField]: recordId
+        [fieldName]: recordId
       });
     
     if (error) {
-      console.error(`Erreur lors de l'ajout du like pour ${table}:`, error);
+      console.error(`Erreur lors de l'ajout du like pour ${type}:`, error);
       return { success: false, error: 'Une erreur est survenue' };
     }
     
-    return { success: true, liked: true };
+    // Get the new count after adding like
+    const newCount = await getLikeCount(type, recordId);
+    
+    return { success: true, liked: true, newCount };
   } catch (error) {
-    console.error(`Erreur lors de l'ajout du like pour ${table}:`, error);
+    console.error(`Erreur lors de l'ajout du like pour ${type}:`, error);
     return { success: false, error: 'Une erreur est survenue' };
   }
 };
@@ -141,7 +175,7 @@ export const addLike = async (
  * Retire un like d'un élément
  */
 export const removeLike = async (
-  table: string,
+  type: 'forum_post' | 'forum_reply',
   recordId: string
 ): Promise<LikeResponse> => {
   try {
@@ -151,23 +185,26 @@ export const removeLike = async (
       return { success: false, error: 'Vous devez être connecté pour retirer votre like' };
     }
     
-    const tableName = `${table}_likes`;
-    const recordIdField = `${table.replace('_likes', '')}_id`;
+    const tableName = `${type}_likes`;
+    const fieldName = `${type}_id`;
     
     const { error } = await supabase
       .from(tableName)
       .delete()
       .eq('user_id', userId)
-      .eq(recordIdField, recordId);
+      .eq(fieldName, recordId);
     
     if (error) {
-      console.error(`Erreur lors du retrait du like pour ${table}:`, error);
+      console.error(`Erreur lors du retrait du like pour ${type}:`, error);
       return { success: false, error: 'Une erreur est survenue' };
     }
     
-    return { success: true, liked: false };
+    // Get the new count after removing like
+    const newCount = await getLikeCount(type, recordId);
+    
+    return { success: true, liked: false, newCount };
   } catch (error) {
-    console.error(`Erreur lors du retrait du like pour ${table}:`, error);
+    console.error(`Erreur lors du retrait du like pour ${type}:`, error);
     return { success: false, error: 'Une erreur est survenue' };
   }
 };

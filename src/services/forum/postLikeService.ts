@@ -6,26 +6,12 @@ import {
   LikeResponse, 
   checkIfUserLiked, 
   addLike, 
-  removeLike 
+  removeLike,
+  getLikeCount
 } from './likeUtils';
 
-export const getLikeCount = async (postId: string): Promise<number> => {
-  try {
-    const { count, error } = await supabase
-      .from('forum_post_likes')
-      .select('*', { count: 'exact', head: true })
-      .eq('forum_post_id', postId);
-    
-    if (error) {
-      console.error('Error getting post like count:', error);
-      return 0;
-    }
-    
-    return count || 0;
-  } catch (error) {
-    console.error('Error getting post like count:', error);
-    return 0;
-  }
+export const getPostLikeCount = async (postId: string): Promise<number> => {
+  return getLikeCount('forum_post', postId);
 };
 
 export const checkIfUserLikedPost = async (postId: string): Promise<boolean> => {
@@ -40,7 +26,34 @@ export const unlikePost = async (postId: string): Promise<LikeResponse> => {
   return removeLike('forum_post', postId);
 };
 
-export const togglePostLike = async (post: ForumPost): Promise<LikeResponse> => {
+// Add the missing function that's being imported elsewhere
+export const getPostLikeStatus = async (postId: string, userId?: string): Promise<boolean> => {
+  if (!userId) {
+    const id = await checkAuthentication();
+    if (!id) return false;
+    userId = id;
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('forum_post_likes')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('forum_post_id', postId)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error checking post like status:', error);
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error('Error checking post like status:', error);
+    return false;
+  }
+};
+
+export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
   try {
     const userId = await checkAuthentication();
     
@@ -48,13 +61,16 @@ export const togglePostLike = async (post: ForumPost): Promise<LikeResponse> => 
       return { success: false, error: 'Vous devez être connecté pour aimer un post' };
     }
     
-    const isLiked = await checkIfUserLikedPost(post.id);
+    const isLiked = await checkIfUserLikedPost(postId);
     
+    let result: LikeResponse;
     if (isLiked) {
-      return unlikePost(post.id);
+      result = await unlikePost(postId);
     } else {
-      return likePost(post.id);
+      result = await likePost(postId);
     }
+    
+    return result;
   } catch (error) {
     console.error('Error toggling post like:', error);
     return { success: false, error: 'Une erreur est survenue' };

@@ -1,5 +1,5 @@
 
-import { ForumPost, ForumReply } from "@/types/community";
+import { ForumPost, ForumReply, ForumCategory } from "@/types/community";
 
 // Helper function to map database data to our TypeScript types
 export const mapPostFromDB = (post: any): ForumPost => {
@@ -7,7 +7,7 @@ export const mapPostFromDB = (post: any): ForumPost => {
     id: post.id,
     title: post.title,
     content: post.content,
-    category: post.category,
+    category: post.category as ForumCategory,
     authorId: post.author_id || "",
     authorName: post.author_name,
     authorAvatar: post.author_avatar,

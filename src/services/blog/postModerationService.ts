@@ -19,6 +19,8 @@ export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 're
       return [];
     }
     
+    console.log(`Fetching ${status} blog posts`);
+    
     const { data, error } = await supabase
       .from('blog_posts')
       .select('*')
@@ -27,13 +29,15 @@ export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 're
       
     if (error) {
       console.error(`Error fetching ${status} blog posts:`, error);
-      return [];
+      throw error;
     }
+    
+    console.log(`Found ${data?.length || 0} ${status} blog posts`, data);
     
     return (data || []).map(mapDbPostToBlogPost);
   } catch (error) {
     console.error(`Error fetching ${status} blog posts:`, error);
-    return [];
+    throw error;
   }
 };
 
@@ -43,7 +47,7 @@ export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 're
  */
 export const updateBlogPostStatus = async (
   postId: string, 
-  status: 'pending' | 'published' | 'rejected', 
+  status: 'published' | 'rejected', 
   adminReason?: string
 ): Promise<{ success: boolean; error?: string }> => {
   try {
@@ -67,6 +71,8 @@ export const updateBlogPostStatus = async (
       };
     }
 
+    console.log(`Updating post ${postId} status to ${status}`);
+    
     const { error } = await supabase
       .from('blog_posts')
       .update({ 

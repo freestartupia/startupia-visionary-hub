@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { ForumPost, ForumCategory } from "@/types/community";
 import { toast } from "sonner";
+import { mapPostFromDB } from "@/utils/forumMappers";
 
 // Function to create a new post
 export const createForumPost = async (
@@ -44,23 +45,7 @@ export const createForumPost = async (
     
     toast.success("Discussion créée avec succès");
     
-    return {
-      id: data.id,
-      title: data.title,
-      content: data.content,
-      category: data.category,
-      authorId: data.author_id,
-      authorName: data.author_name,
-      authorAvatar: data.author_avatar,
-      tags: data.tags || [],
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-      likes: data.likes || 0,
-      views: data.views || 0,
-      isPinned: data.is_pinned || false,
-      replies: [],
-      isLiked: false
-    };
+    return mapPostFromDB(data);
   } catch (error) {
     console.error("Error in createForumPost:", error);
     throw error;

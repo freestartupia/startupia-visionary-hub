@@ -7,16 +7,15 @@ import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import SEO from '@/components/SEO';
 import UserRoleManagement from '@/components/admin/UserRoleManagement';
-import { getBlogPostsByStatus, updateBlogPostStatus } from '@/services/blogService';
+import { getBlogPostsByStatus, updateBlogPostStatus } from '@/services/blog/postModerationService';
 import { useQuery } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, X } from 'lucide-react';
+import { Check, X, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModerator, setIsModerator] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,17 +23,28 @@ const Admin = () => {
   // Check if current user has admin or moderator role
   useEffect(() => {
     const checkPermissions = async () => {
-      const admin = await checkUserHasRole('admin');
-      const moderator = await checkUserHasRole('moderator');
-      setIsAdmin(admin);
-      setIsModerator(moderator);
-      setIsLoading(false);
-      
-      // Redirect if not admin or moderator
-      if (!admin && !moderator) {
+      try {
+        const admin = await checkUserHasRole('admin');
+        const moderator = await checkUserHasRole('moderator');
+        setIsAdmin(admin);
+        setIsModerator(moderator);
+        setIsLoading(false);
+        
+        // Redirect if not admin or moderator
+        if (!admin && !moderator) {
+          toast({
+            title: 'Accès refusé',
+            description: 'Vous n\'avez pas les permissions pour accéder à cette page.',
+            variant: 'destructive',
+          });
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Error checking permissions:', error);
+        setIsLoading(false);
         toast({
-          title: 'Accès refusé',
-          description: 'Vous n\'avez pas les permissions pour accéder à cette page.',
+          title: 'Erreur de vérification',
+          description: 'Impossible de vérifier vos permissions.',
           variant: 'destructive',
         });
         navigate('/');
@@ -42,34 +52,46 @@ const Admin = () => {
     };
     
     checkPermissions();
-  }, [navigate, toast]);
+  }, [navigate]);
 
   // Fetch pending blog posts
   const { 
     data: pendingPosts = [], 
-    refetch: refetchPending
+    refetch: refetchPending,
+    isLoading: isLoadingPosts,
+    error: postsError
   } = useQuery({
     queryKey: ['pendingBlogPosts'],
     queryFn: () => getBlogPostsByStatus('pending'),
-    enabled: isAdmin || isModerator
+    enabled: !isLoading && (isAdmin || isModerator),
+    retry: 1
   });
 
   // Handle post approval/rejection
   const handleUpdatePostStatus = async (postId: string, status: 'published' | 'rejected') => {
-    const result = await updateBlogPostStatus(postId, status);
-    
-    if (result.success) {
-      toast({
-        title: status === 'published' ? 'Article publié' : 'Article rejeté',
-        description: status === 'published' 
-          ? 'L\'article a été publié avec succès.' 
-          : 'L\'article a été rejeté.',
-      });
-      refetchPending();
-    } else {
+    try {
+      const result = await updateBlogPostStatus(postId, status);
+      
+      if (result.success) {
+        toast({
+          title: status === 'published' ? 'Article publié' : 'Article rejeté',
+          description: status === 'published' 
+            ? 'L\'article a été publié avec succès.' 
+            : 'L\'article a été rejeté.',
+        });
+        refetchPending();
+      } else {
+        toast({
+          title: 'Erreur',
+          description: result.error || 'Une erreur est survenue',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating post status:', error);
       toast({
         title: 'Erreur',
-        description: result.error || 'Une erreur est survenue',
+        description: 'Une erreur est survenue lors de la mise à jour du statut',
         variant: 'destructive',
       });
     }
@@ -114,7 +136,26 @@ const Admin = () => {
           <TabsContent value="moderation" className="bg-gray-800/50 rounded-lg p-6">
             <h2 className="text-xl font-bold mb-6">Articles en attente de modération</h2>
             
-            {pendingPosts.length === 0 ? (
+            {isLoadingPosts ? (
+              <div className="text-center py-10">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-startupia-turquoise mx-auto mb-4"></div>
+                <p className="text-white/60">Chargement des articles en attente...</p>
+              </div>
+            ) : postsError ? (
+              <div className="text-center py-10 text-white/60 border border-red-500/50 rounded-lg p-4">
+                <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                <p className="text-red-400">Une erreur est survenue lors du chargement des articles.</p>
+                <p className="text-sm mt-2">Erreur technique: problème de connexion à la base de données</p>
+                <Button 
+                  onClick={() => refetchPending()} 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-4"
+                >
+                  Réessayer
+                </Button>
+              </div>
+            ) : pendingPosts.length === 0 ? (
               <div className="text-center py-10 text-white/60">
                 <p>Aucun article en attente de modération.</p>
               </div>

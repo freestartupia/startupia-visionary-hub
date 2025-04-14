@@ -12,6 +12,14 @@ import ForumPostDetail from '@/components/community/ForumPostDetail';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
+import { 
+  SidebarProvider, 
+  Sidebar, 
+  SidebarContent, 
+  SidebarHeader,
+  SidebarInset
+} from '@/components/ui/sidebar';
+import ForumSidebar from '@/components/community/forum/ForumSidebar';
 
 const Community = () => {
   const navigate = useNavigate();
@@ -56,8 +64,8 @@ const Community = () => {
       
       <Navbar />
       
-      <main className="container relative mx-auto pt-24 pb-16 px-4 z-10">
-        <div className="text-center mb-10">
+      <main className="relative mx-auto pt-20 pb-16 z-10 w-full">
+        <div className="text-center mb-6 px-4">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Communauté <span className="text-startupia-turquoise">Startupia</span>
           </h1>
@@ -67,32 +75,41 @@ const Community = () => {
         </div>
 
         {isPostDetail ? (
-          <ForumPostDetail />
+          <SidebarProvider defaultOpen={true}>
+            <div className="flex min-h-screen w-full">
+              <ForumSidebar />
+              <SidebarInset className="px-4 md:px-8 py-4">
+                <ForumPostDetail />
+              </SidebarInset>
+            </div>
+          </SidebarProvider>
         ) : (
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-6xl mx-auto">
-            <TabsList className="grid grid-cols-4 mb-8">
-              <TabsTrigger value="forum">Forum IA</TabsTrigger>
-              <TabsTrigger value="services">Services</TabsTrigger>
-              <TabsTrigger value="resources">Formations</TabsTrigger>
-              <TabsTrigger value="projects">Projets</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="forum" className="mt-0">
-              <ForumSection requireAuth={true} />
-            </TabsContent>
-            
-            <TabsContent value="services" className="mt-0">
-              <ServicesMarketplace requireAuth={true} />
-            </TabsContent>
-            
-            <TabsContent value="resources" className="mt-0">
-              <ResourcesLibrary requireAuth={true} />
-            </TabsContent>
-            
-            <TabsContent value="projects" className="mt-0">
-              <CollaborativeProjects requireAuth={true} />
-            </TabsContent>
-          </Tabs>
+          <div className="w-full max-w-7xl mx-auto px-4">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+              <TabsList className="w-full md:w-auto grid grid-cols-4 mb-8">
+                <TabsTrigger value="forum">Forum IA</TabsTrigger>
+                <TabsTrigger value="services">Services</TabsTrigger>
+                <TabsTrigger value="resources">Formations</TabsTrigger>
+                <TabsTrigger value="projects">Projets</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="forum" className="mt-0">
+                <ForumSection requireAuth={true} />
+              </TabsContent>
+              
+              <TabsContent value="services" className="mt-0">
+                <ServicesMarketplace requireAuth={true} />
+              </TabsContent>
+              
+              <TabsContent value="resources" className="mt-0">
+                <ResourcesLibrary requireAuth={true} />
+              </TabsContent>
+              
+              <TabsContent value="projects" className="mt-0">
+                <CollaborativeProjects requireAuth={true} />
+              </TabsContent>
+            </Tabs>
+          </div>
         )}
       </main>
 

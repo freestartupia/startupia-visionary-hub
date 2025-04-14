@@ -1,9 +1,11 @@
 
 import React from 'react';
-import { ThumbsUp, MessageCircle, Eye } from 'lucide-react';
+import { ThumbsUp, MessageCircle, Eye, Pin } from 'lucide-react';
 import { ForumPost } from '@/types/community';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import AuthRequired from '@/components/AuthRequired';
 
 interface ForumPostItemProps {
@@ -27,38 +29,51 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
+
   return (
     <div 
-      className="glass-card p-4 hover:bg-white/5 transition-colors cursor-pointer"
+      className="glass-card p-5 hover:bg-white/5 transition-colors cursor-pointer rounded-xl"
       onClick={() => onViewPost(post.id)}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <span className="bg-white/10 text-xs font-medium py-1 px-2 rounded">
-          {post.category}
-        </span>
-        {post.isPinned && (
-          <span className="bg-startupia-gold/20 text-startupia-gold text-xs font-medium py-1 px-2 rounded">
-            Épinglé
-          </span>
-        )}
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-white/10 text-xs font-medium py-1 px-2 rounded">
+            {post.category}
+          </Badge>
+          
+          {post.isPinned && (
+            <Badge className="bg-startupia-turquoise/20 text-startupia-turquoise text-xs font-medium py-1 px-2 rounded flex items-center gap-1">
+              <Pin size={12} />
+              Épinglé
+            </Badge>
+          )}
+        </div>
+        
+        <div className="text-xs text-white/60">
+          {formatDate(post.createdAt)}
+        </div>
       </div>
       
-      <h3 className="text-xl font-semibold mb-1">{post.title}</h3>
+      <h3 className="text-xl font-semibold mb-2">{post.title}</h3>
       
-      <p className="text-white/70 mb-3 line-clamp-2">
+      <p className="text-white/70 mb-4 line-clamp-2">
         {post.content}
       </p>
       
-      <div className="flex flex-wrap justify-between items-center">
-        <div className="flex items-center text-sm text-white/60 mb-2 sm:mb-0">
-          <img 
-            src={post.authorAvatar || '/placeholder.svg'} 
-            alt={post.authorName} 
-            className="w-6 h-6 rounded-full mr-2"
-          />
-          <span>{post.authorName}</span>
-          <span className="mx-2">•</span>
-          <span>{formatDate(post.createdAt)}</span>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center text-sm">
+          <Avatar className="h-8 w-8 mr-2">
+            <AvatarImage src={post.authorAvatar || '/placeholder.svg'} alt={post.authorName} />
+            <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+          </Avatar>
+          <span className="font-medium">{post.authorName}</span>
         </div>
         
         <div className="flex gap-4">

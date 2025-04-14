@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,7 +45,7 @@ const ForumPostDetail = () => {
   }, [postId]);
   
   const handleGoBack = () => {
-    navigate('/community');
+    navigate('/community?tab=forum');
   };
   
   const handleReplyAdded = async () => {
@@ -164,11 +165,6 @@ const ForumPostDetail = () => {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <Button onClick={handleGoBack} variant="outline" className="mb-6">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Retour au forum
-      </Button>
-      
       <PostContent post={post} onLike={handleLikePost} />
       
       <ReplyForm 

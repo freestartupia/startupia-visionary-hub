@@ -1,6 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { BlogPost, BlogCategory } from '@/types/blog';
 import { checkUserHasRole } from './roleService';
+import { generateSlug, generateUniqueSlug } from '@/lib/utils';
 
 // Map database response to BlogPost type
 const mapDbPostToBlogPost = (dbPost: any): BlogPost => {
@@ -118,9 +120,12 @@ export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | '
       };
     }
 
+    // Check if slug already exists and generate a unique one if needed
+    const uniqueSlug = await generateUniqueSlug(post.slug);
+    
     const postToInsert = {
       title: post.title,
-      slug: post.slug,
+      slug: uniqueSlug,
       excerpt: post.excerpt,
       content: post.content,
       category: post.category,

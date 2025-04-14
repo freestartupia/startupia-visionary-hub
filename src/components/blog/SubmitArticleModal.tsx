@@ -125,7 +125,23 @@ const SubmitArticleModal: React.FC<SubmitArticleModalProps> = ({ open, onOpenCha
       const readingTime = Math.ceil(content.split(' ').length / 200) + ' min';
       
       // Upload cover image if provided
-      const coverImageUrl = await uploadCoverImage(slug);
+      let coverImageUrl: string | undefined;
+      
+      try {
+        if (coverImage) {
+          await createStorageBucket('blog_images');
+          
+          const fileExt = coverImage.name.split('.').pop();
+          const fileName = `${slug}-${Date.now()}.${fileExt}`;
+          const filePath = `covers/${fileName}`;
+          
+          await uploadFile('blog_images', filePath, coverImage);
+          coverImageUrl = getPublicUrl('blog_images', filePath);
+        }
+      } catch (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        toast.warning('Erreur lors du téléchargement de l\'image, l\'article sera soumis sans image');
+      }
       
       const result = await submitBlogPost({
         title,

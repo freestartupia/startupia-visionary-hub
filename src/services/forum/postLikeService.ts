@@ -1,58 +1,22 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ForumPost } from '@/types/community';
-import { 
-  checkAuthentication, 
-  LikeResponse, 
-  checkIfUserLiked, 
-  addLike, 
-  removeLike,
-  getLikeCount
-} from './likeUtils';
+import { LikeResponse } from '@/types/community';
+import { checkAuthentication, checkIfUserLiked, getLikeCount, addLike, removeLike } from './likeUtils';
 
-export const getPostLikeCount = async (postId: string): Promise<number> => {
-  return getLikeCount('forum_post', postId);
-};
-
-export const checkIfUserLikedPost = async (postId: string): Promise<boolean> => {
-  return checkIfUserLiked('forum_post', postId);
-};
-
-export const likePost = async (postId: string): Promise<LikeResponse> => {
-  return addLike('forum_post', postId);
-};
-
-export const unlikePost = async (postId: string): Promise<LikeResponse> => {
-  return removeLike('forum_post', postId);
-};
-
-// Add the missing function that's being imported elsewhere
-export const getPostLikeStatus = async (postId: string, userId?: string): Promise<boolean> => {
-  if (!userId) {
-    const id = await checkAuthentication();
-    if (!id) return false;
-    userId = id;
-  }
-  
+// Get like status for a post
+export const getPostLikeStatus = async (postId: string): Promise<{ liked: boolean; count: number }> => {
   try {
-    const { data, error } = await supabase
-      .from('forum_post_likes')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('forum_post_id', postId)
-      .single();
+    const liked = await checkIfUserLiked('forum_post', postId);
+    const count = await getLikeCount('forum_post', postId);
     
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error checking post like status:', error);
-    }
-    
-    return !!data;
+    return { liked, count };
   } catch (error) {
-    console.error('Error checking post like status:', error);
-    return false;
+    console.error('Error getting post like status:', error);
+    return { liked: false, count: 0 };
   }
 };
 
+// Toggle like status for a post
 export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
   try {
     const userId = await checkAuthentication();
@@ -61,18 +25,35 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
       return { success: false, error: 'Vous devez être connecté pour aimer un post' };
     }
     
-    const isLiked = await checkIfUserLikedPost(postId);
+    const isLiked = await checkIfUserLiked('forum_post', postId);
     
-    let result: LikeResponse;
     if (isLiked) {
-      result = await unlikePost(postId);
+      return await unlikePost(postId);
     } else {
-      result = await likePost(postId);
+      return await likePost(postId);
     }
-    
-    return result;
   } catch (error) {
     console.error('Error toggling post like:', error);
     return { success: false, error: 'Une erreur est survenue' };
   }
+};
+
+// Get the number of likes for a post
+export const getPostLikeCount = async (postId: string): Promise<number> => {
+  return await getLikeCount('forum_post', postId);
+};
+
+// Check if the current user has liked a post
+export const checkIfUserLikedPost = async (postId: string): Promise<boolean> => {
+  return await checkIfUserLiked('forum_post', postId);
+};
+
+// Like a post
+export const likePost = async (postId: string): Promise<LikeResponse> => {
+  return await addLike('forum_post', postId);
+};
+
+// Unlike a post
+export const unlikePost = async (postId: string): Promise<LikeResponse> => {
+  return await removeLike('forum_post', postId);
 };

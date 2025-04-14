@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Star, ThumbsUp } from "lucide-react";
@@ -73,27 +74,30 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     }
     
     if (isVoting) return;
+    
     setIsVoting(true);
     
     try {
+      // Do not make optimistic updates here to prevent flicker
       const response = await toggleStartupUpvote(startup.id);
       
-      if (!response.success) {
-        throw new Error(response.message);
+      if (response.success) {
+        // Only update state after confirmed server response
+        setUpvoteCount(response.newCount);
+        setIsUpvoted(response.upvoted);
+        
+        if (response.message) {
+          toast.success(response.message);
+        }
+      } else {
+        toast.error(response.message || "Erreur lors du vote");
       }
-      
-      setUpvoteCount(response.newCount);
-      setIsUpvoted(response.upvoted);
-      
-      if (response.message) {
-        toast.success(response.message);
-      }
-      
     } catch (error) {
       console.error('Error toggling upvote:', error);
       toast.error("Erreur lors du vote");
     } finally {
-      setTimeout(() => setIsVoting(false), 1000);
+      // Use a longer timeout to prevent rapid clicking
+      setTimeout(() => setIsVoting(false), 2000);
     }
   };
 

@@ -39,7 +39,6 @@ const StartupDetails = () => {
           setIsError(true);
           toast.error('Erreur lors du chargement de la startup');
         } else if (data) {
-          // Update the view count for this startup
           await supabase
             .from('startups')
             .update({ view_count: (data.view_count || 0) + 1 })
@@ -61,7 +60,6 @@ const StartupDetails = () => {
             parsedFounders = [];
           }
 
-          // Apply explicit type castings for TypeScript
           const typedAiTools = data.ai_tools ? data.ai_tools.map(tool => tool as AITool) : [];
           const typedSector = data.sector as Sector;
           const typedBusinessModel = data.business_model as BusinessModel;
@@ -88,7 +86,7 @@ const StartupDetails = () => {
             dateAdded: data.date_added,
             viewCount: data.view_count || 0,
             isFeatured: data.is_featured,
-            upvoteCount: data.upvotes_count || 0,
+            upvotes_count: data.upvotes_count || 0,
           });
         } else {
           setIsError(true);
@@ -106,7 +104,6 @@ const StartupDetails = () => {
     fetchStartupDetails();
   }, [id]);
 
-  // Generate stars for AI Impact Score
   const renderStars = (score: number) => {
     return Array(5)
       .fill(0)

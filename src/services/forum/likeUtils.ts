@@ -27,7 +27,6 @@ export const checkIfUserLiked = async (
   userId: string
 ): Promise<boolean> => {
   try {
-    // Use specific types to avoid excessive type instantiation
     if (tableName === 'forum_post_likes') {
       const { data, error } = await supabase
         .from('forum_post_likes')
@@ -131,7 +130,7 @@ export const addLike = async (
       };
     }
     
-    // Add the like record - use type-safe insert based on the table name
+    // Add the like
     if (tableName === 'forum_post_likes') {
       const { error } = await supabase
         .from('forum_post_likes')
@@ -217,7 +216,7 @@ export const removeLike = async (
       };
     }
     
-    // Remove the like record
+    // Remove the like
     if (tableName === 'forum_post_likes') {
       const { error } = await supabase
         .from('forum_post_likes')

@@ -111,7 +111,7 @@ export const getForumRepliesByPostId = async (postId: string): Promise<{ data: P
     
     for (const reply of repliesData) {
       try {
-        const populatedReply = await populateReplyWithLikeInfo(reply as ForumReplyDB);
+        const populatedReply = await populateReplyWithLikeInfo(reply);
         populatedReplies.push(populatedReply);
       } catch (err) {
         console.error('Error populating reply:', err);

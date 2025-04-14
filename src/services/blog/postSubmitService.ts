@@ -4,7 +4,7 @@ import { BlogPost, BlogCategory } from '@/types/blog';
 import { generateUniqueSlug } from '@/lib/utils';
 
 /**
- * Submits a new blog post for moderation
+ * Soumet un nouvel article - publication directe (sans modération préalable)
  */
 export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; error?: string; }> => {
   try {
@@ -32,7 +32,7 @@ export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | '
       author_avatar: post.authorAvatar,
       tags: post.tags,
       reading_time: post.readingTime,
-      status: 'pending', // All submitted posts start as pending
+      status: 'published', // Publish directly without moderation
     };
     
     const { error: insertError } = await supabase

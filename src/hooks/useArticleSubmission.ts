@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { BlogCategory } from '@/types/blog';
-import { submitBlogPost } from '@/services/blogService';
+import { submitBlogPost } from '@/services/blog/postSubmitService';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateSlug } from '@/lib/utils';
@@ -114,11 +114,12 @@ export const useArticleSubmission = (onSuccess: () => void) => {
         authorAvatar: userProfile.avatar_url,
         tags: tagsArray,
         featured: false,
-        readingTime
+        readingTime,
+        status: 'published'
       });
       
       if (result.success) {
-        toast.success('Article soumis avec succès! Il sera publié après modération.');
+        toast.success('Article publié avec succès!');
         resetForm();
         onSuccess();
       } else {

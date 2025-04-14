@@ -1,6 +1,12 @@
 
 import { LikeResponse } from '@/types/community';
-import { checkAuthentication, checkIfUserLiked, getLikeCount, addLike, removeLike } from './likeUtils';
+import { 
+  checkAuthentication, 
+  checkIfUserLiked, 
+  getLikeCount, 
+  addLike, 
+  removeLike 
+} from './likeUtils';
 
 // Get like status for a post
 export const getPostLikeStatus = async (postId: string): Promise<{ liked: boolean; count: number }> => {

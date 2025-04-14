@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ForumPost, PopulatedForumPost } from '@/types/community';
+import { ForumPost, PopulatedForumPost, ForumCategory } from '@/types/community';
 import { getPostLikeStatus } from './forum/postLikeService';
 import { ForumPostDB } from '@/types/forumTypes';
 
@@ -28,7 +28,7 @@ const mapDbPostToForumPost = (postData: ForumPostDB): ForumPost => {
     id: postData.id,
     title: postData.title,
     content: postData.content,
-    category: postData.category,
+    category: postData.category as ForumCategory,
     authorId: postData.author_id,
     authorName: postData.author_name,
     authorAvatar: postData.author_avatar || null,
@@ -108,7 +108,7 @@ export const createForumPost = async (title: string, content: string, userId: st
       author_id: userId,
       author_name: authorName,
       author_avatar: profileData?.avatar_url || null,
-      category: 'general' // Default category
+      category: 'Général' as ForumCategory // Use a valid ForumCategory value
     };
 
     const { data: postData, error } = await supabase

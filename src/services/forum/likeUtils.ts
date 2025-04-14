@@ -51,17 +51,17 @@ export const checkAdminStatus = async (): Promise<boolean> => {
  */
 export const safeRpcCall = async <T>(
   functionName: 'is_admin',
-  params?: Record<string, any>
-): Promise<{ success: boolean; data?: T; error?: string }> => {
+  params: Record<string, never> = {}
+): Promise<{ success: boolean; data?: boolean; error?: string }> => {
   try {
-    const { data, error } = await supabase.rpc(functionName, params || {});
+    const { data, error } = await supabase.rpc(functionName, params);
     
     if (error) {
       console.error(`Erreur lors de l'appel RPC ${functionName}:`, error);
       return { success: false, error: error.message };
     }
     
-    return { success: true, data };
+    return { success: true, data: data as boolean };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
     console.error(`Erreur lors de l'appel RPC ${functionName}:`, error);
@@ -86,18 +86,35 @@ export const checkIfUserLiked = async (
     const tableName = `${type}_likes`;
     const fieldName = `${type}_id`;
     
-    const { data, error } = await supabase
-      .from(tableName)
-      .select('*')
-      .eq('user_id', userId)
-      .eq(fieldName, recordId)
-      .single();
-    
-    if (error && error.code !== 'PGRST116') {
-      console.error(`Erreur lors de la vérification des likes pour ${type}:`, error);
+    if (type === 'forum_post') {
+      const { data, error } = await supabase
+        .from('forum_post_likes')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('post_id', recordId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error(`Erreur lors de la vérification des likes pour ${type}:`, error);
+      }
+      
+      return !!data;
+    } else if (type === 'forum_reply') {
+      const { data, error } = await supabase
+        .from('forum_reply_likes')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('reply_id', recordId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error(`Erreur lors de la vérification des likes pour ${type}:`, error);
+      }
+      
+      return !!data;
     }
     
-    return !!data;
+    return false;
   } catch (error) {
     console.error(`Erreur lors de la vérification des likes pour ${type}:`, error);
     return false;
@@ -112,20 +129,33 @@ export const getLikeCount = async (
   recordId: string
 ): Promise<number> => {
   try {
-    const tableName = `${type}_likes`;
-    const fieldName = `${type}_id`;
-    
-    const { count, error } = await supabase
-      .from(tableName)
-      .select('*', { count: 'exact', head: true })
-      .eq(fieldName, recordId);
-    
-    if (error) {
-      console.error(`Erreur lors du comptage des likes pour ${type}:`, error);
-      return 0;
+    if (type === 'forum_post') {
+      const { count, error } = await supabase
+        .from('forum_post_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('post_id', recordId);
+      
+      if (error) {
+        console.error(`Erreur lors du comptage des likes pour ${type}:`, error);
+        return 0;
+      }
+      
+      return count || 0;
+    } else if (type === 'forum_reply') {
+      const { count, error } = await supabase
+        .from('forum_reply_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('reply_id', recordId);
+      
+      if (error) {
+        console.error(`Erreur lors du comptage des likes pour ${type}:`, error);
+        return 0;
+      }
+      
+      return count || 0;
     }
     
-    return count || 0;
+    return 0;
   } catch (error) {
     console.error(`Erreur lors du comptage des likes pour ${type}:`, error);
     return 0;
@@ -146,25 +176,43 @@ export const addLike = async (
       return { success: false, error: 'Vous devez être connecté pour aimer un élément' };
     }
     
-    const tableName = `${type}_likes`;
-    const fieldName = `${type}_id`;
-    
-    const { error } = await supabase
-      .from(tableName)
-      .insert({ 
-        user_id: userId,
-        [fieldName]: recordId
-      });
-    
-    if (error) {
-      console.error(`Erreur lors de l'ajout du like pour ${type}:`, error);
-      return { success: false, error: 'Une erreur est survenue' };
+    if (type === 'forum_post') {
+      const { error } = await supabase
+        .from('forum_post_likes')
+        .insert({ 
+          user_id: userId,
+          post_id: recordId
+        });
+      
+      if (error) {
+        console.error(`Erreur lors de l'ajout du like pour ${type}:`, error);
+        return { success: false, error: 'Une erreur est survenue' };
+      }
+      
+      // Get the new count after adding like
+      const newCount = await getLikeCount(type, recordId);
+      
+      return { success: true, liked: true, newCount };
+    } else if (type === 'forum_reply') {
+      const { error } = await supabase
+        .from('forum_reply_likes')
+        .insert({ 
+          user_id: userId,
+          reply_id: recordId
+        });
+      
+      if (error) {
+        console.error(`Erreur lors de l'ajout du like pour ${type}:`, error);
+        return { success: false, error: 'Une erreur est survenue' };
+      }
+      
+      // Get the new count after adding like
+      const newCount = await getLikeCount(type, recordId);
+      
+      return { success: true, liked: true, newCount };
     }
     
-    // Get the new count after adding like
-    const newCount = await getLikeCount(type, recordId);
-    
-    return { success: true, liked: true, newCount };
+    return { success: false, error: 'Type d\'élément non supporté' };
   } catch (error) {
     console.error(`Erreur lors de l'ajout du like pour ${type}:`, error);
     return { success: false, error: 'Une erreur est survenue' };
@@ -185,24 +233,41 @@ export const removeLike = async (
       return { success: false, error: 'Vous devez être connecté pour retirer votre like' };
     }
     
-    const tableName = `${type}_likes`;
-    const fieldName = `${type}_id`;
-    
-    const { error } = await supabase
-      .from(tableName)
-      .delete()
-      .eq('user_id', userId)
-      .eq(fieldName, recordId);
-    
-    if (error) {
-      console.error(`Erreur lors du retrait du like pour ${type}:`, error);
-      return { success: false, error: 'Une erreur est survenue' };
+    if (type === 'forum_post') {
+      const { error } = await supabase
+        .from('forum_post_likes')
+        .delete()
+        .eq('user_id', userId)
+        .eq('post_id', recordId);
+      
+      if (error) {
+        console.error(`Erreur lors du retrait du like pour ${type}:`, error);
+        return { success: false, error: 'Une erreur est survenue' };
+      }
+      
+      // Get the new count after removing like
+      const newCount = await getLikeCount(type, recordId);
+      
+      return { success: true, liked: false, newCount };
+    } else if (type === 'forum_reply') {
+      const { error } = await supabase
+        .from('forum_reply_likes')
+        .delete()
+        .eq('user_id', userId)
+        .eq('reply_id', recordId);
+      
+      if (error) {
+        console.error(`Erreur lors du retrait du like pour ${type}:`, error);
+        return { success: false, error: 'Une erreur est survenue' };
+      }
+      
+      // Get the new count after removing like
+      const newCount = await getLikeCount(type, recordId);
+      
+      return { success: true, liked: false, newCount };
     }
     
-    // Get the new count after removing like
-    const newCount = await getLikeCount(type, recordId);
-    
-    return { success: true, liked: false, newCount };
+    return { success: false, error: 'Type d\'élément non supporté' };
   } catch (error) {
     console.error(`Erreur lors du retrait du like pour ${type}:`, error);
     return { success: false, error: 'Une erreur est survenue' };

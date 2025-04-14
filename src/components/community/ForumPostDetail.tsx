@@ -164,7 +164,7 @@ const ForumPostDetail = () => {
   }
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 w-full max-w-3xl mx-auto">
       <div className="hidden md:block">
         <Button onClick={handleGoBack} variant="outline" size="sm" className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />

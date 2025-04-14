@@ -20,12 +20,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
+import { useMediaQuery } from '@/hooks/use-mobile';
 
 const ForumSidebar = () => {
   const [recentPosts, setRecentPosts] = useState<ForumPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     const fetchRecentPosts = async () => {
@@ -63,7 +65,11 @@ const ForumSidebar = () => {
   const isPostDetail = location.pathname.includes('/post/');
 
   return (
-    <Sidebar className="border-r border-white/10 overflow-hidden" collapsible="icon">
+    <Sidebar 
+      className="border-r border-white/10 overflow-hidden" 
+      collapsible={isMobile ? "offcanvas" : "icon"}
+      variant={isMobile ? "sidebar" : "inset"}
+    >
       <SidebarHeader className="px-4 py-3 border-b border-white/10">
         <button 
           onClick={handleGoBack}

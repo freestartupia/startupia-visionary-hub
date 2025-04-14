@@ -77,16 +77,14 @@ const Community = () => {
         )}
 
         {isPostDetail ? (
-          <div className="flex w-full h-full">
-            <SidebarProvider defaultOpen={true}>
-              <div className="flex w-full min-h-[calc(100vh-80px)]">
-                <ForumSidebar />
-                <div className="flex-1 w-full px-4 md:px-8 py-4">
-                  <ForumPostDetail />
-                </div>
+          <SidebarProvider defaultOpen={true}>
+            <div className="flex w-full mt-16 md:mt-0">
+              <ForumSidebar />
+              <div className="flex-1 px-4 md:px-8 py-4">
+                <ForumPostDetail />
               </div>
-            </SidebarProvider>
-          </div>
+            </div>
+          </SidebarProvider>
         ) : (
           <div className="w-full max-w-7xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">

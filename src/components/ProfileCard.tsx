@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import ProfileDetail from './ProfileDetail';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface ProfileCardProps {
   profile: CofounderProfile;
@@ -29,6 +30,16 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
     toast.success("Demande de contact envoyée !");
   };
 
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   return (
     <>
       <div 
@@ -37,17 +48,18 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
       >
         {/* Header with photo and name */}
         <div className="flex items-center mb-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden">
+          <Avatar className="w-16 h-16">
             {profile.photoUrl ? (
-              <img 
+              <AvatarImage 
                 src={profile.photoUrl} 
-                alt={profile.name} 
-                className="w-full h-full object-cover"
+                alt={profile.name}
+                className="object-cover"
               />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-startupia-light-purple to-startupia-turquoise rounded-full"></div>
-            )}
-          </div>
+            ) : null}
+            <AvatarFallback className="bg-gradient-to-br from-startupia-light-purple to-startupia-turquoise text-white">
+              {getInitials(profile.name)}
+            </AvatarFallback>
+          </Avatar>
           <div className="ml-3">
             <div className="flex items-center">
               <h3 className="font-semibold text-lg">{profile.name}</h3>

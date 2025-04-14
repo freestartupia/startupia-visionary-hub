@@ -129,19 +129,19 @@ export interface CofounderProfileDB {
 }
 
 // Fonctions helpers pour convertir entre le format DB et le format d'application
-export const convertDbProfileToApp = (profile: CofounderProfileDB): CofounderProfile => ({
+export const convertDbProfileToApp = (profile: any): CofounderProfile => ({
   id: profile.id,
   name: profile.name,
-  profileType: profile.profile_type,
-  role: profile.role,
+  profileType: profile.profile_type as ProfileType,
+  role: profile.role as Role,
   seekingRoles: profile.seeking_roles || [],
   pitch: profile.pitch,
-  sector: profile.sector,
-  objective: profile.objective,
+  sector: profile.sector as Sector,
+  objective: profile.objective as Objective,
   aiTools: profile.ai_tools || [],
-  availability: profile.availability,
+  availability: profile.availability as Availability,
   vision: profile.vision,
-  region: profile.region,
+  region: profile.region as Region,
   linkedinUrl: profile.linkedin_url,
   portfolioUrl: profile.portfolio_url,
   websiteUrl: profile.website_url,
@@ -149,11 +149,11 @@ export const convertDbProfileToApp = (profile: CofounderProfileDB): CofounderPro
   dateCreated: profile.date_created || new Date().toISOString(),
   hasAIBadge: profile.has_ai_badge || false,
   projectName: profile.project_name,
-  projectStage: profile.project_stage,
+  projectStage: profile.project_stage as ProjectStage,
   matches: profile.matches || []
 });
 
-export const convertAppProfileToDb = (profile: CofounderProfile): CofounderProfileDB => ({
+export const convertAppProfileToDb = (profile: CofounderProfile): any => ({
   id: profile.id,
   name: profile.name,
   profile_type: profile.profileType,

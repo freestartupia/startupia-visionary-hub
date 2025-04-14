@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { CofounderProfile, ProfileType, convertDbProfileToApp } from "@/types/cofounders";
+import { CofounderProfile, ProfileType, convertDbProfileToApp, convertAppProfileToDb } from "@/types/cofounders";
 import { v4 as uuidv4 } from 'uuid';
 
 export const getCofounderProfiles = async (): Promise<CofounderProfile[]> => {
@@ -13,7 +12,7 @@ export const getCofounderProfiles = async (): Promise<CofounderProfile[]> => {
     throw error;
   }
   
-  return data.map(convertDbProfileToApp);
+  return data.map(profile => convertDbProfileToApp(profile));
 };
 
 export const getCofounderProfile = async (id: string): Promise<CofounderProfile> => {
@@ -205,7 +204,7 @@ export const getMyCofounderProfiles = async (): Promise<CofounderProfile[]> => {
     throw error;
   }
   
-  return data.map(convertDbProfileToApp);
+  return data.map(profile => convertDbProfileToApp(profile));
 };
 
 export const sendMatchRequest = async (recipientProfileId: string, message?: string): Promise<void> => {

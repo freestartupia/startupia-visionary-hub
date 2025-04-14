@@ -206,7 +206,7 @@ export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | '
     
     if (error) {
       console.error("Error submitting blog post:", error);
-      throw error;
+      throw new Error(error.message || "Failed to submit blog post");
     }
     
     console.log("Blog post submitted successfully:", data);

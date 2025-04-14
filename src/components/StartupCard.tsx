@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Star, ThumbsUp } from "lucide-react";
@@ -49,20 +48,6 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     fetchUpvoteData();
   }, [startup.id, startup.upvoteCount, user]);
   
-  const renderStars = (score: number) => {
-    return Array(5)
-      .fill(0)
-      .map((_, i) => (
-        <Star
-          key={i}
-          size={16}
-          className={`${
-            i < score ? "text-startupia-turquoise fill-startupia-turquoise" : "text-gray-600"
-          }`}
-        />
-      ));
-  };
-
   const handleVote = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -77,11 +62,21 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     
     setIsVoting(true);
     
+    const previousUpvoted = isUpvoted;
+    const previousCount = upvoteCount;
+    
+    if (isUpvoted) {
+      setUpvoteCount(prev => prev - 1);
+      setIsUpvoted(false);
+    } else {
+      setUpvoteCount(prev => prev + 1);
+      setIsUpvoted(true);
+    }
+    
     try {
       const response = await toggleStartupUpvote(startup.id);
       
       if (response.success) {
-        // Mettre à jour l'état seulement après confirmation du serveur
         setUpvoteCount(response.newCount);
         setIsUpvoted(response.upvoted);
         
@@ -89,15 +84,30 @@ const StartupCard = ({ startup }: StartupCardProps) => {
           toast.success(response.message);
         }
       } else {
+        setUpvoteCount(previousCount);
+        setIsUpvoted(previousUpvoted);
         toast.error(response.message || "Erreur lors du vote");
       }
     } catch (error) {
       console.error('Error toggling upvote:', error);
       toast.error("Erreur lors du vote");
     } finally {
-      // Utiliser un délai plus long pour éviter les clics rapides
-      setTimeout(() => setIsVoting(false), 3000);
+      setTimeout(() => setIsVoting(false), 500);
     }
+  };
+
+  const renderStars = (score: number) => {
+    return Array(5)
+      .fill(0)
+      .map((_, i) => (
+        <Star
+          key={i}
+          size={16}
+          className={`${
+            i < score ? "text-startupia-turquoise fill-startupia-turquoise" : "text-gray-600"
+          }`}
+        />
+      ));
   };
 
   return (
@@ -127,11 +137,13 @@ const StartupCard = ({ startup }: StartupCardProps) => {
             <Button
               variant="ghost"
               size="sm"
-              className={`hover:bg-startupia-turquoise/20 mr-2 ${isUpvoted ? 'text-startupia-turquoise' : ''}`}
+              className={`hover:bg-startupia-turquoise/20 mr-2 transition-colors ${
+                isUpvoted ? 'text-startupia-turquoise' : 'text-white/70'
+              } ${isVoting ? 'opacity-50' : ''}`}
               onClick={handleVote}
               disabled={isVoting}
             >
-              <ThumbsUp size={16} className="mr-1" />
+              <ThumbsUp size={16} className={`mr-1 ${isVoting ? 'animate-pulse' : ''}`} />
               <span>{upvoteCount}</span>
             </Button>
           </div>

@@ -3,16 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { UpvoteResponse } from "@/types/community";
 import { toast } from "sonner";
 
-// Define an interface for the response from our Supabase RPC function
-interface HandleStartupVoteResponse {
-  message: string;
-  is_upvoted: boolean;
-  new_count: number;
-}
-
 /**
  * Toggle a vote on a startup
- * This is a simplified, more reliable implementation
+ * This handles upvoting and downvoting in a single function
  */
 export const toggleStartupVote = async (startupId: string, isUpvote: boolean): Promise<UpvoteResponse> => {
   try {
@@ -54,37 +47,47 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       throw startupError;
     }
     
-    const currentCount = startupData?.upvotes_count || 0;
-    let newCount = currentCount;
-    let responseMessage = "";
+    let newCount = startupData?.upvotes_count || 0;
     let isVoteUpvoted = false;
+    let responseMessage = "";
     
-    // Begin transaction using a function
-    // Note: We need to use a different approach to specify RPC types
-    const { data, error } = await supabase
-      .rpc('handle_startup_vote', {
-        p_startup_id: startupId,
-        p_user_id: userId,
-        p_is_upvote: isUpvote,
-        p_existing_vote_id: existingVote?.id || null,
-        p_was_upvote: existingVote?.is_upvote || null
-      });
+    // Now call the RPC function and cast the response
+    const { data, error } = await supabase.rpc('handle_startup_vote', {
+      p_startup_id: startupId,
+      p_user_id: userId,
+      p_is_upvote: isUpvote,
+      p_existing_vote_id: existingVote?.id || null,
+      p_was_upvote: existingVote?.is_upvote || null
+    });
     
     if (error) {
       console.error("Error in vote transaction:", error);
       throw error;
     }
     
-    // Cast the response to our interface type
-    const typedData = data as HandleStartupVoteResponse;
+    // The response should contain these properties
+    if (data && typeof data === 'object') {
+      const response = data as {
+        message: string;
+        is_upvoted: boolean;
+        new_count: number;
+      };
+      
+      return {
+        success: true,
+        message: response.message || "Vote mis à jour",
+        upvoted: response.is_upvoted || false,
+        newCount: response.new_count || 0
+      };
+    }
     
-    // Return the new state based on the transaction result
     return {
       success: true,
-      message: typedData?.message || "Vote mis à jour",
-      upvoted: typedData?.is_upvoted || false,
-      newCount: typedData?.new_count || 0
+      message: "Vote mis à jour",
+      upvoted: isUpvote,
+      newCount: newCount
     };
+    
   } catch (error) {
     console.error("Error in toggleStartupVote:", error);
     return {

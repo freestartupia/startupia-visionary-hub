@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { likeReply, checkAuthentication } from "./likeUtils";
+import { checkAuthentication, likeReply } from "./likeUtils";
 import type { LikeResponse } from "@/types/community";
 
 // Function to check if a user has liked a reply
@@ -42,23 +42,7 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
     }
     
     // Utiliser la fonction générique likeReply
-    const likeResponse = await likeReply(replyId);
-    
-    // Get the current like count to return
-    const { data: replyData } = await supabase
-      .from('forum_replies')
-      .select('likes')
-      .eq('id', replyId)
-      .single();
-    
-    return {
-      success: likeResponse.success,
-      message: likeResponse.message,
-      liked: likeResponse.liked || false,
-      newCount: likeResponse.liked 
-        ? (replyData?.likes || 0) + 1 
-        : (replyData?.likes || 0)
-    };
+    return await likeReply(replyId);
     
   } catch (error) {
     console.error("Error in toggleReplyLike:", error);

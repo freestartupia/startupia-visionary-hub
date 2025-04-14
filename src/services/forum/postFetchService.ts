@@ -4,7 +4,7 @@ import { ForumPost } from "@/types/community";
 import { mapPostFromDB } from "@/utils/forumMappers";
 import { toast } from "sonner";
 import { getPostLikeStatus } from "./postLikeService";
-import { getRepliesForPost } from "../forumReplyService";
+import { getRepliesForPost } from "../../services/forumReplyService";
 
 // Function to get all forum posts
 export const getForumPosts = async (): Promise<ForumPost[]> => {

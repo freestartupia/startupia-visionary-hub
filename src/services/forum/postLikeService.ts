@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { likePost, checkAuthentication } from "./likeUtils";
+import { checkAuthentication, likePost } from "./likeUtils";
 import type { LikeResponse } from "@/types/community";
 
 // Function to check if a user has liked a post
@@ -42,23 +42,7 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
     }
     
     // Utiliser la fonction générique likePost
-    const likeResponse = await likePost(postId);
-    
-    // Get the current like count to return
-    const { data: postData } = await supabase
-      .from('forum_posts')
-      .select('likes')
-      .eq('id', postId)
-      .single();
-    
-    return {
-      success: likeResponse.success,
-      message: likeResponse.message,
-      liked: likeResponse.liked || false,
-      newCount: likeResponse.liked 
-        ? (postData?.likes || 0) + 1 
-        : (postData?.likes || 0)
-    };
+    return await likePost(postId);
     
   } catch (error) {
     console.error("Error in togglePostLike:", error);

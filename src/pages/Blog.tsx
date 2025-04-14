@@ -37,16 +37,18 @@ const Blog = () => {
   
   useEffect(() => {
     const loadBlogData = async () => {
+      console.log("Blog: Loading blog data");
       setIsLoading(true);
       try {
         // First check if user is admin
         if (user?.email) {
-          console.log("Current user email:", user.email);
+          console.log("Blog: Current user email:", user.email);
           const admin = await checkIsAdmin();
-          console.log("Is admin:", admin);
+          console.log("Blog: Is admin check result:", admin);
           setIsAdmin(admin);
           
           if (admin) {
+            console.log("Blog: User is admin, showing admin notifications");
             // For admins, show a prominent notification that they're in admin mode
             toast({
               title: "Mode administrateur activé",
@@ -56,28 +58,34 @@ const Blog = () => {
         }
         
         // Fetch all data in parallel
+        console.log("Blog: Fetching blog posts");
         const posts = await fetchBlogPosts();
+        console.log("Blog: Fetching featured posts");
         const featured = await fetchFeaturedPosts();
+        console.log("Blog: Fetching categories");
         const allCategories = await getAllBlogCategories();
         
-        console.log("Fetched posts:", posts.length);
-        console.log("Fetched categories:", allCategories);
+        console.log("Blog: Fetched posts:", posts?.length);
+        console.log("Blog: Fetched categories:", allCategories);
         
         // If admin, count pending posts
         if (isAdmin) {
+          console.log("Blog: User is admin, counting pending posts");
           const pendingPosts = posts.filter(post => post.status === 'pending');
+          console.log("Blog: Pending posts count:", pendingPosts.length);
           setPendingCount(pendingPosts.length);
         }
         
         // Filter out pending posts for regular display
         const approvedPosts = posts.filter(post => post.status === 'approved' || (isAdmin && post.status === 'pending'));
+        console.log("Blog: Approved posts count:", approvedPosts.length);
         
         setBlogPosts(approvedPosts);
         setFilteredPosts(approvedPosts);
         setFeaturedPosts(featured.filter(post => post.status === 'approved'));
         setCategories(allCategories);
       } catch (error) {
-        console.error("Error loading blog data:", error);
+        console.error("Blog: Error loading blog data:", error);
         toast({
           title: "Erreur",
           description: "Impossible de charger les articles. Veuillez réessayer plus tard.",
@@ -89,7 +97,21 @@ const Blog = () => {
     };
     
     loadBlogData();
-  }, [toast, user, isAdmin]);
+  }, [toast, user]);
+  
+  // Re-check admin status and pending count when user changes
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user?.email) {
+        const admin = await checkIsAdmin();
+        setIsAdmin(admin);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    
+    checkAdminStatus();
+  }, [user]);
   
   const handleSearch = (query: string) => {
     setSearchQuery(query);

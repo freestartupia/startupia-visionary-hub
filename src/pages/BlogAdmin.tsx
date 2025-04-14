@@ -47,11 +47,14 @@ const BlogAdmin: React.FC = () => {
 
   useEffect(() => {
     const checkAdmin = async () => {
+      console.log("BlogAdmin: Checking if user is admin");
       try {
         const admin = await checkIsAdmin();
+        console.log("BlogAdmin: Admin check result:", admin);
         setIsAdmin(admin);
         
         if (!admin) {
+          console.log("BlogAdmin: User is not admin, redirecting to blog");
           toast({
             title: "Accès refusé",
             description: "Vous n'avez pas les droits d'administrateur pour accéder à cette page.",
@@ -61,9 +64,10 @@ const BlogAdmin: React.FC = () => {
           return;
         }
         
+        console.log("BlogAdmin: User is admin, loading pending posts");
         loadPendingPosts();
       } catch (error) {
-        console.error("Error checking admin status:", error);
+        console.error("BlogAdmin: Error checking admin status:", error);
         toast({
           title: "Erreur",
           description: "Une erreur est survenue lors de la vérification de vos droits d'administrateur.",
@@ -77,12 +81,14 @@ const BlogAdmin: React.FC = () => {
   }, [navigate, toast]);
   
   const loadPendingPosts = async () => {
+    console.log("BlogAdmin: Loading pending posts");
     setIsLoading(true);
     try {
       const posts = await fetchPendingPosts();
+      console.log("BlogAdmin: Pending posts loaded:", posts);
       setPendingPosts(posts);
     } catch (error) {
-      console.error("Error loading pending posts:", error);
+      console.error("BlogAdmin: Error loading pending posts:", error);
       toast({
         title: "Erreur",
         description: "Impossible de charger les articles en attente.",
@@ -96,6 +102,7 @@ const BlogAdmin: React.FC = () => {
   const handleApprove = async (post: BlogPost) => {
     if (actionInProgress) return;
     
+    console.log("BlogAdmin: Approving post:", post.id);
     setActionInProgress(post.id);
     try {
       await approvePost(post.id);
@@ -105,7 +112,7 @@ const BlogAdmin: React.FC = () => {
         description: `L'article "${post.title}" a été publié avec succès.`
       });
     } catch (error) {
-      console.error("Error approving post:", error);
+      console.error("BlogAdmin: Error approving post:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'approbation de l'article.",
@@ -119,6 +126,7 @@ const BlogAdmin: React.FC = () => {
   const handleReject = async (post: BlogPost) => {
     if (actionInProgress) return;
     
+    console.log("BlogAdmin: Rejecting post:", post.id);
     setActionInProgress(post.id);
     try {
       await rejectPost(post.id);
@@ -129,7 +137,7 @@ const BlogAdmin: React.FC = () => {
       });
       setPostToReject(null);
     } catch (error) {
-      console.error("Error rejecting post:", error);
+      console.error("BlogAdmin: Error rejecting post:", error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors du rejet de l'article.",
@@ -145,6 +153,7 @@ const BlogAdmin: React.FC = () => {
   };
   
   if (!isAdmin) {
+    console.log("BlogAdmin: Not showing content because user is not admin");
     return null; // Redirect handled in useEffect
   }
 
@@ -180,6 +189,16 @@ const BlogAdmin: React.FC = () => {
             <AlertTitle>Aucun article en attente</AlertTitle>
             <AlertDescription>
               Il n'y a actuellement aucun article en attente de modération.
+              <Button 
+                variant="outline" 
+                className="mt-2 border-startupia-turquoise text-white hover:bg-startupia-turquoise/20"
+                onClick={() => {
+                  console.log("BlogAdmin: Manually refreshing pending posts");
+                  loadPendingPosts();
+                }}
+              >
+                Rafraîchir
+              </Button>
             </AlertDescription>
           </Alert>
         ) : (

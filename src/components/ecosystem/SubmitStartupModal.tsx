@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Dialog, 
@@ -165,7 +164,6 @@ const SubmitStartupModal = ({ open, onOpenChange, onSubmitSuccess }: SubmitStart
     }
   };
 
-  // List of available tools and sectors
   const aiToolOptions: AITool[] = [
     "ChatGPT", "Claude", "LLama", "Stable Diffusion", 
     "Midjourney", "API interne", "Hugging Face", 

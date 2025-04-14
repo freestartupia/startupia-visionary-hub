@@ -55,6 +55,9 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
               parsedFounders = [];
             }
             
+            // Ensure aiTools is AITool[] type
+            const typedAiTools = item.ai_tools ? item.ai_tools.map(tool => tool as any) : [];
+            
             return {
               id: item.id,
               name: item.name,
@@ -63,7 +66,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
               longTermVision: item.long_term_vision || '',
               founders: parsedFounders,
               aiUseCases: item.ai_use_cases || '',
-              aiTools: item.ai_tools || [],
+              aiTools: typedAiTools,
               sector: item.sector,
               businessModel: item.business_model,
               maturityLevel: item.maturity_level,

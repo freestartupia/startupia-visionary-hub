@@ -5,9 +5,6 @@ import Footer from '@/components/Footer';
 import BlogPostCard from '@/components/blog/BlogPostCard';
 import BlogSearch from '@/components/blog/BlogSearch';
 import CategoryFilter from '@/components/blog/CategoryFilter';
-import SubmitArticleModal from '@/components/blog/SubmitArticleModal';
-import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
 import { 
   mockBlogPosts, 
   getAllBlogCategories, 
@@ -20,7 +17,6 @@ const Blog = () => {
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(mockBlogPosts);
   const [selectedCategory, setSelectedCategory] = useState<BlogCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
   
   const categories = getAllBlogCategories();
   const featuredPosts = getFeaturedPosts();
@@ -81,13 +77,7 @@ const Blog = () => {
             <BlogSearch onSearch={handleSearch} />
           </div>
           
-          <Button 
-            onClick={() => setIsSubmitModalOpen(true)}
-            className="bg-startupia-turquoise text-black hover:bg-startupia-light-turquoise transition-all"
-          >
-            <PlusCircle className="mr-2" size={16} />
-            Soumettre un article
-          </Button>
+          {/* Le bouton "Soumettre un article" a été supprimé */}
         </div>
         
         {/* Featured posts carousel */}
@@ -122,11 +112,6 @@ const Blog = () => {
       </main>
 
       <Footer />
-      
-      <SubmitArticleModal 
-        open={isSubmitModalOpen} 
-        onOpenChange={setIsSubmitModalOpen} 
-      />
     </div>
   );
 };

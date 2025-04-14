@@ -1,146 +1,116 @@
 
-import { SupabaseClient } from '@supabase/supabase-js';
-import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
+import { LikeResponse } from "@/types/community";
 
-export interface LikeResponse {
-  success: boolean;
-  message: string;
-  isLiked?: boolean;
-  likeCount?: number;
-  liked?: boolean;
-  newCount?: number;
-}
-
-// Function to check authentication
-export const checkAuthentication = async (): Promise<string | null> => {
-  try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !userData.user) {
-      return null;
-    }
-    
-    return userData.user.id;
-  } catch (error) {
-    console.error("Authentication error:", error);
-    return null;
+// Fonction générique pour vérifier si un utilisateur a aimé un contenu
+export const getLikeStatus = async (
+  table: string, 
+  contentField: string, 
+  contentId: string
+): Promise<boolean> => {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !userData.user) {
+    return false;
   }
+  
+  const { data, error } = await supabase
+    .from(table)
+    .select('id')
+    .eq(contentField, contentId)
+    .eq('user_id', userData.user.id)
+    .single();
+    
+  return !!data && !error;
 };
 
-// Function to like a post
-export const likePost = async (postId: string): Promise<LikeResponse> => {
-  try {
-    const userId = await checkAuthentication();
-    
-    if (!userId) {
-      return {
-        success: false,
-        message: "Authentication required",
-        liked: false
-      };
-    }
-    
-    const result = await handleToggleLike(supabase, 'forum_post_likes', 'post_id', postId, userId);
-    
-    // Determine if the post is now liked based on the result
-    return {
-      ...result,
-      liked: result.isLiked
-    };
-    
-  } catch (error) {
-    console.error("Error in likePost:", error);
-    return {
-      success: false,
-      message: "Error toggling like",
-      liked: false
-    };
-  }
-};
-
-// Function to like a reply
-export const likeReply = async (replyId: string): Promise<LikeResponse> => {
-  try {
-    const userId = await checkAuthentication();
-    
-    if (!userId) {
-      return {
-        success: false,
-        message: "Authentication required",
-        liked: false
-      };
-    }
-    
-    const result = await handleToggleLike(supabase, 'forum_reply_likes', 'reply_id', replyId, userId);
-    
-    // Determine if the reply is now liked based on the result
-    return {
-      ...result,
-      liked: result.isLiked
-    };
-    
-  } catch (error) {
-    console.error("Error in likeReply:", error);
-    return {
-      success: false,
-      message: "Error toggling like",
-      liked: false
-    };
-  }
-};
-
-export const handleToggleLike = async (
-  supabase: SupabaseClient,
+// Fonction générique pour basculer le statut "j'aime" d'un contenu
+export const toggleLike = async (
   table: string,
-  field: string,
-  id: string,
-  userId: string
+  contentTable: string,
+  contentField: string,
+  contentId: string,
+  likesField: string = 'likes'
 ): Promise<LikeResponse> => {
-  try {
-    // Check if the user has already liked this item
-    const { data: existingLike } = await supabase
-      .from(table)
-      .select('id')
-      .eq(field, id)
-      .eq('user_id', userId)
-      .single();
-
-    if (existingLike) {
-      // Unlike - remove the like
-      const { error: deleteError } = await supabase
-        .from(table)
-        .delete()
-        .eq(field, id)
-        .eq('user_id', userId);
-
-      if (deleteError) throw deleteError;
-
-      return {
-        success: true,
-        message: 'Like removed successfully',
-        isLiked: false,
-      };
-    } else {
-      // Like - add a new like
-      const { error: insertError } = await supabase
-        .from(table)
-        .insert({ [field]: id, user_id: userId });
-
-      if (insertError) throw insertError;
-
-      return {
-        success: true,
-        message: 'Liked successfully',
-        isLiked: true,
-      };
-    }
-  } catch (error) {
-    console.error(`Error toggling like for ${table}:`, error);
-    toast.error(`Une erreur est survenue. Veuillez réessayer.`);
-    return {
-      success: false,
-      message: 'Error toggling like',
-    };
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  
+  if (userError || !userData.user) {
+    throw new Error('User not authenticated');
   }
+  
+  // Vérifiez si l'utilisateur a déjà aimé le contenu
+  const { data: existingLike } = await supabase
+    .from(table)
+    .select('id')
+    .eq(contentField, contentId)
+    .eq('user_id', userData.user.id)
+    .single();
+  
+  let isLiked = false;
+  
+  // Commencer une transaction
+  const { data: contentData, error: contentError } = await supabase
+    .from(contentTable)
+    .select(likesField)
+    .eq('id', contentId)
+    .single();
+  
+  if (contentError) {
+    throw contentError;
+  }
+  
+  const currentLikes = contentData ? (contentData[likesField] || 0) : 0;
+  
+  if (existingLike) {
+    // Si l'utilisateur a déjà aimé le contenu, supprimez le "j'aime"
+    const { error: deleteError } = await supabase
+      .from(table)
+      .delete()
+      .eq('id', existingLike.id);
+    
+    if (deleteError) {
+      throw deleteError;
+    }
+    
+    // Décrémentez le compteur de "j'aime"
+    const { error: updateError } = await supabase
+      .from(contentTable)
+      .update({ [likesField]: Math.max(0, currentLikes - 1) })
+      .eq('id', contentId);
+    
+    if (updateError) {
+      throw updateError;
+    }
+    
+    isLiked = false;
+  } else {
+    // Si l'utilisateur n'a pas encore aimé le contenu, ajoutez un "j'aime"
+    const { error: insertError } = await supabase
+      .from(table)
+      .insert({
+        [contentField]: contentId,
+        user_id: userData.user.id
+      });
+    
+    if (insertError) {
+      throw insertError;
+    }
+    
+    // Incrémentez le compteur de "j'aime"
+    const { error: updateError } = await supabase
+      .from(contentTable)
+      .update({ [likesField]: currentLikes + 1 })
+      .eq('id', contentId);
+    
+    if (updateError) {
+      throw updateError;
+    }
+    
+    isLiked = true;
+  }
+  
+  return {
+    isLiked,
+    likesCount: isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1)
+  };
 };

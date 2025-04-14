@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import BlogPostCard from '@/components/blog/BlogPostCard';
@@ -9,21 +9,54 @@ import SubmitArticleModal from '@/components/blog/SubmitArticleModal';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { 
-  mockBlogPosts, 
-  getAllBlogCategories, 
-  getFeaturedPosts 
-} from '@/data/mockBlogPosts';
+  fetchBlogPosts, 
+  fetchFeaturedPosts,
+  getAllBlogCategories
+} from '@/services/blogService';
 import { BlogCategory, BlogPost } from '@/types/blog';
 import SEO from '@/components/SEO';
+import { useToast } from "@/components/ui/use-toast";
 
 const Blog = () => {
-  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(mockBlogPosts);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<BlogCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
+  const [featuredPosts, setFeaturedPosts] = useState<BlogPost[]>([]);
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { toast } = useToast();
   
-  const categories = getAllBlogCategories();
-  const featuredPosts = getFeaturedPosts();
+  useEffect(() => {
+    const loadBlogData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch all data in parallel
+        const [posts, featured, allCategories] = await Promise.all([
+          fetchBlogPosts(),
+          fetchFeaturedPosts(),
+          getAllBlogCategories()
+        ]);
+        
+        setBlogPosts(posts);
+        setFilteredPosts(posts);
+        setFeaturedPosts(featured);
+        setCategories(allCategories);
+      } catch (error) {
+        console.error("Error loading blog data:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les articles. Veuillez réessayer plus tard.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadBlogData();
+  }, [toast]);
   
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -36,14 +69,14 @@ const Blog = () => {
   };
   
   const filterPosts = (query: string, category: BlogCategory | null) => {
-    let filtered = [...mockBlogPosts];
+    let filtered = [...blogPosts];
     
     if (query) {
       const lowerQuery = query.toLowerCase();
       filtered = filtered.filter(post => 
         post.title.toLowerCase().includes(lowerQuery) ||
         post.excerpt.toLowerCase().includes(lowerQuery) ||
-        post.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+        (post.tags && post.tags.some(tag => tag.toLowerCase().includes(lowerQuery)))
       );
     }
     
@@ -90,35 +123,46 @@ const Blog = () => {
           </Button>
         </div>
         
-        {/* Featured posts carousel */}
-        {featuredPosts.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">À la une</h2>
-            <div className="grid gap-6">
-              {featuredPosts.map(post => (
-                <BlogPostCard key={post.id} post={post} featured={true} />
-              ))}
-            </div>
+        {/* Loading state */}
+        {isLoading ? (
+          <div className="flex justify-center my-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
           </div>
-        )}
-        
-        <CategoryFilter 
-          categories={categories} 
-          selectedCategory={selectedCategory}
-          onSelectCategory={handleCategoryChange}
-        />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPosts.length > 0 ? (
-            filteredPosts.map(post => (
-              <BlogPostCard key={post.id} post={post} />
-            ))
-          ) : (
-            <div className="col-span-3 text-center py-10">
-              <p className="text-white/60">Aucun article trouvé avec ces critères.</p>
+        ) : (
+          <>
+            {/* Featured posts carousel */}
+            {featuredPosts.length > 0 && (
+              <div className="mb-12">
+                <h2 className="text-2xl font-bold mb-6">À la une</h2>
+                <div className="grid gap-6">
+                  {featuredPosts.map(post => (
+                    <BlogPostCard key={post.id} post={post} featured={true} />
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {categories.length > 0 && (
+              <CategoryFilter 
+                categories={categories} 
+                selectedCategory={selectedCategory}
+                onSelectCategory={handleCategoryChange}
+              />
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPosts.length > 0 ? (
+                filteredPosts.map(post => (
+                  <BlogPostCard key={post.id} post={post} />
+                ))
+              ) : (
+                <div className="col-span-3 text-center py-10">
+                  <p className="text-white/60">Aucun article trouvé avec ces critères.</p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </main>
 
       <Footer />

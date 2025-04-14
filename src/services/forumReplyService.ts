@@ -1,115 +1,84 @@
+import { supabase } from '@/integrations/supabase/client';
+import { ForumReply, PopulatedForumReply } from '@/types/community';
+import { getReplyLikeStatus } from './forum/replyLikeService';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-import { supabase } from "@/integrations/supabase/client";
-import { ForumReply } from "@/types/community";
-import { mapReplyFromDB } from "@/utils/forumMappers";
-import { toast } from "sonner";
-import { getReplyLikeStatus } from "./forum/replyLikeService";
+const formatReplyDate = (date: string): string => {
+  return formatDistanceToNow(new Date(date), {
+    locale: ptBR,
+    addSuffix: true,
+  });
+};
 
-// Function to get replies for a specific post
-export const getRepliesForPost = async (postId: string): Promise<ForumReply[]> => {
+const populateReplyWithLikeInfo = async (reply: ForumReply): Promise<PopulatedForumReply> => {
+  const { liked, count } = await getReplyLikeStatus(reply.id);
+
+  return {
+    ...reply,
+    userHasLiked: liked,
+    formattedCreatedAt: formatReplyDate(reply.created_at),
+    children: [] // Will be populated later if needed
+  };
+};
+
+export const createForumReply = async (
+  postId: string,
+  content: string,
+  userId: string,
+  userAvatar: string | null,
+  userName: string
+): Promise<{ data: ForumReply | null; error: any }> => {
   try {
-    const { data: repliesData, error: repliesError } = await supabase
+    const { data: reply, error } = await supabase
       .from('forum_replies')
-      .select('*')
-      .eq('parent_id', postId)
-      .order('created_at', { ascending: true });
-      
-    if (repliesError) {
-      console.error("Error fetching replies:", repliesError);
-      return [];
+      .insert([
+        {
+          post_id: postId,
+          content: content,
+          user_id: userId,
+          user_avatar: userAvatar,
+          user_name: userName,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating forum reply:', error);
+      return { data: null, error };
     }
-    
-    // Map raw data to our TypeScript interface
-    const replies = repliesData.map(mapReplyFromDB);
-    
-    // Get current user for like status
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData.user?.id;
-    
-    // Process each reply to add nested replies and like status
-    const processedReplies = await Promise.all(replies.map(async (reply) => {
-      // Get nested replies if any
-      const { data: nestedRepliesData, error: nestedError } = await supabase
-        .from('forum_replies')
-        .select('*')
-        .eq('reply_parent_id', reply.id)
-        .order('created_at', { ascending: true });
-        
-      let nestedReplies: ForumReply[] = [];
-      
-      if (!nestedError && nestedRepliesData.length > 0) {
-        nestedReplies = await Promise.all(nestedRepliesData.map(async (nestedReply) => {
-          const mappedReply = mapReplyFromDB(nestedReply);
-          
-          // Check like status for nested reply
-          if (userId) {
-            mappedReply.isLiked = await getReplyLikeStatus(mappedReply.id, userId);
-          }
-          
-          return mappedReply;
-        }));
-      }
-      
-      // Check like status for this reply
-      let isLiked = false;
-      if (userId) {
-        isLiked = await getReplyLikeStatus(reply.id, userId);
-      }
-      
-      return { ...reply, nestedReplies, isLiked };
-    }));
-    
-    return processedReplies;
+
+    return { data: reply, error: null };
   } catch (error) {
-    console.error("Error in getRepliesForPost:", error);
-    return [];
+    console.error('Error creating forum reply:', error);
+    return { data: null, error };
   }
 };
 
-// Function to add a reply to a post
-export const addReplyToPost = async (
-  postId: string,
-  content: string,
-  authorName: string,
-  authorAvatar?: string,
-  parentReplyId?: string
-): Promise<ForumReply> => {
+export const getForumRepliesByPostId = async (postId: string): Promise<{ data: PopulatedForumReply[] | null; error: any }> => {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !userData.user) {
-      console.error("User not authenticated:", userError);
-      toast.error("Vous devez être connecté pour répondre");
-      throw userError || new Error("User not authenticated");
-    }
-    
-    const newReply = {
-      parent_id: postId,
-      reply_parent_id: parentReplyId || null,
-      content,
-      author_id: userData.user.id,
-      author_name: authorName,
-      author_avatar: authorAvatar,
-      created_at: new Date().toISOString(),
-      likes: 0
-    };
-    
-    const { data, error } = await supabase
+    const { data: replies, error } = await supabase
       .from('forum_replies')
-      .insert(newReply)
-      .select()
-      .single();
-      
+      .select('*')
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true });
+
     if (error) {
-      console.error("Error adding reply:", error);
-      toast.error("Impossible d'ajouter la réponse");
-      throw error;
+      console.error('Error fetching forum replies:', error);
+      return { data: null, error };
     }
-    
-    toast.success("Réponse ajoutée avec succès");
-    return mapReplyFromDB(data);
+
+    if (!replies) {
+      return { data: [], error: null };
+    }
+
+    // Populate like info for each reply
+    const populatedReplies = await Promise.all(replies.map(reply => populateReplyWithLikeInfo(reply)));
+
+    return { data: populatedReplies, error: null };
   } catch (error) {
-    console.error("Error in addReplyToPost:", error);
-    throw error;
+    console.error('Error fetching forum replies:', error);
+    return { data: null, error };
   }
 };

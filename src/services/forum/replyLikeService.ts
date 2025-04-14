@@ -1,5 +1,4 @@
 
-import { supabase } from '@/integrations/supabase/client';
 import { LikeResponse } from '@/types/community';
 import { checkAuthentication, checkIfUserLiked, getLikeCount, addLike, removeLike } from './likeUtils';
 
@@ -22,7 +21,10 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
     const userId = await checkAuthentication();
     
     if (!userId) {
-      return { success: false, error: 'Vous devez être connecté pour aimer une réponse' };
+      return { 
+        success: false, 
+        message: 'Vous devez être connecté pour aimer une réponse' 
+      };
     }
     
     const isLiked = await checkIfUserLiked('forum_reply', replyId);
@@ -34,7 +36,10 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
     }
   } catch (error) {
     console.error('Error toggling reply like:', error);
-    return { success: false, error: 'Une erreur est survenue' };
+    return { 
+      success: false, 
+      message: 'Une erreur est survenue' 
+    };
   }
 };
 

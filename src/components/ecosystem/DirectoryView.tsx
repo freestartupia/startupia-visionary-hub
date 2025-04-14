@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from "react";
-import { Startup, Sector } from "@/types/startup";
+import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from "@/types/startup";
 import StartupCard from "@/components/StartupCard";
 import StartupFilters from "@/components/StartupFilters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,7 +50,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
               parsedFounders = [];
             }
             
-            const typedAiTools = item.ai_tools ? item.ai_tools.map(tool => tool as any) : [];
+            const typedAiTools = item.ai_tools ? item.ai_tools.map(tool => tool as AITool) : [];
             
             return {
               id: item.id,
@@ -61,8 +62,8 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
               aiUseCases: item.ai_use_cases || '',
               aiTools: typedAiTools,
               sector: item.sector as Sector,
-              businessModel: item.business_model,
-              maturityLevel: item.maturity_level,
+              businessModel: item.business_model as BusinessModel,
+              maturityLevel: item.maturity_level as MaturityLevel,
               aiImpactScore: item.ai_impact_score,
               tags: item.tags || [],
               websiteUrl: item.website_url,

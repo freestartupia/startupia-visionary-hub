@@ -22,10 +22,9 @@ import { useNavigate } from 'react-router-dom';
 import DirectoryView from '@/components/ecosystem/DirectoryView';
 import SubmitStartupModal from '@/components/ecosystem/SubmitStartupModal';
 import SEO from '@/components/SEO';
-import { Startup } from '@/types/startup';
+import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from '@/types/startup';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sector } from '@/types/startup';
 
 const AIEcosystem = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,7 +69,7 @@ const AIEcosystem = () => {
               parsedFounders = [];
             }
             
-            const typedAiTools = item.ai_tools ? item.ai_tools.map(tool => tool as any) : [];
+            const typedAiTools = item.ai_tools ? item.ai_tools.map(tool => tool as AITool) : [];
             
             return {
               id: item.id,
@@ -82,8 +81,8 @@ const AIEcosystem = () => {
               aiUseCases: item.ai_use_cases || '',
               aiTools: typedAiTools,
               sector: item.sector as Sector,
-              businessModel: item.business_model,
-              maturityLevel: item.maturity_level,
+              businessModel: item.business_model as BusinessModel,
+              maturityLevel: item.maturity_level as MaturityLevel,
               aiImpactScore: item.ai_impact_score,
               tags: item.tags || [],
               websiteUrl: item.website_url,

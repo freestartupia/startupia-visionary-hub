@@ -11,6 +11,9 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
+// Enable Row Level Security (RLS) for the relevant tables via SQL commands
+// To fix permission issues when inserting data, use SQL commands to create appropriate RLS policies
+
 // Create a custom function for incrementing values
 // In real cases, you should create a Postgres function in Supabase
 // This is just a client-side simulation for upvoting

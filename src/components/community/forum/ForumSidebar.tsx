@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getForumPosts } from '@/services/forumService';
@@ -32,7 +31,6 @@ const ForumSidebar = () => {
       try {
         setIsLoading(true);
         const posts = await getForumPosts();
-        // Sort by date (most recent first)
         const sortedPosts = [...posts].sort((a, b) => 
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
@@ -59,11 +57,13 @@ const ForumSidebar = () => {
     navigate('/community?tab=forum');
   };
 
-  // Determine if we're on the forum list or a specific post
   const isPostDetail = location.pathname.includes('/post/');
 
   return (
-    <Sidebar className="border-r border-white/10 overflow-hidden" collapsible="icon">
+    <Sidebar 
+      className="border-r border-white/10 overflow-hidden fixed top-16 left-0 h-[calc(100vh-4rem)]" 
+      collapsible="icon"
+    >
       <SidebarHeader className="px-4 py-3 border-b border-white/10">
         <button 
           onClick={handleGoBack}

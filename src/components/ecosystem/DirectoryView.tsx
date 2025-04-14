@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from "@/types/startup";
 import StartupCard from "@/components/StartupCard";
@@ -64,7 +63,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
               sector: item.sector as Sector,
               businessModel: item.business_model as BusinessModel,
               maturityLevel: item.maturity_level as MaturityLevel,
-              aiImpactScore: item.ai_impact_score,
+              aiImpactScore: item.ai_impact_score as number,
               tags: item.tags || [],
               websiteUrl: item.website_url,
               pitchDeckUrl: item.pitch_deck_url,
@@ -135,7 +134,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
         onValueChange={setActiveCategory}
         className="mb-8"
       >
-        <TabsList className="inline-flex h-10 items-center justify-start space-x-1 overflow-x-auto w-full pb-1 mb-2">
+        <TabsList className="inline-flex h-10 items-center justify-start space-x-1 overflow-x-auto w-full">
           <TabsTrigger value="all" className="data-[state=active]:bg-startupia-turquoise/20">
             Tous
           </TabsTrigger>

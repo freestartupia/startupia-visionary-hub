@@ -83,7 +83,7 @@ const AIEcosystem = () => {
               sector: item.sector as Sector,
               businessModel: item.business_model as BusinessModel,
               maturityLevel: item.maturity_level as MaturityLevel,
-              aiImpactScore: item.ai_impact_score,
+              aiImpactScore: item.ai_impact_score as number,
               tags: item.tags || [],
               websiteUrl: item.website_url,
               pitchDeckUrl: item.pitch_deck_url,

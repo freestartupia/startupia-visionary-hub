@@ -60,16 +60,23 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
     let isVoteUpvoted = false;
     
     // Begin transaction using a function
-    const { data, error } = await supabase.rpc<HandleStartupVoteResponse>(
-      'handle_startup_vote', 
-      {
-        p_startup_id: startupId,
-        p_user_id: userId,
-        p_is_upvote: isUpvote,
-        p_existing_vote_id: existingVote?.id || null,
-        p_was_upvote: existingVote?.is_upvote || null
-      }
-    );
+    const { data, error } = await supabase
+      .rpc<HandleStartupVoteResponse, {
+        p_startup_id: string;
+        p_user_id: string;
+        p_is_upvote: boolean;
+        p_existing_vote_id: string | null;
+        p_was_upvote: boolean | null;
+      }>(
+        'handle_startup_vote', 
+        {
+          p_startup_id: startupId,
+          p_user_id: userId,
+          p_is_upvote: isUpvote,
+          p_existing_vote_id: existingVote?.id || null,
+          p_was_upvote: existingVote?.is_upvote || null
+        }
+      );
     
     if (error) {
       console.error("Error in vote transaction:", error);

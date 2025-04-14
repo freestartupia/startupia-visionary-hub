@@ -1,3 +1,3 @@
 
 // Re-export all reply-related services for backward compatibility
-export { addReplyToPost, getPostReplies } from './forum/replyService';
+export { addReplyToPost, getPostReplies as getRepliesForPost } from './forum/replyService';

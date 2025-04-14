@@ -786,38 +786,6 @@ export type Database = {
           },
         ]
       }
-      startup_votes: {
-        Row: {
-          created_at: string
-          id: string
-          is_upvote: boolean | null
-          startup_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_upvote?: boolean | null
-          startup_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_upvote?: boolean | null
-          startup_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "startup_votes_startup_id_fkey"
-            columns: ["startup_id"]
-            isOneToOne: false
-            referencedRelation: "startups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       startups: {
         Row: {
           ai_impact_score: number
@@ -840,7 +808,6 @@ export type Database = {
           short_description: string
           tags: string[] | null
           updated_at: string | null
-          upvotes_count: number | null
           view_count: number | null
           website_url: string | null
         }
@@ -865,7 +832,6 @@ export type Database = {
           short_description: string
           tags?: string[] | null
           updated_at?: string | null
-          upvotes_count?: number | null
           view_count?: number | null
           website_url?: string | null
         }
@@ -890,7 +856,6 @@ export type Database = {
           short_description?: string
           tags?: string[] | null
           updated_at?: string | null
-          upvotes_count?: number | null
           view_count?: number | null
           website_url?: string | null
         }
@@ -922,16 +887,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      handle_startup_vote: {
-        Args: {
-          p_startup_id: string
-          p_user_id: string
-          p_is_upvote: boolean
-          p_existing_vote_id: string
-          p_was_upvote: boolean
-        }
-        Returns: Json
-      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean

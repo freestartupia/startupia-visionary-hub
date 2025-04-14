@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { ArrowLeft, Link as LinkIcon, ExternalLink, Globe, FileText, Building, ThumbsUp, Info, Star } from 'lucide-react';
+import { ArrowLeft, Link as LinkIcon, ExternalLink, Globe, FileText, Building, Info, Star } from 'lucide-react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import SEO from '@/components/SEO';
@@ -87,7 +87,6 @@ const StartupDetails = () => {
             dateAdded: data.date_added,
             viewCount: data.view_count || 0,
             isFeatured: data.is_featured,
-            upvotes_count: data.upvotes_count || 0,
           });
         } else {
           setIsError(true);
@@ -260,10 +259,6 @@ const StartupDetails = () => {
                 <div className="flex items-center gap-1">
                   <Info size={16} />
                   <span>{startup.maturityLevel}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <ThumbsUp size={16} />
-                  <span>{startup.upvotes_count || 0}</span>
                 </div>
               </div>
             </div>

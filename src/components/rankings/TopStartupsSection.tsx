@@ -15,7 +15,7 @@ const TopStartupsSection = ({ topStartups }: TopStartupsSectionProps) => {
     <section>
       <div className="flex items-center gap-2 mb-6">
         <Trophy className="text-startupia-gold" />
-        <h2 className="text-2xl font-bold">Top Startups les plus votées</h2>
+        <h2 className="text-2xl font-bold">Top Startups</h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {topStartups.map((startup, index) => (

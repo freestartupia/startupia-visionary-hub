@@ -1,16 +1,12 @@
+
 import React, { useState, useEffect } from "react";
-import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from "@/types/startup";
+import { Startup, Sector } from "@/types/startup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { ThumbsUp, MessageSquare, ExternalLink, ArrowUp, ArrowDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { toggleStartupUpvote, toggleStartupDownvote } from "@/services/startupVoteService";
 
 interface DirectoryViewProps {
   searchQuery: string;
@@ -23,9 +19,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [sectors, setSectors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [startupVotes, setStartupVotes] = useState<Record<string, { upvoted: boolean, downvoted: boolean, count: number }>>({});
-  const [processingVotes, setProcessingVotes] = useState<Record<string, boolean>>({});
-  const { user } = useAuth();
 
   useEffect(() => {
     const fetchStartups = async () => {
@@ -79,22 +72,11 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
               dateAdded: item.date_added,
               viewCount: item.view_count,
               isFeatured: item.is_featured,
-              upvotes_count: item.upvotes_count || 0,
             };
           });
           
           setStartups(transformedData);
           setFilteredStartups(transformedData);
-          
-          const votesState: Record<string, { upvoted: boolean, downvoted: boolean, count: number }> = {};
-          transformedData.forEach(startup => {
-            votesState[startup.id] = { 
-              upvoted: false, 
-              downvoted: false,
-              count: startup.upvotes_count || 0
-            };
-          });
-          setStartupVotes(votesState);
           
           const uniqueSectors = Array.from(new Set(data.map(startup => startup.sector)));
           setSectors(uniqueSectors);
@@ -109,46 +91,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
 
     fetchStartups();
   }, []);
-  
-  useEffect(() => {
-    const checkUserVotes = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('startup_votes')
-          .select('startup_id, is_upvote')
-          .eq('user_id', user.id);
-          
-        if (error) {
-          console.error('Error checking user votes:', error);
-          return;
-        }
-        
-        if (data && data.length > 0) {
-          const newVotesState = { ...startupVotes };
-          
-          data.forEach(vote => {
-            if (newVotesState[vote.startup_id]) {
-              newVotesState[vote.startup_id] = {
-                ...newVotesState[vote.startup_id],
-                upvoted: vote.is_upvote,
-                downvoted: !vote.is_upvote
-              };
-            }
-          });
-          
-          setStartupVotes(newVotesState);
-        }
-      } catch (error) {
-        console.error('Error fetching user votes:', error);
-      }
-    };
-    
-    if (Object.keys(startupVotes).length > 0) {
-      checkUserVotes();
-    }
-  }, [user, startups]);
   
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -178,80 +120,10 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     setFilteredStartups(filtered);
   }, [activeCategory, startups]);
 
-  const handleVote = async (e: React.MouseEvent, startupId: string, isUpvote: boolean) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!user) {
-      toast.error("Vous devez être connecté pour voter");
-      return;
-    }
-    
-    if (processingVotes[startupId]) {
-      return;
-    }
-    
-    setProcessingVotes(prev => ({
-      ...prev,
-      [startupId]: true
-    }));
-    
-    try {
-      const response = isUpvote 
-        ? await toggleStartupUpvote(startupId)
-        : await toggleStartupDownvote(startupId);
-      
-      if (response.success) {
-        setStartupVotes(prev => ({
-          ...prev,
-          [startupId]: {
-            upvoted: isUpvote,
-            downvoted: !isUpvote,
-            count: response.newCount
-          }
-        }));
-        
-        setStartups(prev => 
-          prev.map(s => 
-            s.id === startupId 
-              ? {...s, upvotes_count: response.newCount} 
-              : s
-          )
-        );
-        
-        setFilteredStartups(prev => 
-          prev.map(s => 
-            s.id === startupId 
-              ? {...s, upvotes_count: response.newCount} 
-              : s
-          )
-        );
-        
-        toast.success(response.message);
-      } else {
-        toast.error(response.message || "Erreur lors du vote");
-      }
-    } catch (error) {
-      console.error('Error toggling vote:', error);
-      toast.error("Une erreur s'est produite lors du vote");
-    } finally {
-      setTimeout(() => {
-        setProcessingVotes(prev => ({
-          ...prev,
-          [startupId]: false
-        }));
-      }, 1000);
-    }
-  };
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Date inconnue';
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
-  };
-
-  const getDisplayVoteCount = (startup: Startup) => {
-    return startup.upvotes_count;
   };
 
   return (
@@ -368,39 +240,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                 </div>
               </Card>
             </Link>
-            
-            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center z-10" 
-                 onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center bg-black/40 border border-startupia-turquoise/30 rounded-full overflow-hidden p-0.5">
-                <Button
-                  variant="ghost" 
-                  size="icon"
-                  className={`rounded-full p-1 hover:bg-startupia-turquoise/20 ${
-                    startupVotes[startup.id]?.upvoted ? 'text-startupia-turquoise' : 'text-white/70'
-                  }`}
-                  onClick={(e) => handleVote(e, startup.id, true)}
-                  disabled={processingVotes[startup.id]}
-                >
-                  <ArrowUp className="h-5 w-5" />
-                </Button>
-                
-                <span className="px-2 font-medium text-white">
-                  {getDisplayVoteCount(startup)}
-                </span>
-                
-                <Button
-                  variant="ghost" 
-                  size="icon"
-                  className={`rounded-full p-1 hover:bg-startupia-turquoise/20 ${
-                    startupVotes[startup.id]?.downvoted ? 'text-startupia-turquoise' : 'text-white/70'
-                  }`}
-                  onClick={(e) => handleVote(e, startup.id, false)}
-                  disabled={processingVotes[startup.id]}
-                >
-                  <ArrowDown className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
           </div>
         ))}
       </div>

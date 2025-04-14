@@ -18,11 +18,11 @@ import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import DirectoryView from '@/components/ecosystem/DirectoryView';
+import StartupCard from '@/components/StartupCard';
 import SubmitStartupModal from '@/components/ecosystem/SubmitStartupModal';
 import SEO from '@/components/SEO';
 import { Startup } from '@/types/startup';
-import { supabase } from '@/integrations/supabase/client';
+import { mockStartups } from '@/data/mockStartups';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const AIEcosystem = () => {
@@ -32,7 +32,31 @@ const AIEcosystem = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState('directory');
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [startups, setStartups] = useState<Startup[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+
+  useEffect(() => {
+    // Simulate loading from API
+    setTimeout(() => {
+      setStartups(mockStartups);
+      setIsLoading(false);
+    }, 500);
+  }, []);
+
+  const filteredStartups = startups.filter(startup => {
+    if (searchQuery && !startup.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !startup.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !startup.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))) {
+      return false;
+    }
+    
+    if (selectedCategory !== 'all' && startup.sector !== selectedCategory) {
+      return false;
+    }
+    
+    return true;
+  });
 
   const handleAddStartup = () => {
     setShowSubmitModal(true);
@@ -106,13 +130,6 @@ const AIEcosystem = () => {
               <BadgePlus className="h-4 w-4" />
               <span className="ml-1">Ajouter un projet</span>
             </Button>
-            
-            <Button
-              variant="outline"
-              className={`border-startupia-turquoise/30 bg-black text-white ${viewMode === 'directory' ? 'bg-startupia-turquoise/10' : ''}`}
-            >
-              Vue détaillée
-            </Button>
           </div>
         </div>
 
@@ -127,6 +144,11 @@ const AIEcosystem = () => {
                   </SelectTrigger>
                   <SelectContent className="bg-black border-startupia-turquoise/30">
                     <SelectItem value="all">Toutes les catégories</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="Légal">Légal</SelectItem>
+                    <SelectItem value="Energie">Energie</SelectItem>
+                    <SelectItem value="Autre">Autre</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -151,15 +173,55 @@ const AIEcosystem = () => {
           </TabsList>
           
           <TabsContent value="all" className="mt-6">
-            <DirectoryView searchQuery={searchQuery} showFilters={false} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {isLoading ? (
+                // Loading skeletons
+                Array.from({ length: 6 }).map((_, i) => (
+                  <Card key={i} className="glass-card border border-startupia-turquoise/20 bg-black/30">
+                    <div className="p-4 flex items-center border-b border-startupia-turquoise/10">
+                      <Skeleton className="h-10 w-10 rounded-md" />
+                      <div className="ml-3">
+                        <Skeleton className="h-4 w-32 mb-1" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <Skeleton className="h-4 w-full mb-3" />
+                      <Skeleton className="h-3 w-3/4 mb-2" />
+                      <div className="flex gap-1 mt-4">
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                        <Skeleton className="h-5 w-20 rounded-full" />
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              ) : filteredStartups.length > 0 ? (
+                filteredStartups.map(startup => (
+                  <StartupCard key={startup.id} startup={startup} />
+                ))
+              ) : (
+                <div className="col-span-3 text-center py-8">
+                  <h3 className="text-xl font-medium mb-2">Aucune startup trouvée</h3>
+                  <p className="text-white/70">Essayez d'ajuster vos filtres de recherche</p>
+                </div>
+              )}
+            </div>
           </TabsContent>
           
           <TabsContent value="featured" className="mt-6">
-            <DirectoryView searchQuery="" showFilters={false} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredStartups.slice(0, 1).map(startup => (
+                <StartupCard key={startup.id} startup={startup} />
+              ))}
+            </div>
           </TabsContent>
           
           <TabsContent value="recent" className="mt-6">
-            <DirectoryView searchQuery="" showFilters={false} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredStartups.slice(0, 3).map(startup => (
+                <StartupCard key={startup.id} startup={startup} />
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
       </main>

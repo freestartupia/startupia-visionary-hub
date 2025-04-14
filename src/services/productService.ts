@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ProductComment, ProductLaunch } from '@/types/productLaunch';
+import { ProductComment, ProductLaunch, ProductLaunchStatus } from '@/types/productLaunch';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -35,8 +35,16 @@ export const fetchProductById = async (id: string): Promise<ProductLaunch | null
       demoUrl: data.demo_url,
       category: data.category,
       upvotes: data.upvotes || 0,
-      comments: data.product_comments || [],
-      status: data.status,
+      comments: (data.product_comments || []).map(comment => ({
+        id: comment.id,
+        userId: comment.user_id,
+        userName: comment.user_name,
+        userAvatar: comment.user_avatar,
+        content: comment.content,
+        createdAt: comment.created_at,
+        likes: comment.likes || 0
+      })),
+      status: (data.status as ProductLaunchStatus) || 'upcoming',
       mediaUrls: data.media_urls,
       betaSignupUrl: data.beta_signup_url,
       startupId: data.startup_id,
@@ -78,7 +86,7 @@ export const fetchAllProducts = async (): Promise<ProductLaunch[]> => {
       category: item.category,
       upvotes: item.upvotes || 0,
       comments: [],
-      status: item.status,
+      status: (item.status as ProductLaunchStatus) || 'upcoming',
       mediaUrls: item.media_urls,
       betaSignupUrl: item.beta_signup_url,
       startupId: item.startup_id,
@@ -145,7 +153,7 @@ export const upvoteProduct = async (productId: string): Promise<boolean> => {
     // Fallback if the RPC function doesn't exist
     const { error } = await supabase
       .from('product_launches')
-      .update({ upvotes: supabase.rpc('increment').single() })
+      .update({ upvotes: supabase.rpc('increment') })
       .eq('id', productId);
     
     if (error) {
@@ -263,7 +271,7 @@ export const searchProducts = async (
       category: item.category,
       upvotes: item.upvotes || 0,
       comments: [],
-      status: item.status,
+      status: (item.status as ProductLaunchStatus) || 'upcoming',
       mediaUrls: item.media_urls,
       betaSignupUrl: item.beta_signup_url,
       startupId: item.startup_id,

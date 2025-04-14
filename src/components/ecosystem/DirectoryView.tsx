@@ -1,243 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import { mockStartups } from '@/data/mockStartups';
-import { Startup, Sector, MaturityLevel, BusinessModel, AITool } from '@/types/startup';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { 
-  Select, 
-  SelectTrigger, 
-  SelectContent, 
-  SelectItem, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
-import StartupCard from '@/components/StartupCard';
 
-interface DirectoryViewProps {
+import React, { useState } from 'react';
+import { Startup } from '@/types/startup';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import StartupCard from '@/components/StartupCard';
+import { mockStartups } from '@/data/mockStartups';
+
+export interface DirectoryViewProps {
   searchQuery: string;
 }
 
-interface FilterState {
-  sector: Sector | 'Tous';
-  maturity: MaturityLevel | 'Tous';
-  businessModel: BusinessModel | 'Tous';
-  aiTool: AITool | 'Tous';
-}
-
-const DirectoryView = ({ searchQuery }: DirectoryViewProps) => {
+const DirectoryView: React.FC<DirectoryViewProps> = ({ searchQuery }) => {
+  const [isLoading, setIsLoading] = useState(false);
   const [startups, setStartups] = useState<Startup[]>(mockStartups);
-  const [showFilters, setShowFilters] = useState(false);
-  const [filterState, setFilterState] = useState<FilterState>({
-    sector: 'Tous',
-    maturity: 'Tous',
-    businessModel: 'Tous',
-    aiTool: 'Tous',
-  });
-  const [sortOrder, setSortOrder] = useState('newest');
-
-  useEffect(() => {
-    let filtered = [...mockStartups];
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      filtered = filtered.filter((startup) =>
-        startup.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        startup.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        startup.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  
+  // Filter startups based on search query
+  const filteredStartups = startups.filter(startup => {
+    if (searchQuery && searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
+      return (
+        startup.name.toLowerCase().includes(query) ||
+        startup.shortDescription.toLowerCase().includes(query) ||
+        startup.tags.some(tag => tag.toLowerCase().includes(query)) ||
+        (startup.founders && startup.founders.some(founder => 
+          founder.name.toLowerCase().includes(query)
+        ))
       );
     }
+    return true;
+  });
 
-    // Apply filters
-    if (filterState.sector !== 'Tous') {
-      filtered = filtered.filter(startup => startup.sector === filterState.sector);
-    }
-    if (filterState.maturity !== 'Tous') {
-      filtered = filtered.filter(startup => startup.maturityLevel === filterState.maturity);
-    }
-    if (filterState.businessModel !== 'Tous') {
-      filtered = filtered.filter(startup => startup.businessModel === filterState.businessModel);
-    }
-    if (filterState.aiTool !== 'Tous') {
-       filtered = filtered.filter(startup => startup.aiTools.includes(filterState.aiTool));
-    }
-
-    // Apply sorting
-    switch (sortOrder) {
-      case 'impact':
-        filtered.sort((a, b) => b.aiImpactScore - a.aiImpactScore);
-        break;
-      case 'alphabetical':
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'funding':
-        // In a real app this would sort by funding amount
-        filtered = filtered.filter(s => s.maturityLevel === 'Série A' || s.maturityLevel === 'Série B' || s.maturityLevel === 'Série C+');
-        break;
-      default: // newest
-        filtered = filtered.reverse();
-    }
-
-    setStartups(filtered);
-  }, [searchQuery, filterState, sortOrder]);
-
-  const handleFilterChange = (filterType: keyof FilterState, value: any) => {
-    setFilterState(prevState => ({
-      ...prevState,
-      [filterType]: value,
-    }));
-  };
-
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
-  };
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex-1">
-          <Input
-            type="search"
-            placeholder="Rechercher une startup..."
-            value={searchQuery}
-            className="w-full max-w-md"
-          />
-        </div>
-        <Button variant="outline" onClick={toggleFilters} className="ml-4 border-startupia-turquoise text-startupia-turquoise">
-          <SlidersHorizontal className="mr-2 h-4 w-4" />
-          {showFilters ? 'Masquer' : 'Filtrer'}
-        </Button>
-      </div>
-
-      {showFilters && (
-        <div className="bg-black/30 rounded-md p-4 mb-6 border border-startupia-turquoise/20">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Sector Filter */}
-            <div>
-              <h4 className="text-sm font-bold mb-2">Secteur</h4>
-              <Select onValueChange={(value) => handleFilterChange('sector', value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Tous les secteurs" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Tous">Tous les secteurs</SelectItem>
-                  <SelectItem value="Santé">Santé</SelectItem>
-                  <SelectItem value="RH">RH</SelectItem>
-                  <SelectItem value="Retail">Retail</SelectItem>
-                  <SelectItem value="Finance">Finance</SelectItem>
-                  <SelectItem value="Education">Education</SelectItem>
-                  <SelectItem value="Marketing">Marketing</SelectItem>
-                  <SelectItem value="Légal">Légal</SelectItem>
-                  <SelectItem value="Transport">Transport</SelectItem>
-                  <SelectItem value="Immobilier">Immobilier</SelectItem>
-                  <SelectItem value="Agriculture">Agriculture</SelectItem>
-                  <SelectItem value="Energie">Energie</SelectItem>
-                  <SelectItem value="Autre">Autre</SelectItem>
-                </SelectContent>
-              </Select>
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Card key={i} className="glass-card border border-startupia-turquoise/20 bg-black/30">
+            <div className="p-4 flex items-center border-b border-startupia-turquoise/10">
+              <Skeleton className="h-10 w-10 rounded-md" />
+              <div className="ml-3">
+                <Skeleton className="h-4 w-32 mb-1" />
+                <Skeleton className="h-3 w-20" />
+              </div>
             </div>
-
-            {/* Maturity Filter */}
-            <div>
-              <h4 className="text-sm font-bold mb-2">Niveau de maturité</h4>
-              <Select onValueChange={(value) => handleFilterChange('maturity', value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Tous les niveaux" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Tous">Tous les niveaux</SelectItem>
-                  <SelectItem value="Idée">Idée</SelectItem>
-                  <SelectItem value="MVP">MVP</SelectItem>
-                  <SelectItem value="Seed">Seed</SelectItem>
-                  <SelectItem value="Série A">Série A</SelectItem>
-                  <SelectItem value="Série B">Série B</SelectItem>
-                  <SelectItem value="Série C+">Série C+</SelectItem>
-                  <SelectItem value="Profitable">Profitable</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="p-4">
+              <Skeleton className="h-4 w-full mb-3" />
+              <Skeleton className="h-3 w-3/4 mb-2" />
+              <div className="flex gap-1 mt-4">
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </div>
             </div>
-
-            {/* Business Model Filter */}
-            <div>
-              <h4 className="text-sm font-bold mb-2">Modèle économique</h4>
-              <Select onValueChange={(value) => handleFilterChange('businessModel', value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Tous les modèles" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Tous">Tous les modèles</SelectItem>
-                  <SelectItem value="SaaS">SaaS</SelectItem>
-                  <SelectItem value="Service">Service</SelectItem>
-                  <SelectItem value="Marketplace">Marketplace</SelectItem>
-                  <SelectItem value="API">API</SelectItem>
-                  <SelectItem value="Freemium">Freemium</SelectItem>
-                  <SelectItem value="B2B">B2B</SelectItem>
-                  <SelectItem value="B2C">B2C</SelectItem>
-                  <SelectItem value="B2B2C">B2B2C</SelectItem>
-                  <SelectItem value="Hardware">Hardware</SelectItem>
-                  <SelectItem value="Autre">Autre</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* AI Tool Filter */}
-            <div>
-              <h4 className="text-sm font-bold mb-2">Outil IA utilisé</h4>
-              <Select onValueChange={(value) => handleFilterChange('aiTool', value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Tous les outils" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Tous">Tous les outils</SelectItem>
-                  <SelectItem value="ChatGPT">ChatGPT</SelectItem>
-                  <SelectItem value="Claude">Claude</SelectItem>
-                  <SelectItem value="LLama">LLama</SelectItem>
-                  <SelectItem value="Stable Diffusion">Stable Diffusion</SelectItem>
-                  <SelectItem value="Midjourney">Midjourney</SelectItem>
-                  <SelectItem value="API interne">API interne</SelectItem>
-                  <SelectItem value="Hugging Face">Hugging Face</SelectItem>
-                  <SelectItem value="Vertex AI">Vertex AI</SelectItem>
-                  <SelectItem value="AWS Bedrock">AWS Bedrock</SelectItem>
-                  <SelectItem value="Autre">Autre</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <Separator className="my-4 bg-white/20" />
-          <div className="flex justify-end">
-            <Button variant="secondary" onClick={() => setFilterState({
-              sector: 'Tous',
-              maturity: 'Tous',
-              businessModel: 'Tous',
-              aiTool: 'Tous',
-            })}>
-              Réinitialiser
-              <X className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">Startups IA</h2>
-        <Select onValueChange={setSortOrder}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Tri: Plus récentes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest">Plus récentes</SelectItem>
-            <SelectItem value="impact">Impact IA</SelectItem>
-            <SelectItem value="alphabetical">Alphabétique</SelectItem>
-            <SelectItem value="funding">Levée de fonds</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {startups.map((startup) => (
-          <StartupCard key={startup.id} startup={startup} />
+          </Card>
         ))}
       </div>
+    );
+  }
+
+  if (filteredStartups.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <h3 className="text-xl font-medium mb-2">Aucune startup trouvée</h3>
+        <p className="text-white/70 mb-4">Essayez de modifier vos critères de recherche</p>
+        <Button variant="outline" onClick={() => setStartups(mockStartups)}>
+          Réinitialiser les filtres
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {filteredStartups.map(startup => (
+        <StartupCard key={startup.id} startup={startup} />
+      ))}
     </div>
   );
 };

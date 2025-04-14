@@ -2,6 +2,19 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
+import type { LikeResponse } from '@/types/community';
+
+/**
+ * Check if user is authenticated and return user ID
+ * @returns User ID if authenticated, null otherwise
+ */
+export const checkAuthentication = async (): Promise<string | null> => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) {
+    return null;
+  }
+  return sessionData.session.user.id;
+};
 
 /**
  * Toggle like status for a post
@@ -168,5 +181,57 @@ export const toggleReplyLike = async (replyId: string, userId?: string): Promise
     console.error('Erreur lors du traitement du like de réponse:', error);
     toast.error('Erreur lors du traitement de votre like');
     throw error;
+  }
+};
+
+/**
+ * Like a post with less code duplication
+ * @param postId Post ID
+ * @returns Response with liked status and new count
+ */
+export const likePost = async (postId: string): Promise<LikeResponse> => {
+  try {
+    const result = await togglePostLike(postId);
+    
+    return {
+      success: true,
+      liked: result.liked,
+      newCount: result.newCount,
+      message: result.liked ? "Post liké" : "Like retiré"
+    };
+  } catch (error) {
+    console.error("Error in likePost:", error);
+    return {
+      success: false,
+      liked: false,
+      newCount: 0,
+      message: "Erreur lors du traitement du like"
+    };
+  }
+};
+
+/**
+ * Like a reply with less code duplication
+ * @param replyId Reply ID
+ * @returns Response with liked status and new count
+ */
+export const likeReply = async (replyId: string): Promise<LikeResponse> => {
+  try {
+    const result = await toggleReplyLike(replyId);
+    
+    return {
+      success: true,
+      liked: result.liked,
+      newCount: result.newCount,
+      message: result.liked ? "Réponse likée" : "Like retiré"
+    };
+  } catch (error) {
+    console.error("Error in likeReply:", error);
+    return {
+      success: false,
+      liked: false,
+      newCount: 0,
+      message: "Erreur lors du traitement du like"
+    };
   }
 };

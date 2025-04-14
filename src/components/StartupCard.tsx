@@ -18,7 +18,7 @@ interface StartupCardProps {
 const StartupCard = ({ startup }: StartupCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  // Utiliser uniquement upvotes_count pour éviter la confusion
+  // S'assurer que nous utilisons uniquement upvotes_count
   const [upvoteCount, setUpvoteCount] = useState(startup.upvotes_count || 0);
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [isDownvoted, setIsDownvoted] = useState(false);
@@ -43,7 +43,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
           if (!error && data) {
             setIsUpvoted(data.is_upvote === true);
             setIsDownvoted(data.is_upvote === false);
-            console.log("Vote état initial:", data.is_upvote ? "positif" : "négatif");
+            console.log(`Vote état initial pour ${startup.name}:`, data.is_upvote ? "positif" : "négatif");
           }
         }
       } catch (error) {
@@ -53,6 +53,11 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     
     fetchVoteStatus();
   }, [startup.id, startup.upvotes_count, user]);
+  
+  // Mettre à jour lorsque upvotes_count change
+  useEffect(() => {
+    setUpvoteCount(startup.upvotes_count || 0);
+  }, [startup.upvotes_count]);
   
   const handleUpvote = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -69,15 +74,18 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     setIsVoting(true);
     
     try {
-      console.log("Upvote pour startup:", startup.id);
+      console.log(`Upvote pour startup: ${startup.id} (${startup.name}), count actuel: ${upvoteCount}`);
       const response = await toggleStartupUpvote(startup.id);
-      console.log("Réponse upvote:", response);
+      console.log(`Réponse upvote pour ${startup.name}:`, response);
       
       if (response.success) {
         // Mettre à jour le compte de votes en utilisant la valeur retournée de l'API
         setUpvoteCount(response.newCount);
         setIsUpvoted(response.upvoted);
         setIsDownvoted(false);
+        
+        // Mise à jour globale
+        startup.upvotes_count = response.newCount;
         
         toast.success(response.message || "Vote enregistré");
       } else {
@@ -106,15 +114,18 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     setIsVoting(true);
     
     try {
-      console.log("Downvote pour startup:", startup.id);
+      console.log(`Downvote pour startup: ${startup.id} (${startup.name}), count actuel: ${upvoteCount}`);
       const response = await toggleStartupDownvote(startup.id);
-      console.log("Réponse downvote:", response);
+      console.log(`Réponse downvote pour ${startup.name}:`, response);
       
       if (response.success) {
         // Mettre à jour le compte de votes en utilisant la valeur retournée de l'API
         setUpvoteCount(response.newCount);
         setIsDownvoted(response.upvoted);
         setIsUpvoted(false);
+        
+        // Mise à jour globale
+        startup.upvotes_count = response.newCount;
         
         toast.success(response.message || "Vote enregistré");
       } else {
@@ -142,7 +153,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       ));
   };
 
-  // Afficher le nombre de votes réel, pas une indication +1/-1
+  // Toujours afficher le nombre de votes exact depuis upvoteCount
   const getDisplayVoteCount = () => {
     return upvoteCount;
   };

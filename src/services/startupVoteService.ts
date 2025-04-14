@@ -64,13 +64,55 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
     
     console.log("Vote existant:", existingVote);
     
-    // Si l'utilisateur a déjà voté et essaie de voter à nouveau avec le même type de vote
+    // Si l'utilisateur a déjà voté exactement de la même façon (upvote->upvote ou downvote->downvote)
     if (existingVote && existingVote.is_upvote === isUpvote) {
+      // Permettons à l'utilisateur d'annuler son vote
+      // La fonction handle_startup_vote va s'occuper de supprimer le vote et d'ajuster le compteur
+      const { data, error } = await supabase.rpc('handle_startup_vote', {
+        p_startup_id: startupId,
+        p_user_id: userId,
+        p_is_upvote: isUpvote,
+        p_existing_vote_id: existingVote.id,
+        p_was_upvote: existingVote.is_upvote
+      });
+      
+      if (error) {
+        console.error("Erreur lors de l'annulation du vote:", error);
+        return {
+          success: false,
+          message: "Erreur lors de l'annulation du vote",
+          upvoted: existingVote.is_upvote,
+          newCount: currentCount
+        };
+      }
+      
+      // Typage correct de la réponse JSON
+      const responseData = data as {
+        message: string;
+        new_count: number;
+        is_upvoted: boolean;
+      };
+      
+      console.log("Réponse de vote:", responseData);
+      
+      // Récupérer le nouveau nombre de votes après le traitement
+      const { data: refreshedStartup } = await supabase
+        .from('startups')
+        .select('upvotes_count')
+        .eq('id', startupId)
+        .single();
+        
+      const finalCount = refreshedStartup?.upvotes_count !== undefined 
+        ? refreshedStartup.upvotes_count 
+        : responseData.new_count;
+        
+      console.log(`Nouveau compte de votes (après vérification): ${finalCount}`);
+      
       return {
-        success: false,
-        message: "Vous avez déjà voté pour cette startup",
-        upvoted: existingVote.is_upvote,
-        newCount: currentCount
+        success: true,
+        message: responseData.message,
+        upvoted: responseData.is_upvoted,
+        newCount: finalCount
       };
     }
     
@@ -109,7 +151,10 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       .eq('id', startupId)
       .single();
       
-    const finalCount = refreshedStartup?.upvotes_count || responseData.new_count;
+    const finalCount = refreshedStartup?.upvotes_count !== undefined 
+      ? refreshedStartup.upvotes_count 
+      : responseData.new_count;
+      
     console.log(`Nouveau compte de votes (après vérification): ${finalCount}`);
     
     // Return the results from the database function

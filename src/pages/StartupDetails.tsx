@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -266,7 +265,7 @@ const StartupDetails = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <ThumbsUp size={16} />
-                  <span>{startup.upvoteCount} upvotes</span>
+                  <span>{startup.upvotes_count || 0}</span>
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, MessageCircle, Award } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import ProfileDetail from './ProfileDetail';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileCardProps {
   profile: CofounderProfile;
@@ -17,8 +18,32 @@ interface ProfileCardProps {
 
 const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
   const [showDetail, setShowDetail] = useState(false);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch user avatar from profiles table if this is the current user's profile
+  useEffect(() => {
+    const fetchUserAvatar = async () => {
+      if (user && profile.user_id === user.id) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', user.id)
+            .single();
+          
+          if (!error && data && data.avatar_url) {
+            setUserAvatar(data.avatar_url);
+          }
+        } catch (error) {
+          console.error("Error fetching user avatar:", error);
+        }
+      }
+    };
+    
+    fetchUserAvatar();
+  }, [user, profile.user_id]);
 
   const handleMatchRequest = () => {
     if (!user) {
@@ -49,7 +74,13 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
         {/* Header with photo and name */}
         <div className="flex items-center mb-4">
           <Avatar className="w-16 h-16">
-            {profile.photoUrl && profile.photoUrl.trim() !== "" ? (
+            {userAvatar ? (
+              <AvatarImage 
+                src={userAvatar} 
+                alt={profile.name} 
+                className="object-cover"
+              />
+            ) : profile.photoUrl && profile.photoUrl.trim() !== "" ? (
               <AvatarImage 
                 src={profile.photoUrl} 
                 alt={profile.name}

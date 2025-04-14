@@ -1,4 +1,3 @@
-
 export type ProfileType = 'project-owner' | 'collaborator';
 export type Role = 
   | 'Founder'
@@ -91,6 +90,7 @@ export type CofounderProfile = {
   projectName?: string;
   projectStage?: ProjectStage;
   matches: string[]; // IDs of profiles that matched with this one
+  user_id?: string; // L'ID de l'utilisateur propriétaire du profil
 };
 
 export type MatchNotification = {

@@ -24,10 +24,10 @@ const populateReplyWithLikeInfo = async (replyData: ForumReplyDB): Promise<Popul
     authorAvatar: replyData.author_avatar || null,
     createdAt: replyData.created_at,
     updatedAt: replyData.updated_at || null,
-    likes: replyData.likes || 0,
+    likes: count || 0,
     parentId: replyData.parent_id || null,
     replyParentId: replyData.reply_parent_id || null,
-    isLiked: false,
+    isLiked: liked,
     nestedReplies: []
   };
 

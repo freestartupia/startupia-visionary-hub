@@ -13,6 +13,24 @@ const checkAdminOrModeratorRole = async (): Promise<boolean> => {
       return false;
     }
     
+    // Check if user is the hardcoded admin (temporary)
+    if (userData.user.email === 'skyzohd22@gmail.com') {
+      console.log('User is hardcoded admin');
+      return true;
+    }
+    
+    // Use the is_admin RPC function if available
+    try {
+      const { data: isAdminData, error: isAdminError } = await supabase.rpc('is_admin');
+      
+      if (!isAdminError && isAdminData === true) {
+        console.log('User is admin via RPC');
+        return true;
+      }
+    } catch (error) {
+      console.log('RPC check failed, falling back to direct query');
+    }
+    
     // Direct query to user_roles table
     const { data: roles, error: rolesError } = await supabase
       .from('user_roles')
@@ -24,7 +42,9 @@ const checkAdminOrModeratorRole = async (): Promise<boolean> => {
       return false;
     }
     
-    return roles.some(role => role.role === 'admin' || role.role === 'moderator');
+    const hasRole = roles && roles.some(role => role.role === 'admin' || role.role === 'moderator');
+    console.log('User roles check result:', hasRole, roles);
+    return hasRole || false;
   } catch (error) {
     console.error('Error checking admin role:', error);
     return false;
@@ -37,6 +57,8 @@ const checkAdminOrModeratorRole = async (): Promise<boolean> => {
  */
 export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 'rejected'): Promise<BlogPost[]> => {
   try {
+    console.log(`Fetching ${status} blog posts`);
+    
     // Check if user has admin or moderator role
     const isAdminOrModerator = await checkAdminOrModeratorRole();
     
@@ -44,8 +66,6 @@ export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 're
       console.error('Unauthorized access to moderation functions');
       return [];
     }
-    
-    console.log(`Fetching ${status} blog posts`);
     
     const { data, error } = await supabase
       .from('blog_posts')

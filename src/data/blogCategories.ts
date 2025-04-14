@@ -10,7 +10,14 @@ export const BlogCategoryLabels: Record<BlogCategory, string> = {
   'interviews': 'Interviews',
   'tutorials': 'Tutoriels',
   'opinion': 'Opinion',
-  'events': 'Événements'
+  'events': 'Événements',
+  'Actualités': 'Actualités',
+  'Growth': 'Growth',
+  'Technique': 'Technique',
+  'Interviews': 'Interviews',
+  'Outils': 'Outils',
+  'Levées de fonds': 'Levées de fonds',
+  'Startup du mois': 'Startup du mois'
 };
 
 export const BlogCategoryValues: BlogCategory[] = [
@@ -22,7 +29,13 @@ export const BlogCategoryValues: BlogCategory[] = [
   'interviews',
   'tutorials',
   'opinion',
-  'events'
+  'events',
+  'Actualités',
+  'Growth',
+  'Technique',
+  'Outils',
+  'Levées de fonds',
+  'Startup du mois'
 ];
 
 export const getBlogCategoryLabel = (category: BlogCategory): string => {

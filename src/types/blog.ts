@@ -1,5 +1,14 @@
 
 export type BlogCategory = 
+  | 'ai-trends'
+  | 'startup-advice'
+  | 'investment'
+  | 'tech-news'
+  | 'case-studies'
+  | 'interviews'
+  | 'tutorials'
+  | 'opinion'
+  | 'events'
   | 'Actualités'
   | 'Growth'
   | 'Technique'
@@ -24,6 +33,8 @@ export interface BlogPost {
   tags: string[];
   featured?: boolean;
   readingTime: string;
+  status?: 'pending' | 'published' | 'rejected';
+  adminReason?: string;
 }
 
 export interface BlogAuthor {

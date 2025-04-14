@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UpvoteResponse } from "@/types/community";
-import { toast } from "sonner";
 
 // Toggle upvote on a startup
 export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResponse> => {
@@ -106,7 +105,7 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
         .single();
         
       const currentCount = currentData?.upvotes_count || 0;
-      const newCount = currentCount + countDelta;
+      const newCount = Math.max(0, currentCount + countDelta); // Ensure count never goes below 0
       
       // Update with the calculated value
       const { error: updateCountError } = await supabase
@@ -120,7 +119,7 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
     }
     
     // Get the current upvote count
-    const { data: startupData, error: startupError } = await supabase
+    const { data: startupData } = await supabase
       .from('startups')
       .select('upvotes_count')
       .eq('id', startupId)
@@ -249,7 +248,7 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
         .single();
         
       const currentCount = currentData?.upvotes_count || 0;
-      const newCount = currentCount + countDelta;
+      const newCount = Math.max(0, currentCount + countDelta); // Ensure count never goes below 0
       
       // Update with the calculated value
       const { error: updateCountError } = await supabase
@@ -263,7 +262,7 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
     }
     
     // Get the current upvote count
-    const { data: startupData, error: startupError } = await supabase
+    const { data: startupData } = await supabase
       .from('startups')
       .select('upvotes_count')
       .eq('id', startupId)

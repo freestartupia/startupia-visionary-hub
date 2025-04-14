@@ -73,7 +73,7 @@ const ReplyForm: React.FC<ReplyFormProps> = ({
   }
 
   return (
-    <Card id="reply-form" className="glass-card border-white/10">
+    <Card id="reply-form" className="glass-card border-white/10 w-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex justify-between items-center">
           <span>

@@ -164,7 +164,14 @@ const ForumPostDetail = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 w-full">
+      <div className="hidden md:block">
+        <Button onClick={handleGoBack} variant="outline" size="sm" className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Retour au forum
+        </Button>
+      </div>
+      
       <PostContent post={post} onLike={handleLikePost} />
       
       <ReplyForm 

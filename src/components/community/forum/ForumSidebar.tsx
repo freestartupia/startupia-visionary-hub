@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getForumPosts } from '@/services/forumService';
 import { ForumPost } from '@/types/community';
 import { 
@@ -13,23 +13,26 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarSeparator
 } from '@/components/ui/sidebar';
-import { MessageCircle, TrendingUp, Clock, Pin } from 'lucide-react';
+import { ArrowLeft, MessageCircle, TrendingUp, Clock, Pin, ListFilter } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
 
 const ForumSidebar = () => {
   const [recentPosts, setRecentPosts] = useState<ForumPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchRecentPosts = async () => {
       try {
         setIsLoading(true);
         const posts = await getForumPosts();
-        // Trier par date (plus récent en premier)
+        // Sort by date (most recent first)
         const sortedPosts = [...posts].sort((a, b) => 
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
@@ -56,21 +59,40 @@ const ForumSidebar = () => {
     navigate('/community?tab=forum');
   };
 
+  // Determine if we're on the forum list or a specific post
+  const isPostDetail = location.pathname.includes('/post/');
+
   return (
-    <Sidebar className="border-r border-white/10" variant="sidebar" collapsible="icon">
+    <Sidebar className="border-r border-white/10 overflow-hidden" collapsible="icon">
       <SidebarHeader className="px-4 py-3 border-b border-white/10">
         <button 
           onClick={handleGoBack}
-          className="text-sm font-medium hover:text-startupia-turquoise transition-colors flex items-center gap-2"
+          className="flex items-center gap-2 text-sm font-medium hover:text-startupia-turquoise transition-colors"
         >
-          <MessageCircle size={16} />
-          <span>Forum IA</span>
+          {isPostDetail && <ArrowLeft size={16} />}
+          <MessageCircle size={16} className="shrink-0" />
+          <span className="truncate">Forum IA</span>
         </button>
       </SidebarHeader>
+      
       <SidebarContent>
+        {isPostDetail && (
+          <div className="px-4 py-2 md:hidden">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleGoBack}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <ArrowLeft size={16} />
+              Retour au forum
+            </Button>
+          </div>
+        )}
+      
         <SidebarGroup>
           <SidebarGroupLabel>
-            <Clock size={14} className="mr-1" />
+            <Clock size={14} className="mr-1 shrink-0" />
             Posts récents
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -90,6 +112,7 @@ const ForumSidebar = () => {
                     <SidebarMenuButton
                       asChild
                       tooltip={post.title}
+                      isActive={location.pathname.includes(`/post/${post.id}`)}
                     >
                       <a 
                         href={`/community/post/${post.id}`}
@@ -112,10 +135,12 @@ const ForumSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        
+        <SidebarSeparator />
 
         <SidebarGroup>
           <SidebarGroupLabel>
-            <TrendingUp size={14} className="mr-1" />
+            <TrendingUp size={14} className="mr-1 shrink-0" />
             Posts populaires
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -138,6 +163,7 @@ const ForumSidebar = () => {
                       <SidebarMenuButton
                         asChild
                         tooltip={post.title}
+                        isActive={location.pathname.includes(`/post/${post.id}`)}
                       >
                         <a 
                           href={`/community/post/${post.id}`}
@@ -154,6 +180,34 @@ const ForumSidebar = () => {
                     </SidebarMenuItem>
                   ))
               )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarSeparator />
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>
+            <ListFilter size={14} className="mr-1 shrink-0" />
+            Catégories
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {['IA Générative', 'Startups', 'Business', 'Développement', 'Éthique'].map(category => (
+                <SidebarMenuItem key={category}>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={category}
+                  >
+                    <a 
+                      href={`/community?tab=forum&category=${encodeURIComponent(category)}`}
+                      className="flex items-center"
+                    >
+                      <span className="text-sm">{category}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

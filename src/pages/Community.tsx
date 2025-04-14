@@ -27,13 +27,13 @@ const Community = () => {
   const { postId } = useParams<{ postId?: string }>();
   const [activeTab, setActiveTab] = useState('forum');
   
-  // Vérifier si nous sommes sur une page de post individuel
+  // Check if we're on an individual post page
   const isPostDetail = location.pathname.includes('/post/');
   
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Extraire l'onglet de l'URL si présent
+  // Extract tab from URL if present
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tabFromUrl = searchParams.get('tab');
@@ -45,7 +45,7 @@ const Community = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     
-    // Mettre à jour l'URL sans recharger la page
+    // Update URL without page reload
     navigate({
       pathname: '/community',
       search: `?tab=${value}`
@@ -59,30 +59,34 @@ const Community = () => {
         description="Rejoignez la communauté StartupIA.fr : discutez, collaborez et échangez avec des passionnés d'intelligence artificielle, fondateurs de startups IA et créateurs d'outils IA."
       />
       
-      {/* Background elements - simplified */}
+      {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       
       <Navbar />
       
-      <main className="relative mx-auto pt-20 pb-16 z-10 w-full">
-        <div className="text-center mb-6 px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Communauté <span className="text-startupia-turquoise">Startupia</span>
-          </h1>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            Le QG des créateurs, développeurs, et entrepreneurs de l'IA en France
-          </p>
-        </div>
+      <main className="relative pt-20 pb-16 z-10 w-full">
+        {!isPostDetail && (
+          <div className="text-center mb-6 px-4">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              Communauté <span className="text-startupia-turquoise">Startupia</span>
+            </h1>
+            <p className="text-xl text-white/80 max-w-2xl mx-auto">
+              Le QG des créateurs, développeurs, et entrepreneurs de l'IA en France
+            </p>
+          </div>
+        )}
 
         {isPostDetail ? (
-          <SidebarProvider defaultOpen={true}>
-            <div className="flex min-h-screen w-full">
-              <ForumSidebar />
-              <SidebarInset className="px-4 md:px-8 py-4">
-                <ForumPostDetail />
-              </SidebarInset>
-            </div>
-          </SidebarProvider>
+          <div className="flex w-full h-full">
+            <SidebarProvider defaultOpen={true}>
+              <div className="flex w-full min-h-[calc(100vh-80px)]">
+                <ForumSidebar />
+                <div className="flex-1 w-full px-4 md:px-8 py-4">
+                  <ForumPostDetail />
+                </div>
+              </div>
+            </SidebarProvider>
+          </div>
         ) : (
           <div className="w-full max-w-7xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">

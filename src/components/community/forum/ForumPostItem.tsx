@@ -39,11 +39,11 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
 
   return (
     <div 
-      className="glass-card p-5 hover:bg-white/5 transition-colors cursor-pointer rounded-xl"
+      className="glass-card p-5 hover:bg-white/5 transition-colors cursor-pointer rounded-xl border border-white/10"
       onClick={() => onViewPost(post.id)}
     >
       <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="bg-white/10 text-xs font-medium py-1 px-2 rounded">
             {post.category}
           </Badge>
@@ -70,7 +70,7 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
       <div className="flex justify-between items-center">
         <div className="flex items-center text-sm">
           <Avatar className="h-8 w-8 mr-2">
-            <AvatarImage src={post.authorAvatar || '/placeholder.svg'} alt={post.authorName} />
+            <AvatarImage src={post.authorAvatar || ''} alt={post.authorName} />
             <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
           </Avatar>
           <span className="font-medium">{post.authorName}</span>

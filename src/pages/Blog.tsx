@@ -7,15 +7,18 @@ import BlogSearch from '@/components/blog/BlogSearch';
 import CategoryFilter from '@/components/blog/CategoryFilter';
 import SubmitArticleModal from '@/components/blog/SubmitArticleModal';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, ShieldAlert } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { 
   fetchBlogPosts, 
   fetchFeaturedPosts,
-  getAllBlogCategories
+  getAllBlogCategories,
+  checkIsAdmin
 } from '@/services/blogService';
 import { BlogCategory, BlogPost } from '@/types/blog';
 import SEO from '@/components/SEO';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Blog = () => {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -26,12 +29,18 @@ const Blog = () => {
   const [featuredPosts, setFeaturedPosts] = useState<BlogPost[]>([]);
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [pendingCount, setPendingCount] = useState<number>(0);
   const { toast } = useToast();
   
   useEffect(() => {
     const loadBlogData = async () => {
       setIsLoading(true);
       try {
+        // First check if user is admin
+        const admin = await checkIsAdmin();
+        setIsAdmin(admin);
+        
         // Fetch all data in parallel
         const [posts, featured, allCategories] = await Promise.all([
           fetchBlogPosts(),
@@ -39,9 +48,18 @@ const Blog = () => {
           getAllBlogCategories()
         ]);
         
-        setBlogPosts(posts);
-        setFilteredPosts(posts);
-        setFeaturedPosts(featured);
+        // If admin, count pending posts
+        if (admin) {
+          const pendingPosts = posts.filter(post => post.status === 'pending');
+          setPendingCount(pendingPosts.length);
+        }
+        
+        // Filter out pending posts for regular display
+        const approvedPosts = posts.filter(post => post.status === 'approved' || (admin && post.status === 'pending'));
+        
+        setBlogPosts(approvedPosts);
+        setFilteredPosts(approvedPosts);
+        setFeaturedPosts(featured.filter(post => post.status === 'approved'));
         setCategories(allCategories);
       } catch (error) {
         console.error("Error loading blog data:", error);
@@ -109,6 +127,22 @@ const Blog = () => {
           </p>
         </div>
         
+        {isAdmin && pendingCount > 0 && (
+          <div className="mb-6">
+            <Alert className="bg-black/20 border-startupia-turquoise text-white">
+              <AlertDescription className="flex items-center justify-between">
+                <span>
+                  <ShieldAlert className="inline-block mr-2 h-4 w-4 text-startupia-turquoise" />
+                  {pendingCount} article{pendingCount > 1 ? 's' : ''} en attente de modération
+                </span>
+                <Button asChild variant="outline" className="border-startupia-turquoise text-white hover:bg-startupia-turquoise/20">
+                  <Link to="/blog/admin">Voir les articles à modérer</Link>
+                </Button>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
         <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
           <div className="w-full md:w-1/3">
             <BlogSearch onSearch={handleSearch} />
@@ -153,7 +187,7 @@ const Blog = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredPosts.length > 0 ? (
                 filteredPosts.map(post => (
-                  <BlogPostCard key={post.id} post={post} />
+                  <BlogPostCard key={post.id} post={post} isPending={post.status === 'pending'} />
                 ))
               ) : (
                 <div className="col-span-3 text-center py-10">

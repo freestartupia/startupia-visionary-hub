@@ -19,7 +19,8 @@ const transformBlogPost = (post: any): BlogPost => {
     updatedAt: post.updated_at,
     tags: post.tags || [],
     featured: post.featured || false,
-    readingTime: post.reading_time
+    readingTime: post.reading_time,
+    status: post.status || 'pending'
   };
 };
 
@@ -87,4 +88,80 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
   
   // Transform post to match our interface
   return data ? transformBlogPost(data) : null;
+};
+
+// New functions for the moderation system
+
+export const fetchPendingPosts = async (): Promise<BlogPost[]> => {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error("Error fetching pending posts:", error);
+    throw error;
+  }
+  
+  return (data || []).map(transformBlogPost);
+};
+
+export const approvePost = async (postId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('blog_posts')
+    .update({ status: 'approved' })
+    .eq('id', postId);
+  
+  if (error) {
+    console.error("Error approving post:", error);
+    throw error;
+  }
+};
+
+export const rejectPost = async (postId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('blog_posts')
+    .delete()
+    .eq('id', postId);
+  
+  if (error) {
+    console.error("Error rejecting post:", error);
+    throw error;
+  }
+};
+
+export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | 'status'>): Promise<void> => {
+  const { error } = await supabase
+    .from('blog_posts')
+    .insert([{
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt,
+      content: post.content,
+      category: post.category,
+      cover_image: post.coverImage,
+      author_id: post.authorId,
+      author_name: post.authorName,
+      author_avatar: post.authorAvatar,
+      tags: post.tags,
+      featured: post.featured,
+      reading_time: post.readingTime,
+      status: 'pending'
+    }]);
+  
+  if (error) {
+    console.error("Error submitting blog post:", error);
+    throw error;
+  }
+};
+
+export const checkIsAdmin = async (): Promise<boolean> => {
+  try {
+    const { data } = await supabase.rpc('is_admin');
+    return !!data;
+  } catch (error) {
+    console.error("Error checking admin status:", error);
+    return false;
+  }
 };

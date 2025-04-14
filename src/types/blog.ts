@@ -8,6 +8,8 @@ export type BlogCategory =
   | 'Levées de fonds'
   | 'Startup du mois';
 
+export type BlogPostStatus = 'pending' | 'approved';
+
 export interface BlogPost {
   id: string;
   title: string;
@@ -24,6 +26,7 @@ export interface BlogPost {
   tags: string[];
   featured?: boolean;
   readingTime: string;
+  status?: BlogPostStatus;
 }
 
 export interface BlogAuthor {

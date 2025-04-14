@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import slugify from 'slugify';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import { toast as sonnerToast } from 'sonner';
+import { BlogCategory } from '@/types/blog';
+import { submitBlogPost } from '@/services/blogService';
 
 interface SubmitArticleModalProps {
   open: boolean;
@@ -26,6 +29,14 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formValues, setFormValues] = useState({
+    title: '',
+    excerpt: '',
+    content: '',
+    category: '' as BlogCategory,
+    tags: ''
+  });
 
   // Redirect to authentication page if not logged in
   const handleAuthRequired = () => {
@@ -34,13 +45,64 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
     navigate('/auth');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { id, value } = e.target;
+    setFormValues(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Article soumis !",
-      description: "Nous examinerons votre article et reviendrons vers vous rapidement.",
-    });
-    onOpenChange(false);
+    if (!user) return;
+
+    setIsSubmitting(true);
+    try {
+      // Create a slug from the title
+      const slug = slugify(formValues.title, { lower: true, strict: true });
+      
+      // Split tags by comma
+      const tags = formValues.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+      
+      // Submit the post
+      await submitBlogPost({
+        title: formValues.title,
+        slug,
+        excerpt: formValues.excerpt,
+        content: `<p>${formValues.content.replace(/\n/g, '</p><p>')}</p>`,
+        category: formValues.category as BlogCategory,
+        authorId: user.id,
+        authorName: user.user_metadata?.first_name 
+          ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`
+          : user.email?.split('@')[0] || 'Anonymous',
+        authorAvatar: user.user_metadata?.avatar_url,
+        tags,
+        readingTime: `${Math.max(1, Math.ceil(formValues.content.length / 1000))} min`,
+      });
+      
+      toast({
+        title: "Article soumis !",
+        description: "Votre article a été soumis avec succès et est en attente d'approbation par un modérateur.",
+      });
+      
+      // Reset form and close modal
+      setFormValues({
+        title: '',
+        excerpt: '',
+        content: '',
+        category: '' as BlogCategory,
+        tags: ''
+      });
+      onOpenChange(false);
+      
+    } catch (error) {
+      console.error("Error submitting article:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la soumission de votre article. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // If user is not authenticated, show a message and option to login
@@ -81,36 +143,74 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Nom</Label>
-            <Input id="name" placeholder="Votre nom" className="bg-black/30" />
-          </div>
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="votre@email.com" className="bg-black/30" />
-          </div>
-          <div>
             <Label htmlFor="title">Titre de l'article</Label>
-            <Input id="title" placeholder="Titre accrocheur de votre article" className="bg-black/30" />
+            <Input 
+              id="title" 
+              value={formValues.title}
+              onChange={handleInputChange}
+              placeholder="Titre accrocheur de votre article" 
+              className="bg-black/30" 
+              required
+            />
           </div>
           <div>
             <Label htmlFor="excerpt">Résumé</Label>
-            <Textarea id="excerpt" placeholder="Bref résumé de votre article (max 150 mots)" className="bg-black/30" />
+            <Textarea 
+              id="excerpt" 
+              value={formValues.excerpt}
+              onChange={handleInputChange}
+              placeholder="Bref résumé de votre article (max 150 mots)" 
+              className="bg-black/30" 
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="content">Contenu</Label>
+            <Textarea 
+              id="content" 
+              value={formValues.content}
+              onChange={handleInputChange}
+              placeholder="Contenu de votre article" 
+              className="bg-black/30 min-h-[200px]" 
+              required
+            />
           </div>
           <div>
             <Label htmlFor="category">Catégorie</Label>
-            <select id="category" className="w-full rounded-md border border-input bg-black/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground">
-              <option value="non_specifie">Sélectionner une catégorie</option>
+            <select 
+              id="category" 
+              value={formValues.category}
+              onChange={handleInputChange}
+              className="w-full rounded-md border border-input bg-black/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground"
+              required
+            >
+              <option value="">Sélectionner une catégorie</option>
               <option value="Actualités">Actualités</option>
               <option value="Growth">Growth</option>
               <option value="Technique">Technique</option>
               <option value="Interviews">Interviews</option>
               <option value="Outils">Outils</option>
               <option value="Levées de fonds">Levées de fonds</option>
+              <option value="Startup du mois">Startup du mois</option>
             </select>
           </div>
+          <div>
+            <Label htmlFor="tags">Tags (séparés par des virgules)</Label>
+            <Input 
+              id="tags" 
+              value={formValues.tags}
+              onChange={handleInputChange}
+              placeholder="IA, StartUp, Marketing, etc." 
+              className="bg-black/30" 
+            />
+          </div>
           <DialogFooter>
-            <Button type="submit" className="bg-startupia-turquoise text-black hover:bg-startupia-deep-turquoise">
-              Soumettre
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-startupia-turquoise text-black hover:bg-startupia-deep-turquoise"
+            >
+              {isSubmitting ? 'Soumission en cours...' : 'Soumettre'}
             </Button>
           </DialogFooter>
         </form>

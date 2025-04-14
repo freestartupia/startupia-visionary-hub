@@ -17,7 +17,7 @@ interface StartupCardProps {
 const StartupCard = ({ startup }: StartupCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [upvoteCount, setUpvoteCount] = useState(0);
+  const [upvoteCount, setUpvoteCount] = useState(startup.upvoteCount || 0);
   const [isUpvoted, setIsUpvoted] = useState(false);
   
   // Fetch real upvote count and user's upvote status
@@ -43,7 +43,9 @@ const StartupCard = ({ startup }: StartupCardProps) => {
             .eq('user_id', user.id)
             .single();
             
-          setIsUpvoted(!!userUpvote && !userError);
+          if (!userError && userUpvote) {
+            setIsUpvoted(true);
+          }
         }
       } catch (error) {
         console.error('Error fetching upvote data:', error);
@@ -81,23 +83,35 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     try {
       if (isUpvoted) {
         // Remove upvote
-        await supabase
+        const { error } = await supabase
           .from('post_upvotes')
           .delete()
           .eq('post_id', startup.id)
           .eq('user_id', user.id);
+          
+        if (error) {
+          console.error('Error removing upvote:', error);
+          toast.error("Erreur lors du retrait du vote");
+          return;
+        }
           
         setUpvoteCount(prev => Math.max(0, prev - 1));
         setIsUpvoted(false);
         toast.success(`Vote retiré pour ${startup.name}`);
       } else {
         // Add upvote
-        await supabase
+        const { error } = await supabase
           .from('post_upvotes')
           .insert({
             post_id: startup.id,
             user_id: user.id
           });
+          
+        if (error) {
+          console.error('Error adding upvote:', error);
+          toast.error("Erreur lors du vote");
+          return;
+        }
           
         setUpvoteCount(prev => prev + 1);
         setIsUpvoted(true);

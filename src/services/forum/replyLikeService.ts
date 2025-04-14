@@ -1,111 +1,62 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { LikeResponse, checkAuthentication, safeRpcCall } from "./likeUtils";
+import { supabase } from '@/integrations/supabase/client';
+import { ForumReply } from '@/types/community';
+import { 
+  checkAuthentication, 
+  LikeResponse, 
+  checkIfUserLiked, 
+  addLike, 
+  removeLike 
+} from './likeUtils';
 
-// Function to check if a user has liked a reply
-export const getReplyLikeStatus = async (replyId: string, userId: string): Promise<boolean> => {
+export const getReplyLikeCount = async (replyId: string): Promise<number> => {
   try {
-    const { data, error } = await supabase
+    const { count, error } = await supabase
       .from('forum_reply_likes')
-      .select('id')
-      .eq('reply_id', replyId)
-      .eq('user_id', userId)
-      .single();
-      
-    if (error && error.code !== 'PGRST116') {
-      console.error("Error checking reply like status:", error);
-      return false;
+      .select('*', { count: 'exact', head: true })
+      .eq('forum_reply_id', replyId);
+    
+    if (error) {
+      console.error('Error getting reply like count:', error);
+      return 0;
     }
     
-    return !!data;
+    return count || 0;
   } catch (error) {
-    console.error("Error in getReplyLikeStatus:", error);
-    return false;
+    console.error('Error getting reply like count:', error);
+    return 0;
   }
 };
 
-// Function to toggle like on a reply
-export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> => {
+export const checkIfUserLikedReply = async (replyId: string): Promise<boolean> => {
+  return checkIfUserLiked('forum_reply', replyId);
+};
+
+export const likeReply = async (replyId: string): Promise<LikeResponse> => {
+  return addLike('forum_reply', replyId);
+};
+
+export const unlikeReply = async (replyId: string): Promise<LikeResponse> => {
+  return removeLike('forum_reply', replyId);
+};
+
+export const toggleReplyLike = async (reply: ForumReply): Promise<LikeResponse> => {
   try {
     const userId = await checkAuthentication();
     
     if (!userId) {
-      toast.error("Vous devez être connecté pour liker une réponse");
-      return {
-        success: false,
-        message: "Authentication required",
-        liked: false,
-        newCount: 0
-      };
+      return { success: false, error: 'Vous devez être connecté pour aimer une réponse' };
     }
     
-    // Check if user already liked the reply
-    const { data: existingLike, error: likeError } = await supabase
-      .from('forum_reply_likes')
-      .select('id')
-      .eq('reply_id', replyId)
-      .eq('user_id', userId)
-      .single();
-      
-    if (likeError && likeError.code !== 'PGRST116') {
-      console.error("Error checking existing reply like:", likeError);
-      throw likeError;
-    }
+    const isLiked = await checkIfUserLikedReply(reply.id);
     
-    if (existingLike) {
-      // Unlike: Remove like from database
-      const { error: unlikeError } = await supabase
-        .from('forum_reply_likes')
-        .delete()
-        .eq('id', existingLike.id);
-        
-      if (unlikeError) {
-        console.error("Error unliking reply:", unlikeError);
-        throw unlikeError;
-      }
-      
-      // Decrement likes count using RPC function
-      const { data, error } = await safeRpcCall<{ new_count: number }>(
-        'toggle_reply_like', 
-        { reply_id: replyId, user_id: userId }
-      );
-      
-      return {
-        success: true,
-        message: "Reply unliked successfully",
-        liked: false,
-        newCount: data?.new_count || 0
-      };
+    if (isLiked) {
+      return unlikeReply(reply.id);
     } else {
-      // Like: Add new like to database
-      const { error: addLikeError } = await supabase
-        .from('forum_reply_likes')
-        .insert({
-          reply_id: replyId,
-          user_id: userId
-        });
-        
-      if (addLikeError) {
-        console.error("Error liking reply:", addLikeError);
-        throw addLikeError;
-      }
-      
-      // Increment likes count using RPC function
-      const { data, error } = await safeRpcCall<{ new_count: number }>(
-        'toggle_reply_like', 
-        { reply_id: replyId, user_id: userId }
-      );
-      
-      return {
-        success: true,
-        message: "Reply liked successfully",
-        liked: true,
-        newCount: data?.new_count || 0
-      };
+      return likeReply(reply.id);
     }
   } catch (error) {
-    console.error("Error in toggleReplyLike:", error);
-    throw error;
+    console.error('Error toggling reply like:', error);
+    return { success: false, error: 'Une erreur est survenue' };
   }
 };

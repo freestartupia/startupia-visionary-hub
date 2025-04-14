@@ -1,124 +1,173 @@
 
-import { LikeResponse } from '@/types/community';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
-export type EntityType = 'post' | 'reply' | 'resource' | 'project';
-
-// Add the missing checkAuthentication function
-export const checkAuthentication = async (): Promise<string | null> => {
-  const { data, error } = await supabase.auth.getUser();
-  
-  if (error || !data.user) {
-    return null;
-  }
-  
-  return data.user.id;
-};
-
-// Add the missing safeRpcCall function
-export async function safeRpcCall<T>(
-  functionName: string,
-  params: Record<string, any>
-): Promise<{ data: T | null; error: Error | null }> {
-  try {
-    const { data, error } = await supabase.rpc(functionName, params);
-    
-    if (error) {
-      console.error(`Error calling RPC function ${functionName}:`, error);
-      return { data: null, error };
-    }
-    
-    return { data, error: null };
-  } catch (error) {
-    console.error(`Exception in RPC function ${functionName}:`, error);
-    return { data: null, error: error as Error };
-  }
+export interface LikeResponse {
+  success: boolean;
+  error?: string;
+  liked?: boolean;
 }
 
-export const likeEntity = async (
-  entityId: string,
-  userId: string | undefined,
-  entityType: EntityType,
-  currentLikes: number
-): Promise<LikeResponse> => {
-  if (!userId) {
-    toast.error('Vous devez être connecté pour liker ce contenu');
-    return {
-      success: false,
-      message: 'Utilisateur non authentifié',
-      liked: false,
-      newCount: currentLikes
-    };
-  }
-
+/**
+ * Vérifie si l'utilisateur est authentifié
+ */
+export const checkAuthentication = async (): Promise<string | null> => {
   try {
-    let table: string;
-    let column: string;
-
-    switch (entityType) {
-      case 'post':
-        table = 'forum_post_likes';
-        column = 'post_id';
-        break;
-      case 'reply':
-        table = 'forum_reply_likes';
-        column = 'reply_id';
-        break;
-      case 'resource':
-        table = 'resource_likes';
-        column = 'resource_id';
-        break;
-      case 'project':
-        table = 'project_likes';
-        column = 'project_id';
-        break;
-      default:
-        throw new Error(`Type d'entité non supporté: ${entityType}`);
+    const { data, error } = await supabase.auth.getUser();
+    
+    if (error || !data.user) {
+      return null;
     }
-
-    // Check if already liked
-    const { data: existingLike } = await supabase
-      .from(table)
-      .select('id')
-      .eq(column, entityId)
-      .eq('user_id', userId)
-      .single();
-
-    if (existingLike) {
-      // Unlike: remove the like
-      await supabase
-        .from(table)
-        .delete()
-        .eq('id', existingLike.id);
-
-      return {
-        success: true,
-        message: 'Like retiré avec succès',
-        liked: false,
-        newCount: Math.max(0, currentLikes - 1)
-      };
-    } else {
-      // Like: add a new like
-      await supabase
-        .from(table)
-        .insert({ [column]: entityId, user_id: userId });
-
-      return {
-        success: true,
-        message: 'Contenu liké avec succès',
-        liked: true,
-        newCount: currentLikes + 1
-      };
-    }
+    
+    return data.user.id;
   } catch (error) {
-    console.error(`Erreur lors du like/unlike (${entityType}):`, error);
-    toast.error("Une erreur s'est produite");
-    return {
-      success: false,
-      message: "Une erreur s'est produite",
-      liked: false,
-      newCount: currentLikes
-    };
+    console.error('Erreur de vérification d\'authentification:', error);
+    return null;
+  }
+};
+
+/**
+ * Vérifie si l'utilisateur est un administrateur
+ */
+export const checkAdminStatus = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc('is_admin');
+    
+    if (error) {
+      console.error('Erreur de vérification du statut admin:', error);
+      return false;
+    }
+    
+    return data || false;
+  } catch (error) {
+    console.error('Erreur de vérification du statut admin:', error);
+    return false;
+  }
+};
+
+/**
+ * Fonction générique pour appeler un RPC de manière sécurisée
+ */
+export const safeRpcCall = async <T>(
+  functionName: string,
+  params?: Record<string, any>
+): Promise<{ success: boolean; data?: T; error?: string }> => {
+  try {
+    const { data, error } = await supabase.rpc(functionName, params || {});
+    
+    if (error) {
+      console.error(`Erreur lors de l'appel RPC ${functionName}:`, error);
+      return { success: false, error: error.message };
+    }
+    
+    return { success: true, data };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    console.error(`Erreur lors de l'appel RPC ${functionName}:`, error);
+    return { success: false, error: errorMessage };
+  }
+};
+
+/**
+ * Vérifie si l'utilisateur a aimé un élément
+ */
+export const checkIfUserLiked = async (
+  table: string,
+  recordId: string
+): Promise<boolean> => {
+  try {
+    const userId = await checkAuthentication();
+    
+    if (!userId) {
+      return false;
+    }
+    
+    const tableName = `${table}_likes`;
+    
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .eq('user_id', userId)
+      .eq(`${table.replace('_likes', '')}_id`, recordId)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error(`Erreur lors de la vérification des likes pour ${table}:`, error);
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error(`Erreur lors de la vérification des likes pour ${table}:`, error);
+    return false;
+  }
+};
+
+/**
+ * Ajoute un like à un élément
+ */
+export const addLike = async (
+  table: string,
+  recordId: string
+): Promise<LikeResponse> => {
+  try {
+    const userId = await checkAuthentication();
+    
+    if (!userId) {
+      return { success: false, error: 'Vous devez être connecté pour aimer un élément' };
+    }
+    
+    const tableName = `${table}_likes`;
+    const recordIdField = `${table.replace('_likes', '')}_id`;
+    
+    const { error } = await supabase
+      .from(tableName)
+      .insert({ 
+        user_id: userId,
+        [recordIdField]: recordId
+      });
+    
+    if (error) {
+      console.error(`Erreur lors de l'ajout du like pour ${table}:`, error);
+      return { success: false, error: 'Une erreur est survenue' };
+    }
+    
+    return { success: true, liked: true };
+  } catch (error) {
+    console.error(`Erreur lors de l'ajout du like pour ${table}:`, error);
+    return { success: false, error: 'Une erreur est survenue' };
+  }
+};
+
+/**
+ * Retire un like d'un élément
+ */
+export const removeLike = async (
+  table: string,
+  recordId: string
+): Promise<LikeResponse> => {
+  try {
+    const userId = await checkAuthentication();
+    
+    if (!userId) {
+      return { success: false, error: 'Vous devez être connecté pour retirer votre like' };
+    }
+    
+    const tableName = `${table}_likes`;
+    const recordIdField = `${table.replace('_likes', '')}_id`;
+    
+    const { error } = await supabase
+      .from(tableName)
+      .delete()
+      .eq('user_id', userId)
+      .eq(recordIdField, recordId);
+    
+    if (error) {
+      console.error(`Erreur lors du retrait du like pour ${table}:`, error);
+      return { success: false, error: 'Une erreur est survenue' };
+    }
+    
+    return { success: true, liked: false };
+  } catch (error) {
+    console.error(`Erreur lors du retrait du like pour ${table}:`, error);
+    return { success: false, error: 'Une erreur est survenue' };
   }
 };

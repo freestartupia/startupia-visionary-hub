@@ -5,6 +5,37 @@ import { toast } from 'sonner';
 
 export type EntityType = 'post' | 'reply' | 'resource' | 'project';
 
+// Add the missing checkAuthentication function
+export const checkAuthentication = async (): Promise<string | null> => {
+  const { data, error } = await supabase.auth.getUser();
+  
+  if (error || !data.user) {
+    return null;
+  }
+  
+  return data.user.id;
+};
+
+// Add the missing safeRpcCall function
+export async function safeRpcCall<T>(
+  functionName: string,
+  params: Record<string, any>
+): Promise<{ data: T | null; error: Error | null }> {
+  try {
+    const { data, error } = await supabase.rpc(functionName, params);
+    
+    if (error) {
+      console.error(`Error calling RPC function ${functionName}:`, error);
+      return { data: null, error };
+    }
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error(`Exception in RPC function ${functionName}:`, error);
+    return { data: null, error: error as Error };
+  }
+}
+
 export const likeEntity = async (
   entityId: string,
   userId: string | undefined,

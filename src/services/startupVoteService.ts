@@ -96,6 +96,8 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       is_upvoted: boolean;
     };
     
+    console.log("Réponse de vote:", responseData);
+    
     // Return the results from the database function
     return {
       success: true,

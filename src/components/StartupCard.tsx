@@ -23,33 +23,38 @@ const StartupCard = ({ startup }: StartupCardProps) => {
   const [isDownvoted, setIsDownvoted] = useState(false);
   const [isVoting, setIsVoting] = useState(false);
   
+  // Fetch initial vote status and count
   useEffect(() => {
-    const fetchUpvoteData = async () => {
+    const fetchVoteStatus = async () => {
       try {
-        if (typeof startup.upvoteCount === 'number') {
+        if (typeof startup.upvotes_count === 'number') {
+          setUpvoteCount(startup.upvotes_count);
+        } else if (typeof startup.upvoteCount === 'number') {
           setUpvoteCount(startup.upvoteCount);
         }
         
+        // Check if user has voted for this startup
         if (user) {
-          const { data: userVote, error: userError } = await supabase
+          const { data, error } = await supabase
             .from('startup_votes')
-            .select('id, is_upvote')
+            .select('is_upvote')
             .eq('startup_id', startup.id)
             .eq('user_id', user.id)
             .maybeSingle();
             
-          if (!userError && userVote) {
-            setIsUpvoted(userVote.is_upvote === true);
-            setIsDownvoted(userVote.is_upvote === false);
+          if (!error && data) {
+            setIsUpvoted(data.is_upvote === true);
+            setIsDownvoted(data.is_upvote === false);
+            console.log("Vote état initial:", data.is_upvote ? "positif" : "négatif");
           }
         }
       } catch (error) {
-        console.error('Error fetching upvote data:', error);
+        console.error('Error fetching vote status:', error);
       }
     };
     
-    fetchUpvoteData();
-  }, [startup.id, startup.upvoteCount, user]);
+    fetchVoteStatus();
+  }, [startup.id, startup.upvotes_count, startup.upvoteCount, user]);
   
   const handleUpvote = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -66,7 +71,9 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     setIsVoting(true);
     
     try {
+      console.log("Upvote pour startup:", startup.id);
       const response = await toggleStartupUpvote(startup.id);
+      console.log("Réponse upvote:", response);
       
       if (response.success) {
         setUpvoteCount(response.newCount);
@@ -100,7 +107,9 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     setIsVoting(true);
     
     try {
+      console.log("Downvote pour startup:", startup.id);
       const response = await toggleStartupDownvote(startup.id);
+      console.log("Réponse downvote:", response);
       
       if (response.success) {
         setUpvoteCount(response.newCount);
@@ -131,6 +140,17 @@ const StartupCard = ({ startup }: StartupCardProps) => {
           }`}
         />
       ));
+  };
+
+  // Fonction pour afficher correctement le score de vote
+  const getDisplayVoteCount = () => {
+    if (isDownvoted) {
+      return "-1";
+    } else if (isUpvoted) {
+      return "+1";
+    } else {
+      return upvoteCount;
+    }
   };
 
   return (
@@ -169,7 +189,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
               <ThumbsUp size={16} className={isVoting ? 'animate-pulse' : ''} />
             </Button>
             <span className="text-white mx-1">
-              {isDownvoted ? `-1` : upvoteCount}
+              {getDisplayVoteCount()}
             </span>
             <Button
               variant="ghost"

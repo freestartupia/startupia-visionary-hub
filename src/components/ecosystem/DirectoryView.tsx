@@ -86,7 +86,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           setStartups(transformedData);
           setFilteredStartups(transformedData);
           
-          // Initialize empty vote state for each startup
           const votesState: Record<string, { upvoted: boolean, downvoted: boolean, count: number }> = {};
           transformedData.forEach(startup => {
             votesState[startup.id] = { 
@@ -111,13 +110,11 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     fetchStartups();
   }, []);
   
-  // Check user votes
   useEffect(() => {
     const checkUserVotes = async () => {
       if (!user) return;
       
       try {
-        // Get user's votes for all startups in a single query
         const { data, error } = await supabase
           .from('startup_votes')
           .select('startup_id, is_upvote')
@@ -129,10 +126,8 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
         }
         
         if (data && data.length > 0) {
-          // Start with current state
           const newVotesState = { ...startupVotes };
           
-          // Update with user's actual votes from database
           data.forEach(vote => {
             if (newVotesState[vote.startup_id]) {
               newVotesState[vote.startup_id] = {
@@ -155,7 +150,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     }
   }, [user, startups]);
   
-  // Filter startups by search query
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredStartups(startups);
@@ -171,7 +165,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     setFilteredStartups(filtered);
   }, [searchQuery, startups]);
   
-  // Filter startups by category
   useEffect(() => {
     if (activeCategory === "all") {
       setFilteredStartups(startups);
@@ -185,23 +178,19 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     setFilteredStartups(filtered);
   }, [activeCategory, startups]);
 
-  // Handle vote click
   const handleVote = async (e: React.MouseEvent, startupId: string, isUpvote: boolean) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Ensure we're authenticated
     if (!user) {
       toast.error("Vous devez être connecté pour voter");
       return;
     }
     
-    // Prevent multiple clicks - if this startup is already being processed, ignore the click
     if (processingVotes[startupId]) {
       return;
     }
     
-    // Initialize vote state for this startup if it doesn't exist
     if (!startupVotes[startupId]) {
       setStartupVotes(prev => ({
         ...prev,
@@ -209,30 +198,26 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
       }));
     }
     
-    // Set the processing flag
     setProcessingVotes(prev => ({
       ...prev,
       [startupId]: true
     }));
     
     try {
-      // Call the vote service
       const response = isUpvote 
         ? await toggleStartupUpvote(startupId)
         : await toggleStartupDownvote(startupId);
       
       if (response.success) {
-        // Update the vote state with the result from the server
         setStartupVotes(prev => ({
           ...prev,
           [startupId]: {
             upvoted: response.upvoted,
-            downvoted: !response.upvoted && response.message !== "Vote retiré", // Only set downvoted if it wasn't a removal
+            downvoted: !response.upvoted && response.message !== "Vote retiré",
             count: response.newCount
           }
         }));
         
-        // Optional feedback
         toast.success(response.message);
       } else {
         toast.error(response.message || "Erreur lors du vote");
@@ -241,7 +226,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
       console.error('Error toggling vote:', error);
       toast.error("Une erreur s'est produite lors du vote");
     } finally {
-      // Clear the processing flag after a minimum of 1 second to prevent double-clicks
       setTimeout(() => {
         setProcessingVotes(prev => ({
           ...prev,
@@ -255,6 +239,16 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     if (!dateString) return 'Date inconnue';
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+  };
+
+  const getDisplayVoteCount = (startup: Startup) => {
+    if (startupVotes[startup.id]?.downvoted) {
+      return "-1";
+    } else if (startupVotes[startup.id]?.upvoted) {
+      return "+1";
+    } else {
+      return startupVotes[startup.id]?.count || 0;
+    }
   };
 
   return (
@@ -388,7 +382,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                 </Button>
                 
                 <span className="px-2 font-medium text-white">
-                  {startupVotes[startup.id]?.count || 0}
+                  {getDisplayVoteCount(startup)}
                 </span>
                 
                 <Button

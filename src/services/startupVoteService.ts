@@ -44,6 +44,16 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
         };
       }
       
+      // Decrease the upvote count directly
+      const { error: updateCountError } = await supabase
+        .from('startups')
+        .update({ upvotes_count: supabase.sql`upvotes_count - 1` })
+        .eq('id', startupId);
+        
+      if (updateCountError) {
+        console.error("Error updating startup upvote count:", updateCountError);
+      }
+      
       message = "Vote retiré";
       upvoted = false;
     } 
@@ -63,6 +73,16 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
           upvoted: false,
           newCount: 0
         };
+      }
+      
+      // Increase the upvote count by 2 (removing downvote + adding upvote)
+      const { error: updateCountError } = await supabase
+        .from('startups')
+        .update({ upvotes_count: supabase.sql`upvotes_count + 2` })
+        .eq('id', startupId);
+        
+      if (updateCountError) {
+        console.error("Error updating startup upvote count:", updateCountError);
       }
       
       message = "Vote modifié";
@@ -88,20 +108,18 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
         };
       }
       
+      // Increase the upvote count
+      const { error: updateCountError } = await supabase
+        .from('startups')
+        .update({ upvotes_count: supabase.sql`upvotes_count + 1` })
+        .eq('id', startupId);
+        
+      if (updateCountError) {
+        console.error("Error updating startup upvote count:", updateCountError);
+      }
+      
       message = "Vote ajouté";
       upvoted = true;
-    }
-    
-    // Update the startup's upvote count in the database
-    const { error: updateCountError } = await supabase
-      .from('startups')
-      .update({ 
-        upvotes_count: upvoted ? supabase.rpc('increment_value', { row_id: startupId, increment: 1 }) : supabase.rpc('decrement_value', { row_id: startupId, increment: 1 }) 
-      })
-      .eq('id', startupId);
-      
-    if (updateCountError) {
-      console.error("Error updating startup upvote count:", updateCountError);
     }
     
     // Get the current upvote count
@@ -172,6 +190,16 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
         };
       }
       
+      // Increase the upvote count (removing a downvote increases the count)
+      const { error: updateCountError } = await supabase
+        .from('startups')
+        .update({ upvotes_count: supabase.sql`upvotes_count + 1` })
+        .eq('id', startupId);
+        
+      if (updateCountError) {
+        console.error("Error updating startup upvote count:", updateCountError);
+      }
+      
       message = "Vote retiré";
       downvoted = false;
     } 
@@ -191,6 +219,16 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
           upvoted: false,
           newCount: 0
         };
+      }
+      
+      // Decrease the upvote count by 2 (removing upvote + adding downvote)
+      const { error: updateCountError } = await supabase
+        .from('startups')
+        .update({ upvotes_count: supabase.sql`upvotes_count - 2` })
+        .eq('id', startupId);
+        
+      if (updateCountError) {
+        console.error("Error updating startup upvote count:", updateCountError);
       }
       
       message = "Vote modifié";
@@ -216,20 +254,18 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
         };
       }
       
+      // Decrease the upvote count
+      const { error: updateCountError } = await supabase
+        .from('startups')
+        .update({ upvotes_count: supabase.sql`upvotes_count - 1` })
+        .eq('id', startupId);
+        
+      if (updateCountError) {
+        console.error("Error updating startup upvote count:", updateCountError);
+      }
+      
       message = "Vote négatif ajouté";
       downvoted = true;
-    }
-    
-    // Update the startup's upvote count in the database
-    const { error: updateCountError } = await supabase
-      .from('startups')
-      .update({ 
-        upvotes_count: downvoted ? supabase.rpc('decrement_value', { row_id: startupId, increment: 1 }) : supabase.rpc('increment_value', { row_id: startupId, increment: 1 }) 
-      })
-      .eq('id', startupId);
-      
-    if (updateCountError) {
-      console.error("Error updating startup upvote count:", updateCountError);
     }
     
     // Get the current upvote count

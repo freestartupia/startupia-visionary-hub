@@ -148,13 +148,27 @@ const Blog = () => {
             <BlogSearch onSearch={handleSearch} />
           </div>
           
-          <Button 
-            onClick={() => setIsSubmitModalOpen(true)}
-            className="bg-startupia-turquoise text-black hover:bg-startupia-light-turquoise transition-all"
-          >
-            <PlusCircle className="mr-2" size={16} />
-            Soumettre un article
-          </Button>
+          <div className="flex gap-2">
+            {isAdmin && (
+              <Button
+                asChild
+                className="bg-purple-600 text-white hover:bg-purple-700 transition-all"
+              >
+                <Link to="/blog/admin">
+                  <ShieldAlert className="mr-2" size={16} />
+                  Administration
+                </Link>
+              </Button>
+            )}
+            
+            <Button 
+              onClick={() => setIsSubmitModalOpen(true)}
+              className="bg-startupia-turquoise text-black hover:bg-startupia-light-turquoise transition-all"
+            >
+              <PlusCircle className="mr-2" size={16} />
+              Soumettre un article
+            </Button>
+          </div>
         </div>
         
         {/* Loading state */}

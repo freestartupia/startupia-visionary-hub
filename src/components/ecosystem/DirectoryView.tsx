@@ -1,250 +1,245 @@
-
-import React, { useState, useEffect } from "react";
-import { Startup, Sector } from "@/types/startup";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { mockStartups } from '@/data/mockStartups';
+import { Startup, Sector, MaturityLevel, BusinessModel, AITool } from '@/types/startup';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { 
+  Select, 
+  SelectTrigger, 
+  SelectContent, 
+  SelectItem, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
+import StartupCard from '@/components/StartupCard';
 
 interface DirectoryViewProps {
   searchQuery: string;
-  showFilters: boolean;
 }
 
-const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
-  const [startups, setStartups] = useState<Startup[]>([]);
-  const [filteredStartups, setFilteredStartups] = useState<Startup[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [sectors, setSectors] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface FilterState {
+  sector: Sector | 'Tous';
+  maturity: MaturityLevel | 'Tous';
+  businessModel: BusinessModel | 'Tous';
+  aiTool: AITool | 'Tous';
+}
+
+const DirectoryView = ({ searchQuery }: DirectoryViewProps) => {
+  const [startups, setStartups] = useState<Startup[]>(mockStartups);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterState, setFilterState] = useState<FilterState>({
+    sector: 'Tous',
+    maturity: 'Tous',
+    businessModel: 'Tous',
+    aiTool: 'Tous',
+  });
+  const [sortOrder, setSortOrder] = useState('newest');
 
   useEffect(() => {
-    const fetchStartups = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('startups')
-          .select('*');
-          
-        if (error) {
-          console.error('Error fetching startups:', error);
-          toast.error('Erreur lors du chargement des startups');
-        } else if (data) {
-          const transformedData: Startup[] = data.map(item => {
-            let parsedFounders = [];
-            try {
-              if (item.founders) {
-                if (typeof item.founders === 'string') {
-                  parsedFounders = JSON.parse(item.founders);
-                } else if (Array.isArray(item.founders)) {
-                  parsedFounders = item.founders;
-                } else if (typeof item.founders === 'object') {
-                  parsedFounders = [item.founders];
-                }
-              }
-            } catch (e) {
-              console.error('Error parsing founders:', e);
-              parsedFounders = [];
-            }
-            
-            const typedAiTools = item.ai_tools ? item.ai_tools.map(tool => tool as AITool) : [];
-            
-            return {
-              id: item.id,
-              name: item.name,
-              logoUrl: item.logo_url || '',
-              shortDescription: item.short_description,
-              longTermVision: item.long_term_vision || '',
-              founders: parsedFounders,
-              aiUseCases: item.ai_use_cases || '',
-              aiTools: typedAiTools,
-              sector: item.sector as Sector,
-              businessModel: item.business_model as BusinessModel,
-              maturityLevel: item.maturity_level as MaturityLevel,
-              aiImpactScore: item.ai_impact_score as number,
-              tags: item.tags || [],
-              websiteUrl: item.website_url,
-              pitchDeckUrl: item.pitch_deck_url,
-              crunchbaseUrl: item.crunchbase_url,
-              notionUrl: item.notion_url,
-              dateAdded: item.date_added,
-              viewCount: item.view_count,
-              isFeatured: item.is_featured,
-            };
-          });
-          
-          setStartups(transformedData);
-          setFilteredStartups(transformedData);
-          
-          const uniqueSectors = Array.from(new Set(data.map(startup => startup.sector)));
-          setSectors(uniqueSectors);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        toast.error('Une erreur est survenue');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    let filtered = [...mockStartups];
 
-    fetchStartups();
-  }, []);
-  
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredStartups(startups);
-      return;
+    // Apply search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((startup) =>
+        startup.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        startup.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        startup.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
     }
 
-    const filtered = startups.filter((startup) =>
-      startup.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      startup.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (startup.tags && startup.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
-    );
-    
-    setFilteredStartups(filtered);
-  }, [searchQuery, startups]);
-  
-  useEffect(() => {
-    if (activeCategory === "all") {
-      setFilteredStartups(startups);
-      return;
+    // Apply filters
+    if (filterState.sector !== 'Tous') {
+      filtered = filtered.filter(startup => startup.sector === filterState.sector);
     }
-    
-    const filtered = startups.filter((startup) => 
-      startup.sector === activeCategory
-    );
-    
-    setFilteredStartups(filtered);
-  }, [activeCategory, startups]);
+    if (filterState.maturity !== 'Tous') {
+      filtered = filtered.filter(startup => startup.maturityLevel === filterState.maturity);
+    }
+    if (filterState.businessModel !== 'Tous') {
+      filtered = filtered.filter(startup => startup.businessModel === filterState.businessModel);
+    }
+    if (filterState.aiTool !== 'Tous') {
+       filtered = filtered.filter(startup => startup.aiTools.includes(filterState.aiTool));
+    }
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Date inconnue';
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+    // Apply sorting
+    switch (sortOrder) {
+      case 'impact':
+        filtered.sort((a, b) => b.aiImpactScore - a.aiImpactScore);
+        break;
+      case 'alphabetical':
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'funding':
+        // In a real app this would sort by funding amount
+        filtered = filtered.filter(s => s.maturityLevel === 'Série A' || s.maturityLevel === 'Série B' || s.maturityLevel === 'Série C+');
+        break;
+      default: // newest
+        filtered = filtered.reverse();
+    }
+
+    setStartups(filtered);
+  }, [searchQuery, filterState, sortOrder]);
+
+  const handleFilterChange = (filterType: keyof FilterState, value: any) => {
+    setFilterState(prevState => ({
+      ...prevState,
+      [filterType]: value,
+    }));
+  };
+
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex-1">
+          <Input
+            type="search"
+            placeholder="Rechercher une startup..."
+            value={searchQuery}
+            className="w-full max-w-md"
+          />
+        </div>
+        <Button variant="outline" onClick={toggleFilters} className="ml-4 border-startupia-turquoise text-startupia-turquoise">
+          <SlidersHorizontal className="mr-2 h-4 w-4" />
+          {showFilters ? 'Masquer' : 'Filtrer'}
+        </Button>
+      </div>
+
       {showFilters && (
-        <div className="mt-4 mb-8">
-          {/* Placeholder for filters */}
+        <div className="bg-black/30 rounded-md p-4 mb-6 border border-startupia-turquoise/20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Sector Filter */}
+            <div>
+              <h4 className="text-sm font-bold mb-2">Secteur</h4>
+              <Select onValueChange={(value) => handleFilterChange('sector', value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Tous les secteurs" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tous">Tous les secteurs</SelectItem>
+                  <SelectItem value="Santé">Santé</SelectItem>
+                  <SelectItem value="RH">RH</SelectItem>
+                  <SelectItem value="Retail">Retail</SelectItem>
+                  <SelectItem value="Finance">Finance</SelectItem>
+                  <SelectItem value="Education">Education</SelectItem>
+                  <SelectItem value="Marketing">Marketing</SelectItem>
+                  <SelectItem value="Légal">Légal</SelectItem>
+                  <SelectItem value="Transport">Transport</SelectItem>
+                  <SelectItem value="Immobilier">Immobilier</SelectItem>
+                  <SelectItem value="Agriculture">Agriculture</SelectItem>
+                  <SelectItem value="Energie">Energie</SelectItem>
+                  <SelectItem value="Autre">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Maturity Filter */}
+            <div>
+              <h4 className="text-sm font-bold mb-2">Niveau de maturité</h4>
+              <Select onValueChange={(value) => handleFilterChange('maturity', value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Tous les niveaux" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tous">Tous les niveaux</SelectItem>
+                  <SelectItem value="Idée">Idée</SelectItem>
+                  <SelectItem value="MVP">MVP</SelectItem>
+                  <SelectItem value="Seed">Seed</SelectItem>
+                  <SelectItem value="Série A">Série A</SelectItem>
+                  <SelectItem value="Série B">Série B</SelectItem>
+                  <SelectItem value="Série C+">Série C+</SelectItem>
+                  <SelectItem value="Profitable">Profitable</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Business Model Filter */}
+            <div>
+              <h4 className="text-sm font-bold mb-2">Modèle économique</h4>
+              <Select onValueChange={(value) => handleFilterChange('businessModel', value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Tous les modèles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tous">Tous les modèles</SelectItem>
+                  <SelectItem value="SaaS">SaaS</SelectItem>
+                  <SelectItem value="Service">Service</SelectItem>
+                  <SelectItem value="Marketplace">Marketplace</SelectItem>
+                  <SelectItem value="API">API</SelectItem>
+                  <SelectItem value="Freemium">Freemium</SelectItem>
+                  <SelectItem value="B2B">B2B</SelectItem>
+                  <SelectItem value="B2C">B2C</SelectItem>
+                  <SelectItem value="B2B2C">B2B2C</SelectItem>
+                  <SelectItem value="Hardware">Hardware</SelectItem>
+                  <SelectItem value="Autre">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* AI Tool Filter */}
+            <div>
+              <h4 className="text-sm font-bold mb-2">Outil IA utilisé</h4>
+              <Select onValueChange={(value) => handleFilterChange('aiTool', value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Tous les outils" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tous">Tous les outils</SelectItem>
+                  <SelectItem value="ChatGPT">ChatGPT</SelectItem>
+                  <SelectItem value="Claude">Claude</SelectItem>
+                  <SelectItem value="LLama">LLama</SelectItem>
+                  <SelectItem value="Stable Diffusion">Stable Diffusion</SelectItem>
+                  <SelectItem value="Midjourney">Midjourney</SelectItem>
+                  <SelectItem value="API interne">API interne</SelectItem>
+                  <SelectItem value="Hugging Face">Hugging Face</SelectItem>
+                  <SelectItem value="Vertex AI">Vertex AI</SelectItem>
+                  <SelectItem value="AWS Bedrock">AWS Bedrock</SelectItem>
+                  <SelectItem value="Autre">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Separator className="my-4 bg-white/20" />
+          <div className="flex justify-end">
+            <Button variant="secondary" onClick={() => setFilterState({
+              sector: 'Tous',
+              maturity: 'Tous',
+              businessModel: 'Tous',
+              aiTool: 'Tous',
+            })}>
+              Réinitialiser
+              <X className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
-      
-      <Tabs 
-        value={activeCategory} 
-        onValueChange={setActiveCategory}
-        className="mb-8 w-full"
-      >
-        <TabsList className="inline-flex h-10 items-center justify-start space-x-1 overflow-x-auto w-full bg-transparent mb-6">
-          <TabsTrigger value="all" className="data-[state=active]:bg-startupia-turquoise/20">
-            Tous
-          </TabsTrigger>
-          {sectors.map(sector => (
-            <TabsTrigger 
-              key={sector} 
-              value={sector} 
-              className="data-[state=active]:bg-startupia-turquoise/20 whitespace-nowrap"
-            >
-              {sector}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        
-        <div className="mb-6 text-white/70 text-sm">
-          {filteredStartups.length} startup{filteredStartups.length !== 1 ? 's' : ''} trouvée{filteredStartups.length !== 1 ? 's' : ''}
-        </div>
-        
-        {isLoading ? (
-          <div className="space-y-4">
-            {Array(5).fill(0).map((_, i) => (
-              <Card key={i} className="w-full p-4 border border-startupia-turquoise/20 bg-black/30">
-                <div className="flex items-center gap-4">
-                  <Skeleton className="h-16 w-16 rounded-lg flex-shrink-0" />
-                  <div className="flex-grow">
-                    <Skeleton className="h-6 w-48 mb-2" />
-                    <Skeleton className="h-4 w-full max-w-md mb-2" />
-                    <div className="flex flex-wrap gap-2">
-                      <Skeleton className="h-6 w-20" />
-                      <Skeleton className="h-6 w-20" />
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0 space-y-2">
-                    <Skeleton className="h-8 w-24" />
-                    <Skeleton className="h-8 w-24" />
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <>
-            <TabsContent value="all" className="mt-0">
-              {renderStartupList(filteredStartups)}
-            </TabsContent>
-            
-            {sectors.map(sector => (
-              <TabsContent key={sector} value={sector} className="mt-0">
-                {renderStartupList(filteredStartups)}
-              </TabsContent>
-            ))}
-          </>
-        )}
-      </Tabs>
-    </div>
-  );
 
-  function renderStartupList(startups: Startup[]) {
-    if (startups.length === 0) {
-      return (
-        <div className="text-center py-12">
-          <p className="text-white/60 text-lg">Aucune startup ne correspond à votre recherche</p>
-        </div>
-      );
-    }
-  
-    return (
-      <div className="space-y-4">
-        {startups.map((startup, index) => (
-          <div key={startup.id} className="relative">
-            <Link to={`/startup/${startup.id}`} className="block hover:no-underline">
-              <Card className="hover:border-startupia-turquoise/50 transition-all duration-300 border border-startupia-turquoise/20 bg-black/30">
-                <div className="flex items-center p-5">
-                  <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 mr-4 relative">
-                    <div className="w-full h-full rounded-full bg-startupia-turquoise/10 flex items-center justify-center overflow-hidden">
-                      {startup.logoUrl ? (
-                        <img src={startup.logoUrl} alt={`${startup.name} logo`} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-xl font-bold text-startupia-turquoise">{startup.name.charAt(0)}</span>
-                      )}
-                    </div>
-                    <div className="absolute -top-2 -left-2 flex items-center justify-center h-6 w-6 bg-startupia-turquoise text-black font-bold rounded-full text-xs">
-                      {index + 1}
-                    </div>
-                  </div>
-                  
-                  <div className="flex-grow mr-8">
-                    <div className="mb-1.5">
-                      <div className="flex items-baseline justify-between">
-                        <h3 className="text-lg font-bold text-white">{startup.name}</h3>
-                      </div>
-                      <p className="text-white/80 text-sm mb-1.5 line-clamp-1">{startup.shortDescription}</p>
-                      <p className="text-white/60 text-xs mb-2">
-                        {startup.sector}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          </div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">Startups IA</h2>
+        <Select onValueChange={setSortOrder}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Tri: Plus récentes" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Plus récentes</SelectItem>
+            <SelectItem value="impact">Impact IA</SelectItem>
+            <SelectItem value="alphabetical">Alphabétique</SelectItem>
+            <SelectItem value="funding">Levée de fonds</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {startups.map((startup) => (
+          <StartupCard key={startup.id} startup={startup} />
         ))}
       </div>
-    );
-  }
+    </div>
+  );
 };
 
 export default DirectoryView;

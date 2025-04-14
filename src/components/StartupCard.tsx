@@ -73,9 +73,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
         setIsUpvoted(response.upvoted);
         setIsDownvoted(false);
         
-        if (response.message) {
-          toast.success(response.message);
-        }
+        toast.success(response.message || "Vote enregistré");
       } else {
         toast.error(response.message || "Erreur lors du vote");
       }
@@ -109,9 +107,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
         setIsDownvoted(response.upvoted);
         setIsUpvoted(false);
         
-        if (response.message) {
-          toast.success(response.message);
-        }
+        toast.success(response.message || "Vote enregistré");
       } else {
         toast.error(response.message || "Erreur lors du vote");
       }
@@ -172,7 +168,9 @@ const StartupCard = ({ startup }: StartupCardProps) => {
             >
               <ThumbsUp size={16} className={isVoting ? 'animate-pulse' : ''} />
             </Button>
-            <span className="text-white mx-1">{upvoteCount}</span>
+            <span className="text-white mx-1">
+              {isDownvoted ? `-1` : upvoteCount}
+            </span>
             <Button
               variant="ghost"
               size="sm"

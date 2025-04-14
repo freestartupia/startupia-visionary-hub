@@ -60,6 +60,16 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       };
     }
     
+    // Si l'utilisateur a déjà voté et essaie de voter à nouveau avec le même type de vote
+    if (existingVote && existingVote.is_upvote === isUpvote) {
+      return {
+        success: false,
+        message: "Vous avez déjà voté pour cette startup",
+        upvoted: existingVote.is_upvote,
+        newCount: currentCount
+      };
+    }
+    
     // Perform vote operations using our database function
     const { data, error } = await supabase.rpc('handle_startup_vote', {
       p_startup_id: startupId,
@@ -79,12 +89,19 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       };
     }
     
+    // Typage correct de la réponse JSON
+    const responseData = data as {
+      message: string;
+      new_count: number;
+      is_upvoted: boolean;
+    };
+    
     // Return the results from the database function
     return {
       success: true,
-      message: data.message as string,
-      upvoted: data.is_upvoted as boolean,
-      newCount: data.new_count as number
+      message: responseData.message,
+      upvoted: responseData.is_upvoted,
+      newCount: responseData.new_count
     };
     
   } catch (error) {

@@ -115,8 +115,6 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
   }
 };
 
-// New functions for the moderation system
-
 export const fetchPendingPosts = async (): Promise<BlogPost[]> => {
   try {
     console.log("Fetching pending posts");
@@ -229,7 +227,6 @@ export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | '
   }
 };
 
-// Updated admin check that uses the security definer function
 export const checkIsAdmin = async (): Promise<boolean> => {
   try {
     // First check if user is authenticated
@@ -242,7 +239,7 @@ export const checkIsAdmin = async (): Promise<boolean> => {
     console.log("Checking admin status for user:", user.email);
     
     // Use the is_admin function we created in SQL
-    const { data, error } = await supabase.rpc('is_admin', { uid: user.id });
+    const { data, error } = await supabase.rpc('is_admin');
     
     if (error) {
       console.error("Error checking admin status with RPC:", error);

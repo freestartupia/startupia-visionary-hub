@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import DirectoryView from '@/components/ecosystem/DirectoryView';
+import SubmitStartupModal from '@/components/ecosystem/SubmitStartupModal';
 import SEO from '@/components/SEO';
 import { Startup } from '@/types/startup';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,6 +37,7 @@ const AIEcosystem = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [aiTools, setAiTools] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -53,29 +55,49 @@ const AIEcosystem = () => {
           toast.error('Erreur lors du chargement des startups');
         } else if (data) {
           // Transform data to match Startup type
-          const transformedData: Startup[] = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            logoUrl: item.logo_url || '',
-            shortDescription: item.short_description,
-            longTermVision: item.long_term_vision || '',
-            founders: item.founders || [],
-            aiUseCases: item.ai_use_cases || '',
-            aiTools: item.ai_tools || [],
-            sector: item.sector,
-            businessModel: item.business_model,
-            maturityLevel: item.maturity_level,
-            aiImpactScore: item.ai_impact_score,
-            tags: item.tags || [],
-            websiteUrl: item.website_url,
-            pitchDeckUrl: item.pitch_deck_url,
-            crunchbaseUrl: item.crunchbase_url,
-            notionUrl: item.notion_url,
-            dateAdded: item.date_added,
-            viewCount: item.view_count,
-            isFeatured: item.is_featured,
-            upvoteCount: item.upvotes_count || 0,
-          }));
+          const transformedData: Startup[] = data.map(item => {
+            // Parse founders from JSON
+            let parsedFounders = [];
+            try {
+              if (item.founders) {
+                // Handle founders as a JSON string or already parsed object
+                if (typeof item.founders === 'string') {
+                  parsedFounders = JSON.parse(item.founders);
+                } else if (Array.isArray(item.founders)) {
+                  parsedFounders = item.founders;
+                } else if (typeof item.founders === 'object') {
+                  parsedFounders = [item.founders];
+                }
+              }
+            } catch (e) {
+              console.error('Error parsing founders:', e);
+              parsedFounders = [];
+            }
+            
+            return {
+              id: item.id,
+              name: item.name,
+              logoUrl: item.logo_url || '',
+              shortDescription: item.short_description,
+              longTermVision: item.long_term_vision || '',
+              founders: parsedFounders,
+              aiUseCases: item.ai_use_cases || '',
+              aiTools: item.ai_tools || [],
+              sector: item.sector,
+              businessModel: item.business_model,
+              maturityLevel: item.maturity_level,
+              aiImpactScore: item.ai_impact_score,
+              tags: item.tags || [],
+              websiteUrl: item.website_url,
+              pitchDeckUrl: item.pitch_deck_url,
+              crunchbaseUrl: item.crunchbase_url,
+              notionUrl: item.notion_url,
+              dateAdded: item.date_added,
+              viewCount: item.view_count,
+              isFeatured: item.is_featured,
+              upvoteCount: item.upvotes_count || 0,
+            };
+          });
           
           setStartups(transformedData);
           
@@ -95,7 +117,7 @@ const AIEcosystem = () => {
     };
 
     fetchStartups();
-  }, []);
+  }, [showSubmitModal]); // Refetch when the modal is closed after submission
   
   // Filter and sort startups based on search, category, and sort order
   const filterStartups = () => {
@@ -143,13 +165,7 @@ const AIEcosystem = () => {
   const filteredStartups = filterStartups();
 
   const handleAddStartup = () => {
-    if (!user) {
-      toast.error("Vous devez être connecté pour ajouter une startup");
-      navigate('/auth');
-      return;
-    }
-    
-    toast.info("Cette fonctionnalité sera bientôt disponible");
+    setShowSubmitModal(true);
   };
 
   return (
@@ -396,6 +412,15 @@ const AIEcosystem = () => {
         </Tabs>
       </main>
 
+      {/* Submit Startup Modal */}
+      <SubmitStartupModal 
+        open={showSubmitModal} 
+        onOpenChange={setShowSubmitModal}
+        onSubmitSuccess={() => {
+          toast.success("Votre projet a été ajouté avec succès!");
+        }}
+      />
+
       <Footer />
     </div>
   );
@@ -415,7 +440,7 @@ const renderStartupGrid = (
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {startups.map((startup) => (
         <StartupCard key={startup.id} startup={startup} />
       ))}

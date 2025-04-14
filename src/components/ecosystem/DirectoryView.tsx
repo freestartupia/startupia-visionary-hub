@@ -35,29 +35,50 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           toast.error('Erreur lors du chargement des startups');
         } else if (data) {
           // Transform data to match Startup type
-          const transformedData: Startup[] = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            logoUrl: item.logo_url || '',
-            shortDescription: item.short_description,
-            longTermVision: item.long_term_vision || '',
-            founders: item.founders || [],
-            aiUseCases: item.ai_use_cases || '',
-            aiTools: item.ai_tools || [],
-            sector: item.sector,
-            businessModel: item.business_model,
-            maturityLevel: item.maturity_level,
-            aiImpactScore: item.ai_impact_score,
-            tags: item.tags || [],
-            websiteUrl: item.website_url,
-            pitchDeckUrl: item.pitch_deck_url,
-            crunchbaseUrl: item.crunchbase_url,
-            notionUrl: item.notion_url,
-            dateAdded: item.date_added,
-            viewCount: item.view_count,
-            isFeatured: item.is_featured,
-            upvoteCount: item.upvotes_count || 0,
-          }));
+          const transformedData: Startup[] = data.map(item => {
+            // Parse founders from JSON
+            let parsedFounders = [];
+            try {
+              if (item.founders) {
+                // Handle founders as a JSON string or already parsed object
+                if (typeof item.founders === 'string') {
+                  parsedFounders = JSON.parse(item.founders);
+                } else if (Array.isArray(item.founders)) {
+                  parsedFounders = item.founders;
+                } else if (typeof item.founders === 'object') {
+                  // Try to convert the object to an array if possible
+                  parsedFounders = [item.founders];
+                }
+              }
+            } catch (e) {
+              console.error('Error parsing founders:', e);
+              parsedFounders = [];
+            }
+            
+            return {
+              id: item.id,
+              name: item.name,
+              logoUrl: item.logo_url || '',
+              shortDescription: item.short_description,
+              longTermVision: item.long_term_vision || '',
+              founders: parsedFounders,
+              aiUseCases: item.ai_use_cases || '',
+              aiTools: item.ai_tools || [],
+              sector: item.sector,
+              businessModel: item.business_model,
+              maturityLevel: item.maturity_level,
+              aiImpactScore: item.ai_impact_score,
+              tags: item.tags || [],
+              websiteUrl: item.website_url,
+              pitchDeckUrl: item.pitch_deck_url,
+              crunchbaseUrl: item.crunchbase_url,
+              notionUrl: item.notion_url,
+              dateAdded: item.date_added,
+              viewCount: item.view_count,
+              isFeatured: item.is_featured,
+              upvoteCount: item.upvotes_count || 0,
+            };
+          });
           
           setStartups(transformedData);
           setFilteredStartups(transformedData);

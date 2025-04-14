@@ -14,15 +14,25 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       };
     }
     
-    // Check if user already voted this startup
+    // Vérifier si l'utilisateur a déjà voté pour ce startup
     const { data: existingVote } = await supabase
       .from('startup_votes')
       .select('id, is_upvote')
       .eq('startup_id', startupId)
       .eq('user_id', userData.user.id)
       .single();
+      
+    // Obtenir le nombre actuel de votes
+    const { data: startupData } = await supabase
+      .from('startups')
+      .select('upvotes_count')
+      .eq('id', startupId)
+      .single();
+      
+    const currentCount = startupData?.upvotes_count || 0;
+    let newCount = currentCount;
     
-    // If no vote exists, create a new one
+    // Si aucun vote n'existe, en créer un nouveau
     if (!existingVote) {
       await supabase
         .from('startup_votes')
@@ -32,15 +42,8 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
           is_upvote: isUpvote
         });
       
-      // Update count in startups table
-      const { data: startupData } = await supabase
-        .from('startups')
-        .select('upvotes_count')
-        .eq('id', startupId)
-        .single();
-      
-      const currentCount = startupData?.upvotes_count || 0;
-      const newCount = isUpvote ? currentCount + 1 : currentCount - 1;
+      // Mettre à jour le compteur
+      newCount = isUpvote ? currentCount + 1 : Math.max(0, currentCount - 1);
       
       await supabase
         .from('startups')
@@ -55,22 +58,15 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       };
     }
     
-    // If vote exists with same type, remove it
+    // Si le vote existe déjà avec le même type, le supprimer
     if (existingVote.is_upvote === isUpvote) {
       await supabase
         .from('startup_votes')
         .delete()
         .eq('id', existingVote.id);
       
-      // Update count in startups table
-      const { data: startupData } = await supabase
-        .from('startups')
-        .select('upvotes_count')
-        .eq('id', startupId)
-        .single();
-      
-      const currentCount = startupData?.upvotes_count || 0;
-      const newCount = isUpvote ? Math.max(0, currentCount - 1) : Math.max(0, currentCount + 1);
+      // Mettre à jour le compteur
+      newCount = isUpvote ? Math.max(0, currentCount - 1) : Math.min(currentCount + 1, currentCount);
       
       await supabase
         .from('startups')
@@ -85,23 +81,20 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       };
     }
     
-    // If vote exists with different type, change it
+    // Si le vote existe avec un type différent, le changer
     await supabase
       .from('startup_votes')
       .update({ is_upvote: isUpvote })
       .eq('id', existingVote.id);
     
-    // Update count in startups table
-    const { data: startupData } = await supabase
-      .from('startups')
-      .select('upvotes_count')
-      .eq('id', startupId)
-      .single();
-    
-    const currentCount = startupData?.upvotes_count || 0;
-    // If changing from downvote to upvote: +2 (remove downvote + add upvote)
-    // If changing from upvote to downvote: -2 (remove upvote + add downvote)
-    const newCount = isUpvote ? currentCount + 2 : currentCount - 2;
+    // Mettre à jour le compteur
+    if (isUpvote) {
+      // Changement de downvote à upvote: +2 (supprimer downvote + ajouter upvote)
+      newCount = currentCount + 2;
+    } else {
+      // Changement de upvote à downvote: -2 (supprimer upvote + ajouter downvote)
+      newCount = Math.max(0, currentCount - 2);
+    }
     
     await supabase
       .from('startups')
@@ -125,7 +118,7 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
   }
 };
 
-// Simple wrapper functions for backward compatibility
+// Fonctions wrapper simples pour la rétrocompatibilité
 export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResponse> => {
   return toggleStartupVote(startupId, true);
 };

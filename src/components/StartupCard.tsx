@@ -78,11 +78,10 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     setIsVoting(true);
     
     try {
-      // Do not make optimistic updates here to prevent flicker
       const response = await toggleStartupUpvote(startup.id);
       
       if (response.success) {
-        // Only update state after confirmed server response
+        // Mettre à jour l'état seulement après confirmation du serveur
         setUpvoteCount(response.newCount);
         setIsUpvoted(response.upvoted);
         
@@ -96,8 +95,8 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       console.error('Error toggling upvote:', error);
       toast.error("Erreur lors du vote");
     } finally {
-      // Use a longer timeout to prevent rapid clicking
-      setTimeout(() => setIsVoting(false), 2000);
+      // Utiliser un délai plus long pour éviter les clics rapides
+      setTimeout(() => setIsVoting(false), 3000);
     }
   };
 

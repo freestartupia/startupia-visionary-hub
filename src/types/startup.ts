@@ -1,4 +1,3 @@
-
 export type FounderType = {
   name: string;
   linkedinUrl: string;
@@ -72,7 +71,8 @@ export type Startup = {
   dateAdded?: string; // ISO date string
   viewCount?: number;
   isFeatured?: boolean;
-  upvoteCount?: number;
+  upvoteCount?: number; // Add this to match the usage
+  upvotes_count?: number; // Keep this for database compatibility
   fundingRounds?: FundingRound[];
 };
 

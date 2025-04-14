@@ -18,7 +18,7 @@ interface StartupCardProps {
 const StartupCard = ({ startup }: StartupCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [upvoteCount, setUpvoteCount] = useState(startup.upvoteCount || 0);
+  const [upvoteCount, setUpvoteCount] = useState(startup.upvoteCount || startup.upvotes_count || 0);
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [isDownvoted, setIsDownvoted] = useState(false);
   const [isVoting, setIsVoting] = useState(false);
@@ -27,6 +27,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
   useEffect(() => {
     const fetchVoteStatus = async () => {
       try {
+        // Normalize upvote count
         if (typeof startup.upvotes_count === 'number') {
           setUpvoteCount(startup.upvotes_count);
         } else if (typeof startup.upvoteCount === 'number') {

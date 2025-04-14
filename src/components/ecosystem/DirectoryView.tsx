@@ -5,9 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { ThumbsUp, MessageSquare, Calendar, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { ThumbsUp, MessageSquare, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface DirectoryViewProps {
@@ -130,10 +128,10 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
   };
 
   return (
-    <div className="mb-16 w-full max-w-5xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto">
       {showFilters && (
         <div className="mt-4 mb-8">
-          {/* Retirer l'appel à StartupFilters qui n'existe pas dans ce fichier */}
+          {/* Placeholder for filters */}
         </div>
       )}
       
@@ -142,7 +140,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
         onValueChange={setActiveCategory}
         className="mb-8 w-full"
       >
-        <TabsList className="inline-flex h-10 items-center justify-start space-x-1 overflow-x-auto w-full">
+        <TabsList className="inline-flex h-10 items-center justify-start space-x-1 overflow-x-auto w-full bg-transparent mb-6">
           <TabsTrigger value="all" className="data-[state=active]:bg-startupia-turquoise/20">
             Tous
           </TabsTrigger>
@@ -203,7 +201,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
   function renderStartupList(startups: Startup[]) {
     if (startups.length === 0) {
       return (
-        <div className="text-center py-20">
+        <div className="text-center py-12">
           <p className="text-white/60 text-lg">Aucune startup ne correspond à votre recherche</p>
         </div>
       );
@@ -212,76 +210,40 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     return (
       <div className="space-y-4">
         {startups.map((startup, index) => (
-          <Link to={`/startup/${startup.id}`} key={startup.id} className="block hover:no-underline w-full">
-            <Card className="hover:border-startupia-turquoise/50 transition-all duration-300 border border-startupia-turquoise/20 bg-black/30 w-full">
-              <div className="flex items-center gap-6 p-5">
-                <div className="flex-shrink-0 relative">
-                  <div className="w-16 h-16 rounded-md bg-startupia-turquoise/10 flex items-center justify-center overflow-hidden">
+          <Link to={`/startup/${startup.id}`} key={startup.id} className="block hover:no-underline">
+            <Card className="hover:border-startupia-turquoise/50 transition-all duration-300 border border-startupia-turquoise/20 bg-black/30">
+              <div className="flex items-center p-5">
+                <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 mr-4 relative">
+                  <div className="w-full h-full rounded-full bg-startupia-turquoise/10 flex items-center justify-center overflow-hidden">
                     {startup.logoUrl ? (
                       <img src={startup.logoUrl} alt={`${startup.name} logo`} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-2xl font-bold text-startupia-turquoise">{startup.name.charAt(0)}</span>
+                      <span className="text-xl font-bold text-startupia-turquoise">{startup.name.charAt(0)}</span>
                     )}
                   </div>
-                  <div className="absolute -top-3 -left-3 flex items-center justify-center h-7 w-7 bg-startupia-turquoise/90 text-black font-bold rounded-full">
+                  <div className="absolute -top-2 -left-2 flex items-center justify-center h-6 w-6 bg-startupia-turquoise text-black font-bold rounded-full text-xs">
                     {index + 1}
                   </div>
                 </div>
                 
-                <div className="flex-grow">
-                  <div className="mb-1">
-                    <h3 className="text-xl font-bold text-white">{startup.name}</h3>
-                    <p className="text-white/80 text-base mb-2">{startup.shortDescription}</p>
-                    
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {startup.sector && (
-                        <Badge className="bg-startupia-turquoise/10 hover:bg-startupia-turquoise/20 text-white border-none">
-                          {startup.sector}
-                        </Badge>
-                      )}
-                      {startup.tags && startup.tags.slice(0, 3).map((tag, idx) => (
-                        <Badge key={idx} variant="outline" className="bg-black/40 text-white/70 hover:bg-black/60">
-                          {tag}
-                        </Badge>
-                      ))}
-                      {startup.tags && startup.tags.length > 3 && (
-                        <Badge variant="outline" className="bg-black/40 text-white/70">
-                          +{startup.tags.length - 3}
-                        </Badge>
-                      )}
+                <div className="flex-grow mr-8">
+                  <div className="mb-1.5">
+                    <div className="flex items-baseline justify-between">
+                      <h3 className="text-lg font-bold text-white">{startup.name}</h3>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-sm text-white/60">
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>{formatDate(startup.dateAdded)}</span>
-                    </div>
-                    
-                    {startup.websiteUrl && (
-                      <a 
-                        href={startup.websiteUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center text-white/70 hover:text-startupia-turquoise"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        <span>Site web</span>
-                      </a>
-                    )}
+                    <p className="text-white/80 text-sm mb-1.5 line-clamp-1">{startup.shortDescription}</p>
+                    <p className="text-white/60 text-xs mb-2">
+                      {startup.sector}
+                    </p>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-6 flex-shrink-0">
-                  <div className="flex items-center gap-1 text-white/70">
-                    <MessageSquare className="h-5 w-5" />
-                    <span className="font-medium">{startup.viewCount || 0}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-1 text-white/70">
-                    <ThumbsUp className="h-5 w-5" />
-                    <span className="font-medium">{startup.upvoteCount || 0}</span>
+                <div className="flex-shrink-0 flex items-center gap-4">
+                  <div className="text-center">
+                    <div className="flex items-center px-2 py-1 rounded-md bg-startupia-turquoise/10">
+                      <ThumbsUp className="h-4 w-4 text-white mr-1.5" />
+                      <span className="font-medium text-white">{startup.upvoteCount || 0}</span>
+                    </div>
                   </div>
                 </div>
               </div>

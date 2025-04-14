@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast as sonnerToast } from 'sonner';
 import { BlogCategory } from '@/types/blog';
 import { submitBlogPost } from '@/services/blogService';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SubmitArticleModalProps {
   open: boolean;
@@ -30,6 +31,7 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [formValues, setFormValues] = useState({
     title: '',
     excerpt: '',
@@ -48,19 +50,51 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { id, value } = e.target;
     setFormValues(prev => ({ ...prev, [id]: value }));
+    // Clear error when user starts typing again
+    if (errorMessage) setErrorMessage(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
+    // Basic validation
+    if (!formValues.title.trim()) {
+      setErrorMessage("Le titre est requis");
+      return;
+    }
+    if (!formValues.excerpt.trim()) {
+      setErrorMessage("Le résumé est requis");
+      return;
+    }
+    if (!formValues.content.trim()) {
+      setErrorMessage("Le contenu est requis");
+      return;
+    }
+    if (!formValues.category) {
+      setErrorMessage("Veuillez sélectionner une catégorie");
+      return;
+    }
+
     setIsSubmitting(true);
+    setErrorMessage(null);
+    
     try {
+      console.log("Submitting form with user:", user.id);
+      
       // Create a slug from the title
       const slug = slugify(formValues.title, { lower: true, strict: true });
       
       // Split tags by comma
       const tags = formValues.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+      
+      // Prepare author name from user metadata
+      const authorName = user.user_metadata?.first_name 
+        ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`
+        : user.email?.split('@')[0] || 'Anonymous';
+      
+      console.log("Prepared author name:", authorName);
+      console.log("User avatar:", user.user_metadata?.avatar_url);
       
       // Submit the post
       await submitBlogPost({
@@ -70,12 +104,11 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
         content: `<p>${formValues.content.replace(/\n/g, '</p><p>')}</p>`,
         category: formValues.category as BlogCategory,
         authorId: user.id,
-        authorName: user.user_metadata?.first_name 
-          ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`
-          : user.email?.split('@')[0] || 'Anonymous',
+        authorName,
         authorAvatar: user.user_metadata?.avatar_url,
         tags,
         readingTime: `${Math.max(1, Math.ceil(formValues.content.length / 1000))} min`,
+        featured: false // Explicitly set to false for new submissions
       });
       
       toast({
@@ -95,6 +128,11 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
       
     } catch (error) {
       console.error("Error submitting article:", error);
+      setErrorMessage(
+        error instanceof Error 
+          ? `Erreur: ${error.message}` 
+          : "Une erreur est survenue lors de la soumission de votre article."
+      );
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la soumission de votre article. Veuillez réessayer.",
@@ -141,6 +179,15 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
             Partagez vos connaissances et idées avec la communauté Startupia.
           </DialogDescription>
         </DialogHeader>
+        
+        {errorMessage && (
+          <Alert variant="destructive" className="bg-red-950 border-red-800 my-2">
+            <AlertDescription className="text-white">
+              {errorMessage}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="title">Titre de l'article</Label>

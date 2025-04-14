@@ -50,7 +50,7 @@ export const checkAdminStatus = async (): Promise<boolean> => {
  * Fonction générique pour appeler un RPC de manière sécurisée
  */
 export const safeRpcCall = async <T>(
-  functionName: string,
+  functionName: 'is_admin',
   params?: Record<string, any>
 ): Promise<{ success: boolean; data?: T; error?: string }> => {
   try {

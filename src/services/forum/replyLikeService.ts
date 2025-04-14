@@ -5,8 +5,13 @@ import { checkAuthentication, checkIfUserLiked, getLikeCount, addLike, removeLik
 // Get like status for a reply
 export const getReplyLikeStatus = async (replyId: string): Promise<{ liked: boolean; count: number }> => {
   try {
-    const liked = await checkIfUserLiked('forum_reply', replyId);
-    const count = await getLikeCount('forum_reply', replyId);
+    const userId = await checkAuthentication();
+    if (!userId) {
+      return { liked: false, count: 0 };
+    }
+    
+    const liked = await checkIfUserLiked('forum_reply_likes', 'reply_id', replyId, userId);
+    const count = await getLikeCount('forum_reply_likes', 'reply_id', replyId);
     
     return { liked, count };
   } catch (error) {
@@ -29,7 +34,7 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
       };
     }
     
-    const isLiked = await checkIfUserLiked('forum_reply', replyId);
+    const isLiked = await checkIfUserLiked('forum_reply_likes', 'reply_id', replyId, userId);
     
     if (isLiked) {
       return await unlikeReply(replyId);
@@ -49,20 +54,23 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
 
 // Get the number of likes for a reply
 export const getReplyLikeCount = async (replyId: string): Promise<number> => {
-  return await getLikeCount('forum_reply', replyId);
+  return await getLikeCount('forum_reply_likes', 'reply_id', replyId);
 };
 
 // Check if the current user has liked a reply
 export const checkIfUserLikedReply = async (replyId: string): Promise<boolean> => {
-  return await checkIfUserLiked('forum_reply', replyId);
+  const userId = await checkAuthentication();
+  if (!userId) return false;
+  
+  return await checkIfUserLiked('forum_reply_likes', 'reply_id', replyId, userId);
 };
 
 // Like a reply
 export const likeReply = async (replyId: string): Promise<LikeResponse> => {
-  return await addLike('forum_reply', replyId);
+  return await addLike('forum_reply_likes', replyId, 'reply_id');
 };
 
 // Unlike a reply
 export const unlikeReply = async (replyId: string): Promise<LikeResponse> => {
-  return await removeLike('forum_reply', replyId);
+  return await removeLike('forum_reply_likes', replyId, 'reply_id');
 };

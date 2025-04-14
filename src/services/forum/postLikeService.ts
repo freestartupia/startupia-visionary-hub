@@ -5,8 +5,13 @@ import { checkAuthentication, checkIfUserLiked, getLikeCount, addLike, removeLik
 // Get like status for a post
 export const getPostLikeStatus = async (postId: string): Promise<{ liked: boolean; count: number }> => {
   try {
-    const liked = await checkIfUserLiked('forum_post', postId);
-    const count = await getLikeCount('forum_post', postId);
+    const userId = await checkAuthentication();
+    if (!userId) {
+      return { liked: false, count: 0 };
+    }
+    
+    const liked = await checkIfUserLiked('forum_post_likes', 'post_id', postId, userId);
+    const count = await getLikeCount('forum_post_likes', 'post_id', postId);
     
     return { liked, count };
   } catch (error) {
@@ -29,7 +34,7 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
       };
     }
     
-    const isLiked = await checkIfUserLiked('forum_post', postId);
+    const isLiked = await checkIfUserLiked('forum_post_likes', 'post_id', postId, userId);
     
     if (isLiked) {
       return await unlikePost(postId);
@@ -49,20 +54,23 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
 
 // Get the number of likes for a post
 export const getPostLikeCount = async (postId: string): Promise<number> => {
-  return await getLikeCount('forum_post', postId);
+  return await getLikeCount('forum_post_likes', 'post_id', postId);
 };
 
 // Check if the current user has liked a post
 export const checkIfUserLikedPost = async (postId: string): Promise<boolean> => {
-  return await checkIfUserLiked('forum_post', postId);
+  const userId = await checkAuthentication();
+  if (!userId) return false;
+  
+  return await checkIfUserLiked('forum_post_likes', 'post_id', postId, userId);
 };
 
 // Like a post
 export const likePost = async (postId: string): Promise<LikeResponse> => {
-  return await addLike('forum_post', postId);
+  return await addLike('forum_post_likes', postId, 'post_id');
 };
 
 // Unlike a post
 export const unlikePost = async (postId: string): Promise<LikeResponse> => {
-  return await removeLike('forum_post', postId);
+  return await removeLike('forum_post_likes', postId, 'post_id');
 };

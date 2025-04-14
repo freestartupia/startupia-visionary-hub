@@ -1,217 +1,205 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { checkUserHasRole } from '@/services/roleService';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
-import SEO from '@/components/SEO';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UserRoleManagement from '@/components/admin/UserRoleManagement';
 import { getBlogPostsByStatus, updateBlogPostStatus } from '@/services/blog/postModerationService';
-import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Check, X, AlertTriangle } from 'lucide-react';
+import { Check, X } from 'lucide-react';
+import { BlogPost } from '@/types/blog';
 import { toast } from 'sonner';
+import SEO from '@/components/SEO';
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isModerator, setIsModerator] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>('pending');
+  const [pendingPosts, setPendingPosts] = useState<BlogPost[]>([]);
+  const [publishedPosts, setPublishedPosts] = useState<BlogPost[]>([]);
+  const [rejectedPosts, setRejectedPosts] = useState<BlogPost[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Check if current user has admin or moderator role
   useEffect(() => {
-    const checkPermissions = async () => {
-      try {
-        const admin = await checkUserHasRole('admin');
-        const moderator = await checkUserHasRole('moderator');
-        setIsAdmin(admin);
-        setIsModerator(moderator);
-        setIsLoading(false);
-        
-        // Redirect if not admin or moderator
-        if (!admin && !moderator) {
-          toast({
-            title: 'Accès refusé',
-            description: 'Vous n\'avez pas les permissions pour accéder à cette page.',
-            variant: 'destructive',
-          });
-          navigate('/');
-        }
-      } catch (error) {
-        console.error('Error checking permissions:', error);
-        setIsLoading(false);
-        toast({
-          title: 'Erreur de vérification',
-          description: 'Impossible de vérifier vos permissions.',
-          variant: 'destructive',
-        });
-        navigate('/');
-      }
-    };
-    
-    checkPermissions();
-  }, [navigate]);
+    fetchPosts();
+  }, []);
 
-  // Fetch pending blog posts
-  const { 
-    data: pendingPosts = [], 
-    refetch: refetchPending,
-    isLoading: isLoadingPosts,
-    error: postsError
-  } = useQuery({
-    queryKey: ['pendingBlogPosts'],
-    queryFn: () => getBlogPostsByStatus('pending'),
-    enabled: !isLoading && (isAdmin || isModerator),
-    retry: 1
-  });
-
-  // Handle post approval/rejection
-  const handleUpdatePostStatus = async (postId: string, status: 'published' | 'rejected') => {
+  const fetchPosts = async () => {
+    setIsLoading(true);
     try {
-      const result = await updateBlogPostStatus(postId, status);
+      const pending = await getBlogPostsByStatus('pending');
+      const published = await getBlogPostsByStatus('published');
+      const rejected = await getBlogPostsByStatus('rejected');
       
-      if (result.success) {
-        toast({
-          title: status === 'published' ? 'Article publié' : 'Article rejeté',
-          description: status === 'published' 
-            ? 'L\'article a été publié avec succès.' 
-            : 'L\'article a été rejeté.',
-        });
-        refetchPending();
-      } else {
-        toast({
-          title: 'Erreur',
-          description: result.error || 'Une erreur est survenue',
-          variant: 'destructive',
-        });
-      }
+      setPendingPosts(pending);
+      setPublishedPosts(published);
+      setRejectedPosts(rejected);
     } catch (error) {
-      console.error('Error updating post status:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Une erreur est survenue lors de la mise à jour du statut',
-        variant: 'destructive',
-      });
+      console.error('Error fetching posts:', error);
+      toast.error('Erreur lors du chargement des articles');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
-      </div>
-    );
-  }
+  const handleApprove = async (postId: string) => {
+    try {
+      const result = await updateBlogPostStatus(postId, 'published');
+      if (result.success) {
+        toast.success('Article approuvé et publié');
+        fetchPosts();
+      } else {
+        toast.error(result.error || 'Erreur lors de l\'approbation');
+      }
+    } catch (error) {
+      console.error('Error approving post:', error);
+      toast.error('Erreur lors de l\'approbation');
+    }
+  };
+
+  const handleReject = async (postId: string) => {
+    try {
+      const result = await updateBlogPostStatus(postId, 'rejected');
+      if (result.success) {
+        toast.success('Article rejeté');
+        fetchPosts();
+      } else {
+        toast.error(result.error || 'Erreur lors du rejet');
+      }
+    } catch (error) {
+      console.error('Error rejecting post:', error);
+      toast.error('Erreur lors du rejet');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
       <SEO 
-        title="Administration - StartupIA"
-        description="Panneau d'administration StartupIA"
+        title="Administration - Startupia"
+        description="Panneau d'administration pour Startupia"
       />
-      
-      {/* Background elements */}
-      <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       
       <Navbar />
       
-      <main className="container mx-auto pt-24 pb-16 px-4 relative z-10">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Panneau <span className="text-startupia-turquoise">d'Administration</span>
-          </h1>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            Gérez les utilisateurs, les articles et les permissions
-          </p>
-        </div>
+      <main className="container mx-auto pt-24 pb-16 px-4">
+        <h1 className="text-3xl font-bold mb-6">Administration</h1>
         
-        <Tabs defaultValue="moderation" className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
-            <TabsTrigger value="moderation">Modération</TabsTrigger>
-            {isAdmin && <TabsTrigger value="users">Utilisateurs</TabsTrigger>}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
+          <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+            <TabsTrigger value="pending">En attente ({pendingPosts.length})</TabsTrigger>
+            <TabsTrigger value="published">Publiés ({publishedPosts.length})</TabsTrigger>
+            <TabsTrigger value="rejected">Rejetés ({rejectedPosts.length})</TabsTrigger>
+            <TabsTrigger value="users">Utilisateurs</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="moderation" className="bg-gray-800/50 rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-6">Articles en attente de modération</h2>
-            
-            {isLoadingPosts ? (
-              <div className="text-center py-10">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-startupia-turquoise mx-auto mb-4"></div>
-                <p className="text-white/60">Chargement des articles en attente...</p>
-              </div>
-            ) : postsError ? (
-              <div className="text-center py-10 text-white/60 border border-red-500/50 rounded-lg p-4">
-                <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-                <p className="text-red-400">Une erreur est survenue lors du chargement des articles.</p>
-                <p className="text-sm mt-2">Erreur technique: problème de connexion à la base de données</p>
-                <Button 
-                  onClick={() => refetchPending()} 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-4"
-                >
-                  Réessayer
-                </Button>
+          <TabsContent value="pending" className="space-y-4">
+            <h2 className="text-2xl font-semibold">Articles en attente de modération</h2>
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
               </div>
             ) : pendingPosts.length === 0 ? (
-              <div className="text-center py-10 text-white/60">
-                <p>Aucun article en attente de modération.</p>
-              </div>
+              <p className="text-white/70">Aucun article en attente de modération.</p>
             ) : (
-              <div className="space-y-4">
-                {pendingPosts.map(post => (
-                  <div key={post.id} className="border border-gray-700 rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between">
-                    <div className="mb-4 md:mb-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium text-lg">{post.title}</h3>
-                        <Badge className="bg-yellow-500/80">{post.category}</Badge>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {pendingPosts.map((post) => (
+                  <Card key={post.id} className="bg-gray-800 border-gray-700">
+                    <CardHeader>
+                      <CardTitle>{post.title}</CardTitle>
+                      <CardDescription className="text-white/70">
+                        Par {post.authorName} - {new Date(post.createdAt).toLocaleDateString()}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-white/80 mb-4">{post.excerpt}</p>
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-red-500 border-red-500 hover:bg-red-950"
+                          onClick={() => handleReject(post.id)}
+                        >
+                          <X className="mr-2 h-4 w-4" />
+                          Rejeter
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={() => handleApprove(post.id)}
+                        >
+                          <Check className="mr-2 h-4 w-4" />
+                          Approuver
+                        </Button>
                       </div>
-                      <p className="text-white/60 text-sm">{post.excerpt}</p>
-                      <div className="text-xs text-white/50 mt-2">
-                        Par {post.authorName} • {new Date(post.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button 
-                        onClick={() => handleUpdatePostStatus(post.id, 'rejected')}
-                        variant="destructive"
-                        size="sm"
-                        className="text-xs"
-                      >
-                        <X className="h-4 w-4 mr-1" /> Rejeter
-                      </Button>
-                      <Button 
-                        onClick={() => handleUpdatePostStatus(post.id, 'published')}
-                        className="bg-green-600 hover:bg-green-700 text-white text-xs"
-                        size="sm"
-                      >
-                        <Check className="h-4 w-4 mr-1" /> Approuver
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
-                      >
-                        Prévisualiser
-                      </Button>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
           </TabsContent>
           
-          {isAdmin && (
-            <TabsContent value="users">
-              <UserRoleManagement />
-            </TabsContent>
-          )}
+          <TabsContent value="published" className="space-y-4">
+            <h2 className="text-2xl font-semibold">Articles publiés</h2>
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
+              </div>
+            ) : publishedPosts.length === 0 ? (
+              <p className="text-white/70">Aucun article publié.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {publishedPosts.map((post) => (
+                  <Card key={post.id} className="bg-gray-800 border-gray-700">
+                    <CardHeader>
+                      <CardTitle>{post.title}</CardTitle>
+                      <CardDescription className="text-white/70">
+                        Par {post.authorName} - {new Date(post.createdAt).toLocaleDateString()}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-white/80">{post.excerpt}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="rejected" className="space-y-4">
+            <h2 className="text-2xl font-semibold">Articles rejetés</h2>
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
+              </div>
+            ) : rejectedPosts.length === 0 ? (
+              <p className="text-white/70">Aucun article rejeté.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {rejectedPosts.map((post) => (
+                  <Card key={post.id} className="bg-gray-800 border-gray-700">
+                    <CardHeader>
+                      <CardTitle>{post.title}</CardTitle>
+                      <CardDescription className="text-white/70">
+                        Par {post.authorName} - {new Date(post.createdAt).toLocaleDateString()}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-white/80">{post.excerpt}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="users">
+            <h2 className="text-2xl font-semibold mb-4">Gestion des utilisateurs</h2>
+            <UserRoleManagement />
+          </TabsContent>
         </Tabs>
       </main>
-
+      
       <Footer />
     </div>
   );

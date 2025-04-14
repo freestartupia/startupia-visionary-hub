@@ -99,35 +99,79 @@ export const checkIfUserLiked = async (
 /**
  * Like a post or reply
  */
-export const like = async (
+export const addLike = async (
   table: 'forum_post_likes' | 'forum_reply_likes',
-  record: Record<string, string>
+  id: string,
+  idField: 'post_id' | 'reply_id' = 'post_id'
 ): Promise<LikeResponse> => {
   try {
-    const { error } = await supabase.from(table).insert([record]);
+    const userId = await checkAuthentication();
+    if (!userId) {
+      return { 
+        success: false, 
+        message: 'Vous devez être connecté pour liker',
+        liked: false,
+        newCount: 0
+      };
+    }
+
+    // Create record with the correct field name (post_id or reply_id)
+    const record: Record<string, string> = {
+      user_id: userId,
+      [idField]: id
+    };
+    
+    const { error } = await supabase.from(table).insert(record);
       
     if (error) {
       console.error(`Error liking ${table}:`, error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        message: `Erreur lors du like: ${error.message}`,
+        liked: false,
+        newCount: 0
+      };
     }
     
-    return { success: true };
+    // Get the new count
+    const count = await getLikeCount(table, idField, id);
+    
+    return { 
+      success: true, 
+      message: 'Ajouté aux favoris',
+      liked: true,
+      newCount: count
+    };
   } catch (error) {
     console.error(`Error liking ${table}:`, error);
-    return { success: false, error: String(error) };
+    return { 
+      success: false, 
+      message: `Erreur lors du like: ${error}`,
+      liked: false,
+      newCount: 0
+    };
   }
 };
 
 /**
  * Unlike a post or reply
  */
-export const unlike = async (
+export const removeLike = async (
   table: 'forum_post_likes' | 'forum_reply_likes',
-  idField: 'post_id' | 'reply_id',
   id: string,
-  userId: string
+  idField: 'post_id' | 'reply_id' = 'post_id'
 ): Promise<LikeResponse> => {
   try {
+    const userId = await checkAuthentication();
+    if (!userId) {
+      return { 
+        success: false, 
+        message: 'Vous devez être connecté pour disliker',
+        liked: true,
+        newCount: 0
+      };
+    }
+    
     const { error } = await supabase
       .from(table)
       .delete()
@@ -136,12 +180,30 @@ export const unlike = async (
       
     if (error) {
       console.error(`Error unliking ${table}:`, error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        message: `Erreur lors du dislike: ${error.message}`,
+        liked: true,
+        newCount: 0
+      };
     }
     
-    return { success: true };
+    // Get the new count
+    const count = await getLikeCount(table, idField, id);
+    
+    return { 
+      success: true, 
+      message: 'Retiré des favoris',
+      liked: false,
+      newCount: count
+    };
   } catch (error) {
     console.error(`Error unliking ${table}:`, error);
-    return { success: false, error: String(error) };
+    return { 
+      success: false, 
+      message: `Erreur lors du dislike: ${error}`,
+      liked: true,
+      newCount: 0 
+    };
   }
 };

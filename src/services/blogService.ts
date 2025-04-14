@@ -2,6 +2,27 @@
 import { supabase } from "@/integrations/supabase/client";
 import { BlogPost, BlogCategory } from "@/types/blog";
 
+// Helper function to transform snake_case database columns to camelCase for our interface
+const transformBlogPost = (post: any): BlogPost => {
+  return {
+    id: post.id,
+    title: post.title,
+    slug: post.slug,
+    excerpt: post.excerpt,
+    content: post.content,
+    category: post.category as BlogCategory,
+    coverImage: post.cover_image,
+    authorId: post.author_id,
+    authorName: post.author_name,
+    authorAvatar: post.author_avatar,
+    createdAt: post.created_at,
+    updatedAt: post.updated_at,
+    tags: post.tags || [],
+    featured: post.featured || false,
+    readingTime: post.reading_time
+  };
+};
+
 export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
   const { data, error } = await supabase
     .from('blog_posts')
@@ -13,7 +34,8 @@ export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
     throw error;
   }
   
-  return data || [];
+  // Transform each post to match our interface
+  return (data || []).map(transformBlogPost);
 };
 
 export const fetchFeaturedPosts = async (): Promise<BlogPost[]> => {
@@ -28,7 +50,8 @@ export const fetchFeaturedPosts = async (): Promise<BlogPost[]> => {
     throw error;
   }
   
-  return data || [];
+  // Transform each post to match our interface
+  return (data || []).map(transformBlogPost);
 };
 
 export const getAllBlogCategories = async (): Promise<BlogCategory[]> => {
@@ -62,5 +85,6 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
     throw error;
   }
   
-  return data;
+  // Transform post to match our interface
+  return data ? transformBlogPost(data) : null;
 };

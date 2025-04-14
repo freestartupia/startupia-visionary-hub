@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { getCofounderProfile, updateCofounderProfile, createCofounderProfile } from '@/services/cofounderService';
+import { getCofounderProfile, updateCofounderProfile, createCofounderProfile, deleteCofounderProfile } from '@/services/cofounderService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { CofounderProfile, ProfileType, Role, Sector, Objective, Availability, Region, AITool, ProjectStage } from '@/types/cofounders';
 import { 
   Form,
@@ -15,13 +16,31 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import ProfileBasicInfo from '@/components/profile/cofounder/ProfileBasicInfo';
-import ProfileDetails from '@/components/profile/cofounder/ProfileDetails';
-import ProfileLinks from '@/components/profile/cofounder/ProfileLinks';
-import DeleteProfileButton from '@/components/profile/cofounder/DeleteProfileButton';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -53,9 +72,64 @@ const CofounderProfileEdit = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const isNewProfile = !id;
+  const queryClient = useQueryClient();
   
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Fetch existing profile data
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['cofounderProfile', id],
+    queryFn: () => getCofounderProfile(id as string),
+    enabled: !isNewProfile && !!id,
+    staleTime: 60 * 1000,
+  });
+  
+  // Mutation for creating/updating profile
+  const saveMutation = useMutation({
+    mutationFn: (data: Partial<CofounderProfile>) => 
+      isNewProfile ? createCofounderProfile(data) : updateCofounderProfile(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cofounderProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['myCofounderProfiles'] });
+      toast({
+        title: isNewProfile ? "Profil créé" : "Profil mis à jour",
+        description: isNewProfile 
+          ? "Votre profil a été créé avec succès." 
+          : "Votre profil a été mis à jour avec succès.",
+      });
+      navigate('/profile?tab=cofounder');
+    },
+    onError: (error) => {
+      console.error(`Erreur lors de ${isNewProfile ? 'la création' : 'la mise à jour'} du profil:`, error);
+      toast({
+        title: "Erreur",
+        description: `Impossible ${isNewProfile ? "de créer" : "de mettre à jour"} le profil: ${error}`,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for deleting profile
+  const deleteMutation = useMutation({
+    mutationFn: deleteCofounderProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myCofounderProfiles'] });
+      toast({
+        title: "Profil supprimé",
+        description: "Le profil a été supprimé avec succès.",
+      });
+      navigate('/profile?tab=cofounder');
+    },
+    onError: (error) => {
+      console.error('Erreur lors de la suppression du profil:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le profil",
+        variant: "destructive",
+      });
+      setShowDeleteConfirm(false);
+    }
+  });
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -82,92 +156,63 @@ const CofounderProfileEdit = () => {
     }
   });
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (isNewProfile) {
-        setLoading(false);
-        return;
-      }
+  // Set form values when profile data is loaded
+  React.useEffect(() => {
+    if (profile && !isNewProfile) {
+      form.reset({
+        id: profile.id,
+        name: profile.name,
+        profileType: profile.profileType as ProfileType,
+        role: profile.role,
+        seekingRoles: profile.seekingRoles,
+        pitch: profile.pitch,
+        sector: profile.sector,
+        objective: profile.objective,
+        availability: profile.availability,
+        region: profile.region,
+        photoUrl: profile.photoUrl || '',
+        portfolioUrl: profile.portfolioUrl || '',
+        linkedinUrl: profile.linkedinUrl || '',
+        websiteUrl: profile.websiteUrl || '',
+        projectName: profile.projectName || '',
+        projectStage: profile.projectStage || '',
+        hasAIBadge: profile.hasAIBadge || false
+      });
+    }
+  }, [profile, form, isNewProfile]);
 
-      try {
-        const fetchedProfile = await getCofounderProfile(id as string);
-        if (fetchedProfile) {
-          form.reset({
-            ...fetchedProfile,
-            profileType: fetchedProfile.profileType as ProfileType,
-            role: fetchedProfile.role,
-            sector: fetchedProfile.sector,
-            objective: fetchedProfile.objective,
-            availability: fetchedProfile.availability,
-            region: fetchedProfile.region,
-            hasAIBadge: fetchedProfile.hasAIBadge || false
-          });
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération du profil:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger le profil",
-          variant: "destructive",
-        });
-        navigate('/profile');
-      } finally {
-        setLoading(false);
-      }
+  const onSubmit = (data: FormValues) => {
+    const profileData: Partial<CofounderProfile> = {
+      ...data,
+      id: isNewProfile ? undefined : id,
+      role: data.role as Role,
+      sector: data.sector as Sector,
+      objective: data.objective as Objective,
+      availability: data.availability as Availability,
+      region: data.region as Region,
+      seekingRoles: data.seekingRoles as Role[],
+      aiTools: data.aiTools as AITool[],
+      projectStage: data.projectStage as ProjectStage | undefined
     };
 
-    fetchProfile();
-  }, [id, isNewProfile, navigate, toast, form]);
+    saveMutation.mutate(profileData);
+  };
 
-  const onSubmit = async (data: FormValues) => {
-    setSaving(true);
-
-    try {
-      const profileData: Partial<CofounderProfile> = {
-        ...data,
-        role: data.role as Role,
-        sector: data.sector as Sector,
-        objective: data.objective as Objective,
-        availability: data.availability as Availability,
-        region: data.region as Region,
-        seekingRoles: data.seekingRoles as Role[],
-        aiTools: data.aiTools as AITool[],
-        projectStage: data.projectStage as ProjectStage | undefined
-      };
-
-      if (isNewProfile) {
-        await createCofounderProfile(profileData);
-        toast({
-          title: "Profil créé",
-          description: "Votre profil a été créé avec succès.",
-        });
-      } else {
-        await updateCofounderProfile(profileData);
-        toast({
-          title: "Profil mis à jour",
-          description: "Votre profil a été mis à jour avec succès.",
-        });
-      }
-      navigate('/profile?tab=cofounder');
-    } catch (error) {
-      console.error('Erreur lors de l\'enregistrement du profil:', error);
-      toast({
-        title: "Erreur",
-        description: `Impossible d'enregistrer le profil: ${error}`,
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
+  const handleDelete = () => {
+    if (id) {
+      deleteMutation.mutate(id);
     }
   };
 
-  if (loading) {
+  if (profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
       </div>
     );
   }
+
+  const profileType = form.watch('profileType');
 
   return (
     <ProtectedRoute>
@@ -190,29 +235,62 @@ const CofounderProfileEdit = () => {
                 {isNewProfile ? "Créer un profil cofondateur" : "Modifier votre profil cofondateur"}
               </h1>
               
-              {!isNewProfile && <DeleteProfileButton id={id as string} onSuccess={() => navigate('/profile?tab=cofounder')} />}
+              {!isNewProfile && (
+                <Button 
+                  variant="destructive"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                  ) : (
+                    <Trash2 size={16} className="mr-2" />
+                  )}
+                  Supprimer
+                </Button>
+              )}
             </div>
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Profile Type */}
+                <FormField
+                  control={form.control}
+                  name="profileType"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Type de profil</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="project-owner" id="project-owner" className="border-startupia-turquoise text-startupia-turquoise" />
+                            <label htmlFor="project-owner" className="cursor-pointer">Porteur de projet IA (j'ai une idée à développer)</label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="collaborator" id="collaborator" className="border-startupia-turquoise text-startupia-turquoise" />
+                            <label htmlFor="collaborator" className="cursor-pointer">Collaborateur potentiel (je souhaite rejoindre un projet)</label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Personal Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <ProfileBasicInfo form={form} />
-                  <ProfileDetails form={form} />
-                </div>
-
-                <div className="space-y-6">
                   <FormField
                     control={form.control}
-                    name="pitch"
+                    name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Pitch</FormLabel>
+                        <FormLabel>Nom / Pseudo</FormLabel>
                         <FormControl>
-                          <textarea 
-                            placeholder="Décrivez brièvement votre projet ou vos compétences..." 
-                            {...field} 
-                            className="bg-black/20 border-white/20 min-h-[100px] w-full rounded-md border px-3 py-2" 
-                          />
+                          <Input placeholder="Votre nom" {...field} className="bg-black/20 border-white/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -221,15 +299,382 @@ const CofounderProfileEdit = () => {
 
                   <FormField
                     control={form.control}
-                    name="vision"
+                    name="role"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Vision</FormLabel>
+                        <FormLabel>{profileType === 'collaborator' ? 'Rôle proposé' : 'Votre rôle actuel'}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-black/20 border-white/20">
+                              <SelectValue placeholder="Sélectionner un rôle" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Founder">Founder</SelectItem>
+                            <SelectItem value="CTO">CTO</SelectItem>
+                            <SelectItem value="Developer">Developer</SelectItem>
+                            <SelectItem value="ML Engineer">ML Engineer</SelectItem>
+                            <SelectItem value="Data Scientist">Data Scientist</SelectItem>
+                            <SelectItem value="Designer">Designer</SelectItem>
+                            <SelectItem value="Prompt Engineer">Prompt Engineer</SelectItem>
+                            <SelectItem value="Business Developer">Business Developer</SelectItem>
+                            <SelectItem value="Marketing">Marketing</SelectItem>
+                            <SelectItem value="Product Manager">Product Manager</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Project Owner specific fields */}
+                {profileType === 'project-owner' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="projectName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nom du projet</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nom de votre projet ou startup" {...field} className="bg-black/20 border-white/20" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="projectStage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Stade du projet</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="bg-black/20 border-white/20">
+                                <SelectValue placeholder="Sélectionner le stade" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Idée">Idée</SelectItem>
+                              <SelectItem value="MVP">MVP</SelectItem>
+                              <SelectItem value="Beta">Beta</SelectItem>
+                              <SelectItem value="Lancé">Lancé</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+
+                {/* Project Owner seeking roles */}
+                {profileType === 'project-owner' && (
+                  <FormField
+                    control={form.control}
+                    name="seekingRoles"
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-2">
+                          <FormLabel>Rôles recherchés</FormLabel>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {["Founder", "CTO", "Developer", "ML Engineer", "Data Scientist", "Designer", "Prompt Engineer", "Business Developer", "Marketing", "Product Manager", "Other"].map((role) => (
+                            <FormField
+                              key={role}
+                              control={form.control}
+                              name="seekingRoles"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={role}
+                                    className="flex flex-row items-center space-x-2 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(role)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...(field.value || []), role])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== role
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="text-sm font-normal cursor-pointer">
+                                      {role}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {/* Pitch */}
+                <FormField
+                  control={form.control}
+                  name="pitch"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pitch</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Décrivez brièvement votre projet ou vos compétences..." 
+                          {...field} 
+                          className="bg-black/20 border-white/20 min-h-[100px]" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Vision */}
+                <FormField
+                  control={form.control}
+                  name="vision"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Vision</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Partagez votre vision à long terme..." 
+                          {...field} 
+                          className="bg-black/20 border-white/20 min-h-[100px]" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Main dropdowns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="sector"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Secteur cible</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-black/20 border-white/20">
+                              <SelectValue placeholder="Sélectionner un secteur" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Santé">Santé</SelectItem>
+                            <SelectItem value="RH">RH</SelectItem>
+                            <SelectItem value="Retail">Retail</SelectItem>
+                            <SelectItem value="Finance">Finance</SelectItem>
+                            <SelectItem value="Education">Education</SelectItem>
+                            <SelectItem value="Marketing">Marketing</SelectItem>
+                            <SelectItem value="Légal">Légal</SelectItem>
+                            <SelectItem value="Transport">Transport</SelectItem>
+                            <SelectItem value="Immobilier">Immobilier</SelectItem>
+                            <SelectItem value="Agriculture">Agriculture</SelectItem>
+                            <SelectItem value="Energie">Energie</SelectItem>
+                            <SelectItem value="Autre">Autre</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="objective"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Objectif principal</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-black/20 border-white/20">
+                              <SelectValue placeholder="Sélectionner un objectif" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Créer une startup">Créer une startup</SelectItem>
+                            <SelectItem value="Rejoindre un projet">Rejoindre un projet</SelectItem>
+                            <SelectItem value="Réseauter">Réseauter</SelectItem>
+                            <SelectItem value="Explorer des idées">Explorer des idées</SelectItem>
+                            <SelectItem value="Trouver un associé">Trouver un associé</SelectItem>
+                            <SelectItem value="Autre">Autre</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                
+                  <FormField
+                    control={form.control}
+                    name="availability"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Disponibilité</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-black/20 border-white/20">
+                              <SelectValue placeholder="Sélectionner votre disponibilité" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Temps plein">Temps plein</SelectItem>
+                            <SelectItem value="Mi-temps">Mi-temps</SelectItem>
+                            <SelectItem value="Soirs et weekends">Soirs et weekends</SelectItem>
+                            <SelectItem value="Quelques heures par semaine">Quelques heures par semaine</SelectItem>
+                            <SelectItem value="À définir">À définir</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="region"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Région / Télétravail</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-black/20 border-white/20">
+                              <SelectValue placeholder="Sélectionner votre région" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Paris">Paris</SelectItem>
+                            <SelectItem value="Lyon">Lyon</SelectItem>
+                            <SelectItem value="Marseille">Marseille</SelectItem>
+                            <SelectItem value="Bordeaux">Bordeaux</SelectItem>
+                            <SelectItem value="Lille">Lille</SelectItem>
+                            <SelectItem value="Toulouse">Toulouse</SelectItem>
+                            <SelectItem value="Nantes">Nantes</SelectItem>
+                            <SelectItem value="Strasbourg">Strasbourg</SelectItem>
+                            <SelectItem value="Remote">Remote</SelectItem>
+                            <SelectItem value="Autre">Autre</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* AI Tools */}
+                <FormField
+                  control={form.control}
+                  name="aiTools"
+                  render={() => (
+                    <FormItem>
+                      <div className="mb-2">
+                        <FormLabel>Outils IA maîtrisés</FormLabel>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {["Python", "TensorFlow", "PyTorch", "ChatGPT", "Claude", "Midjourney", "LangChain", "Stable Diffusion", "Hugging Face", "No-code tools", "Autre"].map((tool) => (
+                          <FormField
+                            key={tool}
+                            control={form.control}
+                            name="aiTools"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={tool}
+                                  className="flex flex-row items-center space-x-2 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(tool)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...(field.value || []), tool])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== tool
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="text-sm font-normal cursor-pointer">
+                                    {tool}
+                                  </FormLabel>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Social links */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="linkedinUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>LinkedIn (optionnel)</FormLabel>
                         <FormControl>
-                          <textarea 
-                            placeholder="Partagez votre vision à long terme..." 
+                          <Input 
+                            placeholder="https://linkedin.com/in/..." 
                             {...field} 
-                            className="bg-black/20 border-white/20 min-h-[100px] w-full rounded-md border px-3 py-2" 
+                            className="bg-black/20 border-white/20" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="portfolioUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Portfolio (optionnel)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="https://..." 
+                            {...field} 
+                            className="bg-black/20 border-white/20" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="websiteUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Site web (optionnel)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="https://..." 
+                            {...field} 
+                            className="bg-black/20 border-white/20" 
                           />
                         </FormControl>
                         <FormMessage />
@@ -237,15 +682,15 @@ const CofounderProfileEdit = () => {
                     )}
                   />
                 </div>
-
-                <ProfileLinks form={form} />
                 
                 <Button 
                   type="submit" 
                   className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black"
-                  disabled={saving}
+                  disabled={saveMutation.isPending}
                 >
-                  {saving && <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-black mr-2"></div>}
+                  {saveMutation.isPending && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-black mr-2"></div>
+                  )}
                   <Save size={16} className="mr-2" />
                   {isNewProfile ? "Créer le profil" : "Enregistrer les modifications"}
                 </Button>
@@ -254,6 +699,27 @@ const CofounderProfileEdit = () => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation dialog for deleting a profile */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer ce profil?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Toutes les données associées à ce profil seront définitivement supprimées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ProtectedRoute>
   );
 };

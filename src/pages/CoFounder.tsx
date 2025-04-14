@@ -1,33 +1,31 @@
 
 import React, { useState, useEffect } from 'react';
-import Navbar from '@/components/navbar/Navbar';
 import CoFounderSearch from '@/components/CoFounderSearch';
-import CoFounderProfile from '@/components/CoFounderProfile';
 import ProjectsList from '@/components/ProjectsList';
 import Footer from '@/components/Footer';
 import { CofounderProfile } from '@/types/cofounders';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import SEO from '@/components/SEO';
 import { ArrowRight } from 'lucide-react';
-
-// Mock data for development purposes
-import { mockCofounderProfiles } from '@/data/mockCofounderProfiles';
+import { getCofounderProfiles, sendMatchRequest } from '@/services/cofounderService';
+import { useQuery } from '@tanstack/react-query';
 
 const CoFounder = () => {
-  const [profiles] = useState<CofounderProfile[]>(mockCofounderProfiles);
   const [showProfileForm, setShowProfileForm] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast: toastUI } = useToast();
+  
+  // Fetch cofounder profiles from the database
+  const { data: profiles, isLoading, error } = useQuery({
+    queryKey: ['cofounderProfiles'],
+    queryFn: getCofounderProfiles,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-  // Filter for project owners
-  const projects = profiles.filter(profile => profile.profileType === 'project-owner');
-
-  // Handler wrapped in useCallback to avoid recreation
+  // Handler for creating a profile
   const handleCreateProfileClick = () => {
     console.log("Button clicked - new implementation");
     if (!user) {
@@ -42,12 +40,12 @@ const CoFounder = () => {
       return;
     }
     
-    // If user is authenticated, show the profile form
-    setShowProfileForm(true);
+    // If user is authenticated, redirect to profile creation page
+    navigate('/cofounder/create');
   };
 
-  // Re-implementing the match request handler that was accidentally removed
-  const handleMatchRequest = (profileId: string) => {
+  // Handler for match requests
+  const handleMatchRequest = async (profileId: string) => {
     if (!user) {
       toast("Connexion requise", { 
         description: "Vous devez être connecté pour contacter un profil",
@@ -59,12 +57,21 @@ const CoFounder = () => {
       return;
     }
     
-    // In real app, this would trigger a backend call to send the match request
-    console.log(`Match request sent to profile ${profileId}`);
-    toast.success("Demande de contact envoyée !");
-    
-    // In a real app, we would update the UI to reflect the match request
+    try {
+      await sendMatchRequest(profileId);
+      toast.success("Demande de contact envoyée !");
+    } catch (error) {
+      console.error("Error sending match request:", error);
+      toast.error("Erreur lors de l'envoi de la demande de contact");
+    }
   };
+
+  // Filter for project owners
+  const projects = profiles?.filter(profile => profile.profileType === 'project-owner') || [];
+
+  if (error) {
+    console.error("Error fetching profiles:", error);
+  }
 
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
@@ -78,8 +85,6 @@ const CoFounder = () => {
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
       <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
       
-      <Navbar />
-      
       <main className="container mx-auto pt-28 pb-16 px-4">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -90,62 +95,63 @@ const CoFounder = () => {
           </p>
         </div>
 
-        {!showProfileForm ? (
-          <div className="max-w-6xl mx-auto">
-            <div className="flex justify-center mb-10 relative z-10">
-              <div 
-                className="inline-block"
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-center mb-10 relative z-10">
+            <div 
+              className="inline-block"
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log("Container clicked");
+                handleCreateProfileClick();
+              }}
+            >
+              <button 
+                type="button"
+                className="inline-flex items-center justify-center bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black py-6 px-8 text-lg rounded-md button-glow cursor-pointer z-20 relative"
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log("Container clicked");
+                  console.log("Inner button clicked");
                   handleCreateProfileClick();
                 }}
               >
-                <button 
-                  type="button"
-                  className="inline-flex items-center justify-center bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black py-6 px-8 text-lg rounded-md button-glow cursor-pointer z-20 relative"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    console.log("Inner button clicked");
-                    handleCreateProfileClick();
-                  }}
-                >
-                  Créer mon profil de co-fondateur <ArrowRight className="ml-2 size-4" />
-                </button>
-              </div>
+                Créer mon profil de co-fondateur <ArrowRight className="ml-2 size-4" />
+              </button>
             </div>
+          </div>
 
-            <div className="mb-16">
+          <div className="mb-16">
+            {isLoading ? (
+              <div className="text-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise mx-auto"></div>
+                <p className="mt-4 text-white/70">Chargement des profils...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-20 glass-card">
+                <p className="text-white/70 text-lg">Une erreur est survenue lors du chargement des profils.</p>
+                <Button 
+                  className="mt-4 bg-startupia-turquoise hover:bg-startupia-turquoise/90"
+                  onClick={() => window.location.reload()}
+                >
+                  Réessayer
+                </Button>
+              </div>
+            ) : (
               <CoFounderSearch 
-                profiles={profiles} 
+                profiles={profiles || []} 
                 requireAuth={true} 
                 onMatchRequest={handleMatchRequest}
               />
-            </div>
-            
-            <div className="mt-16">
-              <ProjectsList 
-                projects={projects} 
-                requireAuth={true}
-                onMatchRequest={handleMatchRequest} 
-              />
-            </div>
+            )}
           </div>
-        ) : (
-          <div className="max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Créer mon profil</h2>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowProfileForm(false)}
-                className="border-startupia-turquoise text-startupia-turquoise hover:bg-startupia-turquoise/10"
-              >
-                Retour à la recherche
-              </Button>
-            </div>
-            <CoFounderProfile onProfileCreated={() => setShowProfileForm(false)} />
+          
+          <div className="mt-16">
+            <ProjectsList 
+              projects={projects} 
+              requireAuth={true}
+              onMatchRequest={handleMatchRequest} 
+            />
           </div>
-        )}
+        </div>
       </main>
 
       <Footer />

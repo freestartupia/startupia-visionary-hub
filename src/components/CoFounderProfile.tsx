@@ -25,9 +25,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { AITool, Availability, Region, Sector, CofounderProfile } from '@/types/cofounders';
-import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { createCofounderProfile } from '@/services/cofounderService';
 
 // Form schema
 const formSchema = z.object({
@@ -82,49 +82,56 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
 
   const profileType = form.watch('profileType');
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour créer un profil");
+      navigate('/auth');
+      return;
+    }
+    
     setIsSubmitting(true);
     
-    // Create the cofounder profile object
-    const newProfile: CofounderProfile = {
-      id: uuidv4(),
-      name: values.name,
-      profileType: values.profileType,
-      role: values.role as any,
-      seekingRoles: values.seekingRoles as any[] || [],
-      pitch: values.pitch,
-      sector: values.sector as any,
-      objective: values.objective as any,
-      aiTools: values.aiTools as any[],
-      availability: values.availability as any,
-      vision: values.vision,
-      region: values.region as any,
-      linkedinUrl: values.linkedinUrl || undefined,
-      portfolioUrl: values.portfolioUrl || undefined,
-      websiteUrl: values.websiteUrl || undefined,
-      photoUrl: user?.email ? `https://ui-avatars.com/api/?name=${encodeURIComponent(values.name)}&background=random` : undefined,
-      dateCreated: new Date().toISOString(),
-      hasAIBadge: values.aiTools.length > 3, // Simple logic for AI badge
-      projectName: values.profileType === 'project-owner' ? values.projectName : undefined,
-      projectStage: values.profileType === 'project-owner' ? values.projectStage : undefined,
-      matches: []
-    };
-
-    // In a real app, this would send the data to a backend API or database
-    console.log('Created new profile:', newProfile);
-    
-    // Simulate API call with timeout
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // Create the profile in the database
+      await createCofounderProfile({
+        name: values.name,
+        profileType: values.profileType,
+        role: values.role as any,
+        seekingRoles: values.seekingRoles as any[] || [],
+        pitch: values.pitch,
+        sector: values.sector as any,
+        objective: values.objective as any,
+        aiTools: values.aiTools as any[],
+        availability: values.availability as any,
+        vision: values.vision,
+        region: values.region as any,
+        linkedinUrl: values.linkedinUrl || undefined,
+        portfolioUrl: values.portfolioUrl || undefined,
+        websiteUrl: values.websiteUrl || undefined,
+        photoUrl: user?.email ? `https://ui-avatars.com/api/?name=${encodeURIComponent(values.name)}&background=random` : undefined,
+        hasAIBadge: values.aiTools.length > 3,
+        projectName: values.profileType === 'project-owner' ? values.projectName : undefined,
+        projectStage: values.profileType === 'project-owner' ? values.projectStage : undefined,
+      });
+      
       toast.success("Votre profil a été créé avec succès !", {
         description: "Vous pouvez maintenant rechercher ou être trouvé par d'autres cofondateurs"
       });
       
-      // Call the onProfileCreated callback if provided
+      // Call the onProfileCreated callback if provided or navigate to profile page
       if (onProfileCreated) {
         onProfileCreated();
+      } else {
+        navigate('/profile?tab=cofounder');
       }
-    }, 1000);
+    } catch (error) {
+      console.error("Error creating profile:", error);
+      toast.error("Erreur lors de la création du profil", {
+        description: error instanceof Error ? error.message : "Une erreur s'est produite"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const availabilityOptions: Availability[] = [
@@ -263,9 +270,17 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {roleOptions.map((role) => (
-                        <SelectItem key={role} value={role}>{role}</SelectItem>
-                      ))}
+                      <SelectItem value="Founder">Founder</SelectItem>
+                      <SelectItem value="CTO">CTO</SelectItem>
+                      <SelectItem value="Developer">Developer</SelectItem>
+                      <SelectItem value="ML Engineer">ML Engineer</SelectItem>
+                      <SelectItem value="Data Scientist">Data Scientist</SelectItem>
+                      <SelectItem value="Designer">Designer</SelectItem>
+                      <SelectItem value="Prompt Engineer">Prompt Engineer</SelectItem>
+                      <SelectItem value="Business Developer">Business Developer</SelectItem>
+                      <SelectItem value="Marketing">Marketing</SelectItem>
+                      <SelectItem value="Product Manager">Product Manager</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -328,7 +343,7 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
                     <FormLabel>Rôles recherchés</FormLabel>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {roleOptions.map((role) => (
+                    {["Founder", "CTO", "Developer", "ML Engineer", "Data Scientist", "Designer", "Prompt Engineer", "Business Developer", "Marketing", "Product Manager", "Other"].map((role) => (
                       <FormField
                         key={role}
                         control={form.control}
@@ -414,9 +429,18 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {sectorOptions.map((sector) => (
-                        <SelectItem key={sector} value={sector}>{sector}</SelectItem>
-                      ))}
+                      <SelectItem value="Santé">Santé</SelectItem>
+                      <SelectItem value="RH">RH</SelectItem>
+                      <SelectItem value="Retail">Retail</SelectItem>
+                      <SelectItem value="Finance">Finance</SelectItem>
+                      <SelectItem value="Education">Education</SelectItem>
+                      <SelectItem value="Marketing">Marketing</SelectItem>
+                      <SelectItem value="Légal">Légal</SelectItem>
+                      <SelectItem value="Transport">Transport</SelectItem>
+                      <SelectItem value="Immobilier">Immobilier</SelectItem>
+                      <SelectItem value="Agriculture">Agriculture</SelectItem>
+                      <SelectItem value="Energie">Energie</SelectItem>
+                      <SelectItem value="Autre">Autre</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -437,9 +461,12 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {objectiveOptions.map((objective) => (
-                        <SelectItem key={objective} value={objective}>{objective}</SelectItem>
-                      ))}
+                      <SelectItem value="Créer une startup">Créer une startup</SelectItem>
+                      <SelectItem value="Rejoindre un projet">Rejoindre un projet</SelectItem>
+                      <SelectItem value="Réseauter">Réseauter</SelectItem>
+                      <SelectItem value="Explorer des idées">Explorer des idées</SelectItem>
+                      <SelectItem value="Trouver un associé">Trouver un associé</SelectItem>
+                      <SelectItem value="Autre">Autre</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -460,9 +487,11 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {availabilityOptions.map((option) => (
-                        <SelectItem key={option} value={option}>{option}</SelectItem>
-                      ))}
+                      <SelectItem value="Temps plein">Temps plein</SelectItem>
+                      <SelectItem value="Mi-temps">Mi-temps</SelectItem>
+                      <SelectItem value="Soirs et weekends">Soirs et weekends</SelectItem>
+                      <SelectItem value="Quelques heures par semaine">Quelques heures par semaine</SelectItem>
+                      <SelectItem value="À définir">À définir</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -483,9 +512,16 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {regionOptions.map((region) => (
-                        <SelectItem key={region} value={region}>{region}</SelectItem>
-                      ))}
+                      <SelectItem value="Paris">Paris</SelectItem>
+                      <SelectItem value="Lyon">Lyon</SelectItem>
+                      <SelectItem value="Marseille">Marseille</SelectItem>
+                      <SelectItem value="Bordeaux">Bordeaux</SelectItem>
+                      <SelectItem value="Lille">Lille</SelectItem>
+                      <SelectItem value="Toulouse">Toulouse</SelectItem>
+                      <SelectItem value="Nantes">Nantes</SelectItem>
+                      <SelectItem value="Strasbourg">Strasbourg</SelectItem>
+                      <SelectItem value="Remote">Remote</SelectItem>
+                      <SelectItem value="Autre">Autre</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -504,7 +540,7 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
                   <FormLabel>Outils IA maîtrisés</FormLabel>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {aiToolOptions.map((tool) => (
+                  {["Python", "TensorFlow", "PyTorch", "ChatGPT", "Claude", "Midjourney", "LangChain", "Stable Diffusion", "Hugging Face", "No-code tools", "Autre"].map((tool) => (
                     <FormField
                       key={tool}
                       control={form.control}
@@ -632,7 +668,14 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
               className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black button-glow"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Création en cours...' : 'Créer mon profil'}
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-black mr-2"></div>
+                  Création en cours...
+                </>
+              ) : (
+                'Créer mon profil'
+              )}
             </Button>
           </div>
         </form>

@@ -8,59 +8,58 @@ import { Edit, Plus, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getMyCofounderProfiles, deleteCofounderProfile } from '@/services/cofounderService';
 import type { CofounderProfile } from '@/types/cofounders';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const ProfileCoFounderProfiles = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [profiles, setProfiles] = useState<CofounderProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      if (!user) return;
-      setLoading(true);
-      try {
-        const userProfiles = await getMyCofounderProfiles();
-        setProfiles(userProfiles);
-      } catch (error) {
-        console.error('Erreur lors de la récupération des profils:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger vos profils",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Query to fetch user's cofounder profiles
+  const { data: profiles, isLoading, error } = useQuery({
+    queryKey: ['myCofounderProfiles'],
+    queryFn: getMyCofounderProfiles,
+    enabled: !!user,
+    staleTime: 60 * 1000, // 1 minute
+  });
 
-    fetchProfiles();
-  }, [user, toast]);
-
-  const handleDeleteProfile = async (profileId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce profil ?')) {
-      return;
-    }
-
-    setDeleting(profileId);
-    try {
-      await deleteCofounderProfile(profileId);
-      setProfiles(profiles.filter(p => p.id !== profileId));
+  // Mutation to delete a profile
+  const deleteMutation = useMutation({
+    mutationFn: deleteCofounderProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myCofounderProfiles'] });
       toast({
         title: "Profil supprimé",
         description: "Le profil a été supprimé avec succès.",
       });
-    } catch (error) {
+      setProfileToDelete(null);
+    },
+    onError: (error) => {
       console.error('Erreur lors de la suppression du profil:', error);
       toast({
         title: "Erreur",
         description: "Impossible de supprimer le profil",
         variant: "destructive",
       });
-    } finally {
-      setDeleting(null);
+      setProfileToDelete(null);
+    }
+  });
+
+  const handleDeleteConfirm = async () => {
+    if (profileToDelete) {
+      deleteMutation.mutate(profileToDelete);
     }
   };
 
@@ -74,11 +73,19 @@ const ProfileCoFounderProfiles = () => {
         </Button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-8">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
         </div>
-      ) : profiles.length === 0 ? (
+      ) : error ? (
+        <div className="text-center py-10 border border-dashed border-white/20 rounded-lg">
+          <h3 className="text-lg font-medium mb-2">Erreur de chargement</h3>
+          <p className="text-white/70 mb-4">Impossible de charger vos profils cofondateur.</p>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['myCofounderProfiles'] })} variant="outline">
+            Réessayer
+          </Button>
+        </div>
+      ) : profiles && profiles.length === 0 ? (
         <div className="text-center py-10 border border-dashed border-white/20 rounded-lg">
           <h3 className="text-lg font-medium mb-2">Vous n'avez pas encore de profil cofondateur</h3>
           <p className="text-white/70 mb-4">Créez votre profil pour être mis en relation avec des partenaires potentiels.</p>
@@ -89,7 +96,7 @@ const ProfileCoFounderProfiles = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {profiles.map((profile) => (
+          {profiles?.map((profile) => (
             <div key={profile.id} className="border border-white/10 rounded-lg p-4 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -122,10 +129,10 @@ const ProfileCoFounderProfiles = () => {
                 <Button 
                   variant="destructive"
                   className="flex-1 md:flex-none"
-                  onClick={() => handleDeleteProfile(profile.id)}
-                  disabled={deleting === profile.id}
+                  onClick={() => setProfileToDelete(profile.id)}
+                  disabled={deleteMutation.isPending}
                 >
-                  {deleting === profile.id ? (
+                  {deleteMutation.isPending && profileToDelete === profile.id ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
                   ) : (
                     <Trash2 size={16} className="mr-2" />
@@ -137,6 +144,27 @@ const ProfileCoFounderProfiles = () => {
           ))}
         </div>
       )}
+
+      {/* Confirmation dialog for deleting a profile */}
+      <AlertDialog open={!!profileToDelete} onOpenChange={(open) => !open && setProfileToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer ce profil?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Toutes les données associées à ce profil seront définitivement supprimées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

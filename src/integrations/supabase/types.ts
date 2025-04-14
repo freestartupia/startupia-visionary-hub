@@ -881,6 +881,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      handle_startup_vote: {
+        Args: {
+          p_startup_id: string
+          p_user_id: string
+          p_is_upvote: boolean
+          p_existing_vote_id: string
+          p_was_upvote: boolean
+        }
+        Returns: Json
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean

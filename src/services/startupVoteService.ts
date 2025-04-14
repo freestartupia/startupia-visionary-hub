@@ -60,11 +60,7 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       };
     }
     
-    let newCount = currentCount;
-    let isVoteUpvoted = false;
-    let resultMessage = "";
-    
-    // Perform vote operations in a transaction to ensure data consistency
+    // Perform vote operations using our database function
     const { data, error } = await supabase.rpc('handle_startup_vote', {
       p_startup_id: startupId,
       p_user_id: userId,
@@ -86,9 +82,9 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
     // Return the results from the database function
     return {
       success: true,
-      message: data.message,
-      upvoted: data.is_upvoted,
-      newCount: data.new_count
+      message: data.message as string,
+      upvoted: data.is_upvoted as boolean,
+      newCount: data.new_count as number
     };
     
   } catch (error) {

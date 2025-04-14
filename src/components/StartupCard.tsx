@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Star, ThumbsUp } from "lucide-react";
+import { Star, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Startup } from "@/types/startup";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toggleStartupUpvote } from "@/services/startupVoteService";
+import { toggleStartupUpvote, toggleStartupDownvote } from "@/services/startupVoteService";
 
 interface StartupCardProps {
   startup: Startup;
@@ -19,6 +20,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
   const navigate = useNavigate();
   const [upvoteCount, setUpvoteCount] = useState(startup.upvoteCount || 0);
   const [isUpvoted, setIsUpvoted] = useState(false);
+  const [isDownvoted, setIsDownvoted] = useState(false);
   const [isVoting, setIsVoting] = useState(false);
   
   useEffect(() => {
@@ -29,15 +31,16 @@ const StartupCard = ({ startup }: StartupCardProps) => {
         }
         
         if (user) {
-          const { data: userUpvote, error: userError } = await supabase
+          const { data: userVote, error: userError } = await supabase
             .from('startup_votes')
             .select('id, is_upvote')
             .eq('startup_id', startup.id)
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
             
-          if (!userError && userUpvote && userUpvote.is_upvote) {
-            setIsUpvoted(true);
+          if (!userError && userVote) {
+            setIsUpvoted(userVote.is_upvote === true);
+            setIsDownvoted(userVote.is_upvote === false);
           }
         }
       } catch (error) {
@@ -48,7 +51,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     fetchUpvoteData();
   }, [startup.id, startup.upvoteCount, user]);
   
-  const handleVote = async (e: React.MouseEvent) => {
+  const handleUpvote = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -62,34 +65,58 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     
     setIsVoting(true);
     
-    const previousUpvoted = isUpvoted;
-    const previousCount = upvoteCount;
-    
-    if (isUpvoted) {
-      setUpvoteCount(prev => prev - 1);
-      setIsUpvoted(false);
-    } else {
-      setUpvoteCount(prev => prev + 1);
-      setIsUpvoted(true);
-    }
-    
     try {
       const response = await toggleStartupUpvote(startup.id);
       
       if (response.success) {
         setUpvoteCount(response.newCount);
         setIsUpvoted(response.upvoted);
+        setIsDownvoted(false);
         
         if (response.message) {
           toast.success(response.message);
         }
       } else {
-        setUpvoteCount(previousCount);
-        setIsUpvoted(previousUpvoted);
         toast.error(response.message || "Erreur lors du vote");
       }
     } catch (error) {
       console.error('Error toggling upvote:', error);
+      toast.error("Erreur lors du vote");
+    } finally {
+      setTimeout(() => setIsVoting(false), 500);
+    }
+  };
+  
+  const handleDownvote = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast.error("Vous devez être connecté pour voter");
+      navigate('/auth');
+      return;
+    }
+    
+    if (isVoting) return;
+    
+    setIsVoting(true);
+    
+    try {
+      const response = await toggleStartupDownvote(startup.id);
+      
+      if (response.success) {
+        setUpvoteCount(response.newCount);
+        setIsDownvoted(response.upvoted);
+        setIsUpvoted(false);
+        
+        if (response.message) {
+          toast.success(response.message);
+        }
+      } else {
+        toast.error(response.message || "Erreur lors du vote");
+      }
+    } catch (error) {
+      console.error('Error toggling downvote:', error);
       toast.error("Erreur lors du vote");
     } finally {
       setTimeout(() => setIsVoting(false), 500);
@@ -133,18 +160,29 @@ const StartupCard = ({ startup }: StartupCardProps) => {
               <p className="text-sm text-white/60">{startup.sector}</p>
             </div>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
-              className={`hover:bg-startupia-turquoise/20 mr-2 transition-colors ${
+              className={`hover:bg-startupia-turquoise/20 transition-colors ${
                 isUpvoted ? 'text-startupia-turquoise' : 'text-white/70'
               } ${isVoting ? 'opacity-50' : ''}`}
-              onClick={handleVote}
+              onClick={handleUpvote}
               disabled={isVoting}
             >
-              <ThumbsUp size={16} className={`mr-1 ${isVoting ? 'animate-pulse' : ''}`} />
-              <span>{upvoteCount}</span>
+              <ThumbsUp size={16} className={isVoting ? 'animate-pulse' : ''} />
+            </Button>
+            <span className="text-white mx-1">{upvoteCount}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`hover:bg-red-500/20 transition-colors ${
+                isDownvoted ? 'text-red-500' : 'text-white/70'
+              } ${isVoting ? 'opacity-50' : ''}`}
+              onClick={handleDownvote}
+              disabled={isVoting}
+            >
+              <ThumbsDown size={16} className={isVoting ? 'animate-pulse' : ''} />
             </Button>
           </div>
         </div>

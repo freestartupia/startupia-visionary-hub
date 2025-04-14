@@ -13,24 +13,27 @@ const checkAdminOrModeratorRole = async (): Promise<boolean> => {
       return false;
     }
     
-    // Check if user is the hardcoded admin (temporary)
-    if (userData.user.email === 'skyzohd22@gmail.com') {
-      console.log('User is hardcoded admin');
+    // Check if user is a hardcoded admin (temporary)
+    // This email should match the one used in your account
+    if (userData.user.email === 'adilboudih2@gmail.com') {
       return true;
     }
     
-    // Direct query to user_roles table
+    // Direct query to user_roles table with the correct user ID filter
     const { data: roles, error: rolesError } = await supabase
       .from('user_roles')
-      .select('role');
+      .select('role')
+      .eq('user_id', userData.user.id);
       
     if (rolesError) {
       console.error('Error checking user roles:', rolesError);
       return false;
     }
     
-    const hasRole = roles && roles.some(role => role.role === 'admin' || role.role === 'moderator');
-    console.log('User roles check result:', hasRole, roles);
+    const hasRole = roles && roles.some(role => 
+      role.role === 'admin' || role.role === 'moderator'
+    );
+    
     return hasRole || false;
   } catch (error) {
     console.error('Error checking admin role:', error);
@@ -44,8 +47,6 @@ const checkAdminOrModeratorRole = async (): Promise<boolean> => {
  */
 export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 'rejected'): Promise<BlogPost[]> => {
   try {
-    console.log(`Fetching ${status} blog posts`);
-    
     // Check if user has admin or moderator role
     const isAdminOrModerator = await checkAdminOrModeratorRole();
     
@@ -64,8 +65,6 @@ export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 're
       console.error(`Error fetching ${status} blog posts:`, error);
       return [];
     }
-    
-    console.log(`Found ${data?.length || 0} ${status} blog posts`, data);
     
     return (data || []).map(mapDbPostToBlogPost);
   } catch (error) {
@@ -93,8 +92,6 @@ export const updateBlogPostStatus = async (
         error: 'Vous n\'avez pas les permissions pour modérer des articles' 
       };
     }
-
-    console.log(`Updating post ${postId} status to ${status}`);
     
     const { error } = await supabase
       .from('blog_posts')

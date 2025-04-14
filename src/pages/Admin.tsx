@@ -31,16 +31,9 @@ const Admin = () => {
     setError(null);
     
     try {
-      console.log("Fetching blog posts for moderation...");
-      
       const pending = await getBlogPostsByStatus('pending');
-      console.log("Pending posts:", pending);
-      
       const published = await getBlogPostsByStatus('published');
-      console.log("Published posts:", published);
-      
       const rejected = await getBlogPostsByStatus('rejected');
-      console.log("Rejected posts:", rejected);
       
       setPendingPosts(pending);
       setPublishedPosts(published);
@@ -173,9 +166,7 @@ const Admin = () => {
           <TabsContent value="published" className="space-y-4">
             <h2 className="text-2xl font-semibold">Articles publiés</h2>
             {isLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
-              </div>
+              renderLoading()
             ) : publishedPosts.length === 0 ? (
               <p className="text-white/70">Aucun article publié.</p>
             ) : (
@@ -200,9 +191,7 @@ const Admin = () => {
           <TabsContent value="rejected" className="space-y-4">
             <h2 className="text-2xl font-semibold">Articles rejetés</h2>
             {isLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
-              </div>
+              renderLoading()
             ) : rejectedPosts.length === 0 ? (
               <p className="text-white/70">Aucun article rejeté.</p>
             ) : (

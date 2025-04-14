@@ -104,22 +104,41 @@ export const addLike = async (
       };
     }
     
-    // Add the like record
-    const { error } = await supabase
-      .from(tableName)
-      .insert({
-        [idField]: itemId,
-        user_id: userId
-      });
-      
-    if (error) {
-      console.error(`Error adding like:`, error);
-      return { 
-        success: false, 
-        message: 'Erreur lors de l\'ajout du like',
-        liked: false,
-        newCount: 0
-      };
+    // Add the like record - use type-safe insert based on the table name
+    if (tableName === 'forum_post_likes') {
+      const { error } = await supabase
+        .from('forum_post_likes')
+        .insert({
+          post_id: itemId,
+          user_id: userId
+        });
+        
+      if (error) {
+        console.error(`Error adding like:`, error);
+        return { 
+          success: false, 
+          message: 'Erreur lors de l\'ajout du like',
+          liked: false,
+          newCount: 0
+        };
+      }
+    } else if (tableName === 'forum_reply_likes') {
+      const { error } = await supabase
+        .from('forum_reply_likes')
+        .insert({
+          reply_id: itemId,
+          user_id: userId
+        });
+        
+      if (error) {
+        console.error(`Error adding like:`, error);
+        return { 
+          success: false, 
+          message: 'Erreur lors de l\'ajout du like',
+          liked: false,
+          newCount: 0
+        };
+      }
     }
     
     const newCount = await getLikeCount(tableName, idField, itemId);

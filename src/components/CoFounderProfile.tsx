@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,8 +27,8 @@ import { AITool, Availability, Region, Sector, CofounderProfile } from '@/types/
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { createCofounderProfile } from '@/services/cofounderService';
+import AvatarUpload from './AvatarUpload';
 
-// Form schema
 const formSchema = z.object({
   profileType: z.enum(['project-owner', 'collaborator']),
   name: z.string().min(2, { message: 'Le nom doit contenir au moins 2 caractères' }),
@@ -55,6 +54,7 @@ interface CoFounderProfileProps {
 
 const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -108,7 +108,7 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
         linkedinUrl: values.linkedinUrl || undefined,
         portfolioUrl: values.portfolioUrl || undefined,
         websiteUrl: values.websiteUrl || undefined,
-        photoUrl: user?.email ? `https://ui-avatars.com/api/?name=${encodeURIComponent(values.name)}&background=random` : undefined,
+        photoUrl: avatarUrl || (user?.email ? `https://ui-avatars.com/api/?name=${encodeURIComponent(values.name)}&background=random` : undefined),
         hasAIBadge: values.aiTools.length > 3,
         projectName: values.profileType === 'project-owner' ? values.projectName : undefined,
         projectStage: values.profileType === 'project-owner' ? values.projectStage : undefined,
@@ -213,6 +213,15 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {user && (
+            <div className="mb-6 flex justify-center">
+              <AvatarUpload 
+                userId={user.id} 
+                onImageUploaded={(url) => setAvatarUrl(url)}
+              />
+            </div>
+          )}
+          
           {/* Profile Type */}
           <FormField
             control={form.control}

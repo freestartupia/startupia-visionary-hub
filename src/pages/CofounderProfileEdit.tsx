@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,17 +29,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import AvatarUpload from '@/components/AvatarUpload';
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -75,8 +66,8 @@ const CofounderProfileEdit = () => {
   const queryClient = useQueryClient();
   
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
   
-  // Fetch existing profile data
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['cofounderProfile', id],
     queryFn: () => getCofounderProfile(id as string),
@@ -84,7 +75,6 @@ const CofounderProfileEdit = () => {
     staleTime: 60 * 1000,
   });
   
-  // Mutation for creating/updating profile
   const saveMutation = useMutation({
     mutationFn: (data: Partial<CofounderProfile>) => 
       isNewProfile ? createCofounderProfile(data) : updateCofounderProfile(data),
@@ -109,7 +99,6 @@ const CofounderProfileEdit = () => {
     }
   });
   
-  // Mutation for deleting profile
   const deleteMutation = useMutation({
     mutationFn: deleteCofounderProfile,
     onSuccess: () => {
@@ -156,7 +145,6 @@ const CofounderProfileEdit = () => {
     }
   });
 
-  // Set form values when profile data is loaded
   React.useEffect(() => {
     if (profile && !isNewProfile) {
       form.reset({
@@ -192,7 +180,8 @@ const CofounderProfileEdit = () => {
       region: data.region as Region,
       seekingRoles: data.seekingRoles as Role[],
       aiTools: data.aiTools as AITool[],
-      projectStage: data.projectStage as ProjectStage | undefined
+      projectStage: data.projectStage as ProjectStage | undefined,
+      photoUrl: avatarUrl || data.photoUrl
     };
 
     saveMutation.mutate(profileData);
@@ -251,9 +240,18 @@ const CofounderProfileEdit = () => {
               )}
             </div>
 
+            {user && (
+              <div className="mb-6 flex justify-center">
+                <AvatarUpload 
+                  userId={user.id}
+                  existingImageUrl={profile?.photoUrl || null}
+                  onImageUploaded={(url) => setAvatarUrl(url)}
+                />
+              </div>
+            )}
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {/* Profile Type */}
                 <FormField
                   control={form.control}
                   name="profileType"
@@ -281,7 +279,6 @@ const CofounderProfileEdit = () => {
                   )}
                 />
 
-                {/* Personal Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
@@ -329,7 +326,6 @@ const CofounderProfileEdit = () => {
                   />
                 </div>
 
-                {/* Project Owner specific fields */}
                 {profileType === 'project-owner' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
@@ -372,7 +368,6 @@ const CofounderProfileEdit = () => {
                   </div>
                 )}
 
-                {/* Project Owner seeking roles */}
                 {profileType === 'project-owner' && (
                   <FormField
                     control={form.control}
@@ -423,7 +418,6 @@ const CofounderProfileEdit = () => {
                   />
                 )}
 
-                {/* Pitch */}
                 <FormField
                   control={form.control}
                   name="pitch"
@@ -442,7 +436,6 @@ const CofounderProfileEdit = () => {
                   )}
                 />
 
-                {/* Vision */}
                 <FormField
                   control={form.control}
                   name="vision"
@@ -461,7 +454,6 @@ const CofounderProfileEdit = () => {
                   )}
                 />
 
-                {/* Main dropdowns */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
@@ -577,7 +569,6 @@ const CofounderProfileEdit = () => {
                   />
                 </div>
 
-                {/* AI Tools */}
                 <FormField
                   control={form.control}
                   name="aiTools"
@@ -626,7 +617,6 @@ const CofounderProfileEdit = () => {
                   )}
                 />
 
-                {/* Social links */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <FormField
                     control={form.control}
@@ -700,7 +690,6 @@ const CofounderProfileEdit = () => {
         </div>
       </div>
 
-      {/* Confirmation dialog for deleting a profile */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>

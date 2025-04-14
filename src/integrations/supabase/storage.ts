@@ -35,6 +35,9 @@ export const uploadFile = async (
   file: File
 ) => {
   try {
+    // Create bucket if it doesn't exist
+    await createStorageBucket(bucketName);
+    
     const { data, error } = await supabase.storage
       .from(bucketName)
       .upload(filePath, file, {
@@ -81,9 +84,17 @@ export const deleteFile = async (bucketName: string, filePath: string) => {
 // Initialiser les buckets au démarrage de l'application
 export const initializeStorage = async () => {
   try {
-    // Créer le bucket pour les avatars utilisateurs
+    // Créer le bucket pour les avatars utilisateurs et contenu utilisateur
     await createStorageBucket('user_content');
   } catch (error) {
     console.error('Erreur lors de l\'initialisation du stockage:', error);
   }
+};
+
+export default {
+  createStorageBucket,
+  uploadFile,
+  getPublicUrl,
+  deleteFile,
+  initializeStorage
 };

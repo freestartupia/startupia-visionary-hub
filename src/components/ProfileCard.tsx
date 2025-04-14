@@ -27,20 +27,13 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
   // Fetch user avatar from profiles table
   useEffect(() => {
     const fetchUserAvatar = async () => {
-      if (!user) return;
-      
       try {
-        // First check if this is current user's profile by user_id
-        const isCurrentUserProfile = profile.user_id === user.id;
-        
-        if (isCurrentUserProfile) {
-          console.log("This is current user's profile, fetching avatar for:", user.id);
-          
-          // Fetch avatar from profiles table
+        // Fetch avatar from profiles table using the profile.user_id
+        if (profile.user_id) {
           const { data, error } = await supabase
             .from('profiles')
             .select('avatar_url')
-            .eq('id', user.id)
+            .eq('id', profile.user_id)
             .single();
           
           if (error) {
@@ -48,11 +41,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
           } else if (data && data.avatar_url) {
             console.log("Found avatar URL in profiles:", data.avatar_url);
             setUserAvatar(data.avatar_url);
-          } else {
-            console.log("No avatar found in profiles table for current user");
           }
-        } else {
-          console.log("Not current user's profile, skipping avatar fetch");
         }
       } catch (error) {
         console.error("Exception fetching user avatar:", error);
@@ -60,7 +49,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
     };
     
     fetchUserAvatar();
-  }, [user, profile.user_id]);
+  }, [profile.user_id]);
 
   const handleMatchRequest = () => {
     if (!user) {
@@ -97,7 +86,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
                 alt={profile.name} 
                 className="object-cover"
               />
-            ) : profile.photoUrl && profile.photoUrl.trim() !== "" ? (
+            ) : profile.photoUrl ? (
               <AvatarImage 
                 src={profile.photoUrl} 
                 alt={profile.name}

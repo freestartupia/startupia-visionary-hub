@@ -1,8 +1,5 @@
-
 import React, { useState, useEffect } from "react";
 import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from "@/types/startup";
-import StartupCard from "@/components/StartupCard";
-import StartupFilters from "@/components/StartupFilters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -216,7 +213,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
       <div className="space-y-4">
         {startups.map((startup) => (
           <Link to={`/startup/${startup.id}`} key={startup.id}>
-            <Card className="hover:border-startupia-turquoise/50 transition-all duration-300 border border-startupia-turquoise/20 bg-black/30 p-4">
+            <Card className="hover:border-startupia-turquoise/50 transition-all duration-300 border border-startupia-turquoise/20 bg-black/30 p-4 w-full">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 bg-startupia-turquoise/10 rounded-lg flex items-center justify-center overflow-hidden">
                   {startup.logoUrl ? (

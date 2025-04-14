@@ -1,6 +1,6 @@
 
-import React from "react";
-import { useParams, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, 
   Star, 
@@ -14,26 +14,106 @@ import {
   Users,
   ExternalLink,
   FileText,
-  Linkedin
+  Linkedin,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { mockStartups } from "@/data/mockStartups";
 import { Startup } from "@/types/startup";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import Navbar from "@/components/navbar/Navbar";
+import Footer from "@/components/Footer";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const StartupDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const startup = mockStartups.find(s => s.id === id);
+  const navigate = useNavigate();
+  const [startup, setStartup] = useState<Startup | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  if (!startup) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <h2 className="text-2xl mb-4">Startup introuvable</h2>
-        <Button asChild>
-          <Link to="/startups">Retour à la liste</Link>
-        </Button>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const fetchStartupDetails = async () => {
+      if (!id) {
+        setError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('startups')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          console.error("Erreur lors de la récupération de la startup:", error);
+          setError(true);
+          toast.error("Impossible de trouver cette startup");
+        } else if (data) {
+          let parsedFounders = [];
+          try {
+            if (data.founders) {
+              if (typeof data.founders === 'string') {
+                parsedFounders = JSON.parse(data.founders);
+              } else if (Array.isArray(data.founders)) {
+                parsedFounders = data.founders;
+              } else if (typeof data.founders === 'object') {
+                parsedFounders = [data.founders];
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing founders:', e);
+            parsedFounders = [];
+          }
+
+          const transformedData: Startup = {
+            id: data.id,
+            name: data.name,
+            logoUrl: data.logo_url || '',
+            shortDescription: data.short_description,
+            longTermVision: data.long_term_vision || '',
+            founders: parsedFounders,
+            aiUseCases: data.ai_use_cases || '',
+            aiTools: data.ai_tools || [],
+            sector: data.sector,
+            businessModel: data.business_model,
+            maturityLevel: data.maturity_level,
+            aiImpactScore: data.ai_impact_score,
+            tags: data.tags || [],
+            websiteUrl: data.website_url,
+            pitchDeckUrl: data.pitch_deck_url,
+            crunchbaseUrl: data.crunchbase_url,
+            notionUrl: data.notion_url,
+            dateAdded: data.date_added,
+            viewCount: data.view_count,
+            isFeatured: data.is_featured,
+            upvoteCount: data.upvotes_count || 0,
+          };
+
+          setStartup(transformedData);
+
+          // Incrémenter le compteur de vues
+          const { error: updateError } = await supabase
+            .from('startups')
+            .update({ view_count: (data.view_count || 0) + 1 })
+            .eq('id', id);
+
+          if (updateError) {
+            console.error("Erreur lors de la mise à jour du compteur de vues:", updateError);
+          }
+        }
+      } catch (error) {
+        console.error("Erreur:", error);
+        setError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStartupDetails();
+  }, [id]);
 
   // Generate stars for AI Impact Score
   const renderStars = (score: number) => {
@@ -50,8 +130,38 @@ const StartupDetails = () => {
       ));
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navbar />
+        <div className="container mx-auto px-4 py-20 flex flex-col items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-startupia-turquoise mb-4" />
+          <p className="text-white/70 text-lg">Chargement des détails de la startup...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !startup) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navbar />
+        <div className="container mx-auto px-4 py-20 flex flex-col items-center justify-center">
+          <h2 className="text-2xl mb-4">Startup introuvable</h2>
+          <p className="text-white/70 mb-6">Nous n'avons pas pu trouver la startup que vous recherchez.</p>
+          <Button asChild>
+            <Link to="/ecosystem">Retour à l'écosystème</Link>
+          </Button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
+      <Navbar />
       <div className="container mx-auto px-4 py-10">
         {/* Back button */}
         <div className="mb-10">
@@ -60,9 +170,9 @@ const StartupDetails = () => {
             asChild
             className="border-startupia-turquoise/50 hover:bg-startupia-turquoise/10"
           >
-            <Link to="/startups">
+            <Link to="/ecosystem">
               <ArrowLeft className="mr-2" size={18} />
-              Retour à la liste
+              Retour à l'écosystème
             </Link>
           </Button>
         </div>
@@ -115,12 +225,14 @@ const StartupDetails = () => {
             </div>
             
             <div className="flex flex-col gap-3">
-              <Button asChild className="bg-startupia-turquoise hover:bg-startupia-turquoise/90">
-                <a href={startup.websiteUrl} target="_blank" rel="noopener noreferrer">
-                  <Globe size={18} className="mr-2" />
-                  Visiter le site
-                </a>
-              </Button>
+              {startup.websiteUrl && (
+                <Button asChild className="bg-startupia-turquoise hover:bg-startupia-turquoise/90">
+                  <a href={startup.websiteUrl} target="_blank" rel="noopener noreferrer">
+                    <Globe size={18} className="mr-2" />
+                    Visiter le site
+                  </a>
+                </Button>
+              )}
               
               {startup.pitchDeckUrl && (
                 <Button asChild variant="outline" className="border-startupia-turquoise/50 hover:bg-startupia-turquoise/10">
@@ -143,31 +255,37 @@ const StartupDetails = () => {
               <h2 className="flex items-center text-xl font-semibold mb-4">
                 <Target className="mr-2 text-startupia-turquoise" /> Vision long terme
               </h2>
-              <p className="text-white/80">{startup.longTermVision}</p>
+              <p className="text-white/80">{startup.longTermVision || "Non renseignée"}</p>
             </div>
             
             {/* Founders */}
             <div className="glass-card p-6">
               <h2 className="flex items-center text-xl font-semibold mb-4">
-                <Users className="mr-2 text-startupia-turquoise" /> Fondateur{startup.founders.length > 1 ? 's' : ''}
+                <Users className="mr-2 text-startupia-turquoise" /> Fondateur{startup.founders && startup.founders.length > 1 ? 's' : ''}
               </h2>
               <div className="space-y-4">
-                {startup.founders.map((founder, idx) => (
-                  <div key={idx} className="flex items-center justify-between">
-                    <span className="text-white/80">{founder.name}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      asChild
-                      className="text-startupia-turquoise hover:bg-startupia-turquoise/10"
-                    >
-                      <a href={founder.linkedinUrl} target="_blank" rel="noopener noreferrer">
-                        <Linkedin size={16} className="mr-1" />
-                        LinkedIn
-                      </a>
-                    </Button>
-                  </div>
-                ))}
+                {startup.founders && startup.founders.length > 0 ? (
+                  startup.founders.map((founder, idx) => (
+                    <div key={idx} className="flex items-center justify-between">
+                      <span className="text-white/80">{founder.name}</span>
+                      {founder.linkedinUrl && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          asChild
+                          className="text-startupia-turquoise hover:bg-startupia-turquoise/10"
+                        >
+                          <a href={founder.linkedinUrl} target="_blank" rel="noopener noreferrer">
+                            <Linkedin size={16} className="mr-1" />
+                            LinkedIn
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-white/60">Aucun fondateur renseigné</p>
+                )}
               </div>
             </div>
             
@@ -177,7 +295,7 @@ const StartupDetails = () => {
                 <ExternalLink className="mr-2 text-startupia-turquoise" /> Liens externes
               </h2>
               <div className="space-y-2">
-                {startup.crunchbaseUrl && (
+                {startup.crunchbaseUrl ? (
                   <div className="flex items-center justify-between">
                     <span className="text-white/80">Crunchbase</span>
                     <Button 
@@ -191,9 +309,9 @@ const StartupDetails = () => {
                       </a>
                     </Button>
                   </div>
-                )}
+                ) : null}
                 
-                {startup.notionUrl && (
+                {startup.notionUrl ? (
                   <div className="flex items-center justify-between">
                     <span className="text-white/80">Notion</span>
                     <Button 
@@ -207,6 +325,10 @@ const StartupDetails = () => {
                       </a>
                     </Button>
                   </div>
+                ) : null}
+
+                {!startup.crunchbaseUrl && !startup.notionUrl && (
+                  <p className="text-white/60">Aucun lien externe renseigné</p>
                 )}
               </div>
             </div>
@@ -219,7 +341,7 @@ const StartupDetails = () => {
               <h2 className="flex items-center text-xl font-semibold mb-4">
                 <Cpu className="mr-2 text-startupia-turquoise" /> Cas d'usage de l'IA
               </h2>
-              <p className="text-white/80">{startup.aiUseCases}</p>
+              <p className="text-white/80">{startup.aiUseCases || "Non renseigné"}</p>
             </div>
             
             {/* AI Tools */}
@@ -227,16 +349,20 @@ const StartupDetails = () => {
               <h2 className="flex items-center text-xl font-semibold mb-4">
                 <Cpu className="mr-2 text-startupia-turquoise" /> Outils IA utilisés
               </h2>
-              <div className="flex flex-wrap gap-2">
-                {startup.aiTools.map((tool, idx) => (
-                  <span 
-                    key={idx}
-                    className="px-3 py-1 rounded-full bg-startupia-turquoise/10 text-startupia-turquoise"
-                  >
-                    {tool}
-                  </span>
-                ))}
-              </div>
+              {startup.aiTools && startup.aiTools.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {startup.aiTools.map((tool, idx) => (
+                    <span 
+                      key={idx}
+                      className="px-3 py-1 rounded-full bg-startupia-turquoise/10 text-startupia-turquoise"
+                    >
+                      {tool}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-white/60">Aucun outil IA renseigné</p>
+              )}
             </div>
             
             {/* Tags */}
@@ -244,20 +370,25 @@ const StartupDetails = () => {
               <h2 className="flex items-center text-xl font-semibold mb-4">
                 <Hash className="mr-2 text-startupia-turquoise" /> Tags
               </h2>
-              <div className="flex flex-wrap gap-2">
-                {startup.tags.map((tag, idx) => (
-                  <span 
-                    key={idx}
-                    className="px-3 py-1 rounded-full bg-startupia-turquoise/10 text-white/80"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
+              {startup.tags && startup.tags.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {startup.tags.map((tag, idx) => (
+                    <span 
+                      key={idx}
+                      className="px-3 py-1 rounded-full bg-startupia-turquoise/10 text-white/80"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-white/60">Aucun tag renseigné</p>
+              )}
             </div>
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

@@ -1,122 +1,191 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ForumReply, PopulatedForumReply } from '@/types/community';
+import { ForumReply } from '@/types/community';
+import { ForumReplyDB } from '@/types/forumTypes';
 import { getReplyLikeStatus } from './replyLikeService';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
-const formatReplyDate = (date: string): string => {
-  return formatDistanceToNow(new Date(date), {
-    locale: fr,
-    addSuffix: true,
-  });
+// Format date for display
+const formatReplyDate = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const diffMinutes = Math.round(diff / (1000 * 60));
+  const diffHours = Math.round(diff / (1000 * 3600));
+  const diffDays = Math.round(diff / (1000 * 3600 * 24));
+
+  if (diffMinutes < 60) {
+    return `Il y a ${diffMinutes} minute(s)`;
+  } else if (diffHours < 24) {
+    return `Il y a ${diffHours} heure(s)`;
+  } else if (diffDays < 7) {
+    return `Il y a ${diffDays} jour(s)`;
+  } else {
+    return date.toLocaleDateString();
+  }
 };
 
-export const populateReplyWithLikeInfo = async (reply: any): Promise<PopulatedForumReply> => {
-  const { liked, count } = await getReplyLikeStatus(reply.id);
-
+// Map DB reply to ForumReply
+const mapDbReplyToForumReply = (replyData: ForumReplyDB): ForumReply => {
   return {
-    id: reply.id,
-    content: reply.content,
-    authorId: reply.author_id || "",
-    authorName: reply.author_name,
-    authorAvatar: reply.author_avatar,
-    createdAt: reply.created_at,
-    updatedAt: reply.updated_at,
-    likes: count,
-    parentId: reply.parent_id,
-    replyParentId: reply.reply_parent_id,
-    userHasLiked: liked,
-    formattedCreatedAt: formatReplyDate(reply.created_at),
-    children: [],
-    isLiked: liked,
-    nestedReplies: []
+    id: replyData.id,
+    content: replyData.content,
+    authorId: replyData.author_id,
+    authorName: replyData.author_name,
+    authorAvatar: replyData.author_avatar || null,
+    createdAt: replyData.created_at,
+    updatedAt: replyData.updated_at || null,
+    likes: replyData.likes || 0,
+    isLiked: false,
+    parentId: replyData.parent_id,
+    replyParentId: replyData.reply_parent_id || null,
+    formattedCreatedAt: formatReplyDate(replyData.created_at),
+    replies: []
   };
 };
 
+// Get replies for a post
 export const getRepliesForPost = async (postId: string): Promise<ForumReply[]> => {
   try {
-    const { data: replies, error } = await supabase
+    const { data, error } = await supabase
       .from('forum_replies')
       .select('*')
-      .eq('post_id', postId)
+      .eq('parent_id', postId)
+      .is('reply_parent_id', null)
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Error fetching forum replies:', error);
+      console.error("Error fetching replies:", error);
       return [];
     }
 
-    if (!replies || replies.length === 0) {
-      return [];
-    }
+    // Populate with like info and nested replies
+    const populatedReplies = await Promise.all(data.map(async (reply) => {
+      const { liked } = await getReplyLikeStatus(reply.id);
+      const formattedReply = mapDbReplyToForumReply(reply as ForumReplyDB);
+      
+      // Get nested replies
+      const nestedReplies = await getNestedReplies(reply.id);
+      
+      return {
+        ...formattedReply,
+        userHasLiked: liked,
+        replies: nestedReplies
+      };
+    }));
 
-    // Populate like info for each reply
-    const populatedReplies = await Promise.all(replies.map(reply => populateReplyWithLikeInfo(reply)));
-    
-    // Organize replies into a tree structure
-    const topLevelReplies: PopulatedForumReply[] = [];
-    const nestedReplies: Record<string, PopulatedForumReply[]> = {};
-    
-    // Group nested replies by parent ID
-    populatedReplies.forEach(reply => {
-      if (reply.replyParentId) {
-        if (!nestedReplies[reply.replyParentId]) {
-          nestedReplies[reply.replyParentId] = [];
-        }
-        nestedReplies[reply.replyParentId].push(reply);
-      } else {
-        topLevelReplies.push(reply);
-      }
-    });
-    
-    // Attach nested replies to their parents
-    topLevelReplies.forEach(reply => {
-      if (nestedReplies[reply.id]) {
-        reply.nestedReplies = nestedReplies[reply.id];
-      }
-    });
-
-    return topLevelReplies;
+    return populatedReplies;
   } catch (error) {
-    console.error('Error fetching forum replies:', error);
+    console.error("Error fetching replies:", error);
     return [];
   }
 };
 
-export const addReplyToPost = async (
-  postId: string,
-  content: string,
-  userId: string,
-  userAvatar: string | null,
-  userName: string,
-  replyToId?: string
-): Promise<{ success: boolean; reply?: ForumReply; error?: any }> => {
+// Get nested replies
+export const getNestedReplies = async (replyId: string): Promise<ForumReply[]> => {
   try {
-    const newReply = {
-      post_id: postId,
-      content,
-      author_id: userId,
-      author_name: userName,
-      author_avatar: userAvatar,
-      reply_parent_id: replyToId
-    };
+    const { data, error } = await supabase
+      .from('forum_replies')
+      .select('*')
+      .eq('reply_parent_id', replyId)
+      .order('created_at', { ascending: true });
 
+    if (error) {
+      console.error("Error fetching nested replies:", error);
+      return [];
+    }
+
+    const populatedReplies = await Promise.all(data.map(async (reply) => {
+      const { liked } = await getReplyLikeStatus(reply.id);
+      const formattedReply = mapDbReplyToForumReply(reply as ForumReplyDB);
+      
+      return {
+        ...formattedReply,
+        userHasLiked: liked,
+        // Don't fetch deeper nested replies to avoid infinite recursion
+        replies: []
+      };
+    }));
+
+    return populatedReplies;
+  } catch (error) {
+    console.error("Error fetching nested replies:", error);
+    return [];
+  }
+};
+
+// Create a new reply
+export const createReply = async (
+  content: string, 
+  postId: string, 
+  replyParentId: string | null = null
+): Promise<{ success: boolean; reply: ForumReply | null; error: string | null }> => {
+  try {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !userData.user) {
+      return { 
+        success: false, 
+        reply: null, 
+        error: "Vous devez être connecté pour répondre." 
+      };
+    }
+    
+    // Get user profile info
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, avatar_url')
+      .eq('id', userData.user.id)
+      .single();
+      
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+    }
+    
+    const authorName = profileData 
+      ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() 
+      : 'Utilisateur StartupIA';
+    
+    const newReply = {
+      content,
+      parent_id: postId,
+      reply_parent_id: replyParentId,
+      author_id: userData.user.id,
+      author_name: authorName,
+      author_avatar: profileData?.avatar_url || null
+    };
+    
     const { data, error } = await supabase
       .from('forum_replies')
       .insert(newReply)
       .select()
       .single();
-
+      
     if (error) {
-      console.error('Error creating forum reply:', error);
-      return { success: false, error };
+      console.error("Error creating reply:", error);
+      return { 
+        success: false, 
+        reply: null, 
+        error: "Erreur lors de la création de la réponse." 
+      };
     }
-
-    const populatedReply = await populateReplyWithLikeInfo(data);
-    return { success: true, reply: populatedReply };
+    
+    const reply = mapDbReplyToForumReply(data as ForumReplyDB);
+    
+    return { 
+      success: true, 
+      reply: {
+        ...reply,
+        userHasLiked: false,
+        replies: []
+      }, 
+      error: null 
+    };
   } catch (error) {
-    console.error('Error creating forum reply:', error);
-    return { success: false, error };
+    console.error("Error creating reply:", error);
+    return { 
+      success: false, 
+      reply: null, 
+      error: "Erreur lors de la création de la réponse." 
+    };
   }
 };

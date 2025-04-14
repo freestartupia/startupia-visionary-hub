@@ -19,23 +19,10 @@ const checkAdminOrModeratorRole = async (): Promise<boolean> => {
       return true;
     }
     
-    // Use the is_admin RPC function if available
-    try {
-      const { data: isAdminData, error: isAdminError } = await supabase.rpc('is_admin');
-      
-      if (!isAdminError && isAdminData === true) {
-        console.log('User is admin via RPC');
-        return true;
-      }
-    } catch (error) {
-      console.log('RPC check failed, falling back to direct query');
-    }
-    
     // Direct query to user_roles table
     const { data: roles, error: rolesError } = await supabase
       .from('user_roles')
-      .select('role')
-      .eq('user_id', userData.user.id);
+      .select('role');
       
     if (rolesError) {
       console.error('Error checking user roles:', rolesError);

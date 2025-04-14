@@ -745,6 +745,47 @@ export type Database = {
         }
         Relationships: []
       }
+      startup_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          startup_id: string
+          updated_at: string
+          user_avatar: string | null
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          startup_id: string
+          updated_at?: string
+          user_avatar?: string | null
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          startup_id?: string
+          updated_at?: string
+          user_avatar?: string | null
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "startup_comments_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       startup_votes: {
         Row: {
           created_at: string

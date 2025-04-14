@@ -1,4 +1,3 @@
-
 export type FounderType = {
   name: string;
   linkedinUrl: string;
@@ -83,4 +82,15 @@ export type FundingRound = {
   mainInvestor: string;
   round: "Pré-seed" | "Seed" | "Série A" | "Série B" | "Série C" | "Série D+" | "Growth";
   sourceUrl?: string;
+};
+
+export type StartupComment = {
+  id: string;
+  startup_id: string;
+  user_id: string;
+  user_name: string;
+  user_avatar?: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
 };

@@ -11,6 +11,7 @@ import { ArrowLeft, Link as LinkIcon, ExternalLink, Globe, FileText, Building, T
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import SEO from '@/components/SEO';
+import CommentsSection from '@/components/startup/CommentsSection';
 
 const StartupDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -368,6 +369,8 @@ const StartupDetails = () => {
         <div className="text-white/60 text-sm">
           Ajouté le {formatDate(startup.dateAdded)} • Vu {startup.viewCount} fois
         </div>
+
+        {startup && <CommentsSection startupId={startup.id} />}
       </div>
       <Footer />
     </div>

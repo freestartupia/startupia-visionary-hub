@@ -14,8 +14,8 @@ const checkAdminOrModeratorRole = async (): Promise<boolean> => {
     }
     
     // Check if user is a hardcoded admin (temporary)
-    // This email should match the one used in your account
-    if (userData.user.email === 'adilboudih2@gmail.com') {
+    // Make sure both email addresses are included for testing
+    if (userData.user.email === 'adilboudih2@gmail.com' || userData.user.email === 'skyzohd22@gmail.com') {
       return true;
     }
     
@@ -30,6 +30,7 @@ const checkAdminOrModeratorRole = async (): Promise<boolean> => {
       return false;
     }
     
+    // Check if user has admin or moderator role
     const hasRole = roles && roles.some(role => 
       role.role === 'admin' || role.role === 'moderator'
     );
@@ -66,6 +67,7 @@ export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 're
       return [];
     }
     
+    console.log(`Fetched ${data?.length || 0} ${status} blog posts`);
     return (data || []).map(mapDbPostToBlogPost);
   } catch (error) {
     console.error(`Error fetching ${status} blog posts:`, error);

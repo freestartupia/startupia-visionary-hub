@@ -27,23 +27,36 @@ export const checkIfUserLiked = async (
   userId: string
 ): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
-      .from(tableName)
-      .select('id')
-      .eq(idField, itemId)
-      .eq('user_id', userId)
-      .single();
-      
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No record found, means not liked
+    // Use specific types to avoid excessive type instantiation
+    if (tableName === 'forum_post_likes') {
+      const { data, error } = await supabase
+        .from('forum_post_likes')
+        .select('id')
+        .eq(idField, itemId)
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error checking post like status:', error);
         return false;
       }
-      console.error(`Error checking like status:`, error);
-      return false;
+      
+      return !!data;
+    } else {
+      const { data, error } = await supabase
+        .from('forum_reply_likes')
+        .select('id')
+        .eq(idField, itemId)
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error checking reply like status:', error);
+        return false;
+      }
+      
+      return !!data;
     }
-    
-    return !!data;
   } catch (error) {
     console.error(`Error checking like status:`, error);
     return false;
@@ -57,17 +70,31 @@ export const getLikeCount = async (
   itemId: string
 ): Promise<number> => {
   try {
-    const { count, error } = await supabase
-      .from(tableName)
-      .select('id', { count: 'exact', head: true })
-      .eq(idField, itemId);
+    if (tableName === 'forum_post_likes') {
+      const { count, error } = await supabase
+        .from('forum_post_likes')
+        .select('id', { count: 'exact', head: true })
+        .eq(idField, itemId);
+        
+      if (error) {
+        console.error('Error getting post like count:', error);
+        return 0;
+      }
       
-    if (error) {
-      console.error(`Error getting like count:`, error);
-      return 0;
+      return count || 0;
+    } else {
+      const { count, error } = await supabase
+        .from('forum_reply_likes')
+        .select('id', { count: 'exact', head: true })
+        .eq(idField, itemId);
+        
+      if (error) {
+        console.error('Error getting reply like count:', error);
+        return 0;
+      }
+      
+      return count || 0;
     }
-    
-    return count || 0;
   } catch (error) {
     console.error(`Error getting like count:`, error);
     return 0;
@@ -114,7 +141,7 @@ export const addLike = async (
         });
         
       if (error) {
-        console.error(`Error adding like:`, error);
+        console.error('Error adding post like:', error);
         return { 
           success: false, 
           message: 'Erreur lors de l\'ajout du like',
@@ -122,7 +149,7 @@ export const addLike = async (
           newCount: 0
         };
       }
-    } else if (tableName === 'forum_reply_likes') {
+    } else {
       const { error } = await supabase
         .from('forum_reply_likes')
         .insert({
@@ -131,7 +158,7 @@ export const addLike = async (
         });
         
       if (error) {
-        console.error(`Error adding like:`, error);
+        console.error('Error adding reply like:', error);
         return { 
           success: false, 
           message: 'Erreur lors de l\'ajout du like',
@@ -191,20 +218,38 @@ export const removeLike = async (
     }
     
     // Remove the like record
-    const { error } = await supabase
-      .from(tableName)
-      .delete()
-      .eq(idField, itemId)
-      .eq('user_id', userId);
-      
-    if (error) {
-      console.error(`Error removing like:`, error);
-      return { 
-        success: false, 
-        message: 'Erreur lors de la suppression du like',
-        liked: true,
-        newCount: 0
-      };
+    if (tableName === 'forum_post_likes') {
+      const { error } = await supabase
+        .from('forum_post_likes')
+        .delete()
+        .eq(idField, itemId)
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error('Error removing post like:', error);
+        return { 
+          success: false, 
+          message: 'Erreur lors de la suppression du like',
+          liked: true,
+          newCount: 0
+        };
+      }
+    } else {
+      const { error } = await supabase
+        .from('forum_reply_likes')
+        .delete()
+        .eq(idField, itemId)
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error('Error removing reply like:', error);
+        return { 
+          success: false, 
+          message: 'Erreur lors de la suppression du like',
+          liked: true,
+          newCount: 0
+        };
+      }
     }
     
     const newCount = await getLikeCount(tableName, idField, itemId);

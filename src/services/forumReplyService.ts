@@ -106,14 +106,32 @@ export const getForumRepliesByPostId = async (postId: string): Promise<{ data: P
       return { data: [], error: null };
     }
 
-    // Populate like info for each reply
-    const populatedReplies = await Promise.all(
-      repliesData.map(reply => populateReplyWithLikeInfo(reply as ForumReplyDB))
-    );
+    // Type-safe approach to avoid instantiation issues
+    const populatedReplies: PopulatedForumReply[] = [];
+    
+    for (const reply of repliesData) {
+      try {
+        const populatedReply = await populateReplyWithLikeInfo(reply as ForumReplyDB);
+        populatedReplies.push(populatedReply);
+      } catch (err) {
+        console.error('Error populating reply:', err);
+      }
+    }
 
     return { data: populatedReplies, error: null };
   } catch (error) {
     console.error('Error fetching forum replies:', error);
     return { data: null, error };
   }
+};
+
+// This function is needed by forumService.ts
+export const addReplyToPost = async (
+  postId: string,
+  content: string,
+  userId: string,
+  userAvatar: string | null,
+  userName: string
+): Promise<{ data: ForumReply | null; error: any }> => {
+  return createForumReply(postId, content, userId, userAvatar, userName);
 };

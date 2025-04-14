@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from "@/types/startup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -85,6 +86,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           setStartups(transformedData);
           setFilteredStartups(transformedData);
           
+          // Initialize vote state for each startup
           const votesState: Record<string, { upvoted: boolean, downvoted: boolean, count: number }> = {};
           transformedData.forEach(startup => {
             votesState[startup.id] = { 
@@ -187,9 +189,22 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     }
     
     try {
+      // Fix: Make sure the startup exists in the state before accessing it
+      if (!startupVotes[startupId]) {
+        setStartupVotes(prev => ({
+          ...prev,
+          [startupId]: { upvoted: false, downvoted: false, count: 0 }
+        }));
+        return;
+      }
+      
       setStartupVotes(prev => {
         const newState = { ...prev };
         const currentVoteState = prev[startupId];
+        
+        // Skip if the state for this startup doesn't exist yet
+        if (!currentVoteState) return prev;
+        
         const alreadyVotedSameWay = isUpvote ? currentVoteState.upvoted : currentVoteState.downvoted;
         
         if (alreadyVotedSameWay) {
@@ -269,7 +284,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                 [startupId]: {
                   upvoted: userVote.is_upvote,
                   downvoted: !userVote.is_upvote,
-                  count: prev[startupId].count
+                  count: prev[startupId]?.count || 0
                 }
               }));
             } else {
@@ -278,7 +293,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                 [startupId]: {
                   upvoted: false,
                   downvoted: false,
-                  count: prev[startupId].count
+                  count: prev[startupId]?.count || 0
                 }
               }));
             }
@@ -419,7 +434,9 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                 <Button
                   variant="ghost" 
                   size="icon"
-                  className={`rounded-full p-1 hover:bg-startupia-turquoise/20 ${startupVotes[startup.id]?.upvoted ? 'text-startupia-turquoise' : 'text-white/70'}`}
+                  className={`rounded-full p-1 hover:bg-startupia-turquoise/20 ${
+                    startupVotes[startup.id]?.upvoted ? 'text-startupia-turquoise' : 'text-white/70'
+                  }`}
                   onClick={(e) => handleVote(e, startup.id, true)}
                 >
                   <ArrowUp className="h-5 w-5" />
@@ -432,7 +449,9 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                 <Button
                   variant="ghost" 
                   size="icon"
-                  className={`rounded-full p-1 hover:bg-startupia-turquoise/20 ${startupVotes[startup.id]?.downvoted ? 'text-startupia-turquoise' : 'text-white/70'}`}
+                  className={`rounded-full p-1 hover:bg-startupia-turquoise/20 ${
+                    startupVotes[startup.id]?.downvoted ? 'text-startupia-turquoise' : 'text-white/70'
+                  }`}
                   onClick={(e) => handleVote(e, startup.id, false)}
                 >
                   <ArrowDown className="h-5 w-5" />

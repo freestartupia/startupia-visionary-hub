@@ -34,16 +34,14 @@ const OptimizedPostList: React.FC<OptimizedPostListProps> = ({
     e.stopPropagation();
     e.preventDefault();
     
-    if (requireAuth && !user) {
+    if (!user) {
       toast.error("Vous devez être connecté pour aimer un post");
       navigate('/auth');
       return;
     }
     
-    if (user) {
-      toggleLikeMutation.mutate({ postId, userId: user.id });
-    }
-  }, [toggleLikeMutation, user, requireAuth, navigate]);
+    toggleLikeMutation.mutate({ postId, userId: user.id });
+  }, [toggleLikeMutation, user, navigate]);
 
   const filteredPosts = useMemo(() => {
     let result = [...posts];
@@ -87,7 +85,7 @@ const OptimizedPostList: React.FC<OptimizedPostListProps> = ({
           post={post}
           onViewPost={handleViewPost}
           onLikePost={handleLikePost}
-          requireAuth={requireAuth}
+          requireAuth={true}
         />
       ))}
     </div>

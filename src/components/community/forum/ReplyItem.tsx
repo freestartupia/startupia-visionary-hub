@@ -7,6 +7,8 @@ import { ForumReply } from '@/types/community';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import NestedReply from './NestedReply';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface ReplyItemProps {
   reply: ForumReply;
@@ -15,6 +17,9 @@ interface ReplyItemProps {
 }
 
 const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
   const formatDate = (dateString: string) => {
     try {
       return formatDistanceToNow(new Date(dateString), {
@@ -32,6 +37,15 @@ const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }
       .map(n => n[0])
       .join('')
       .toUpperCase();
+  };
+  
+  const handleLikeClick = () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    
+    onLike(reply.id);
   };
 
   return (
@@ -58,7 +72,7 @@ const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }
       <CardFooter className="flex justify-between pt-2">
         <div className="flex gap-4">
           <button 
-            onClick={() => onLike(reply.id)}
+            onClick={handleLikeClick}
             className={`flex items-center gap-1 ${reply.isLiked ? "text-startupia-turquoise" : "text-white/60 hover:text-white"}`}
           >
             <ThumbsUp size={16} />
@@ -66,7 +80,13 @@ const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }
           </button>
           
           <button 
-            onClick={() => onReplyToComment(reply.id)}
+            onClick={() => {
+              if (!user) {
+                navigate('/auth');
+                return;
+              }
+              onReplyToComment(reply.id);
+            }}
             className="flex items-center gap-1 text-white/60 hover:text-white"
           >
             <MessageCircle size={16} />

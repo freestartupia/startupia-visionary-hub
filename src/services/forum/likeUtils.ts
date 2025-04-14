@@ -1,271 +1,146 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { LikeResponse } from '@/types/community';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
 
-// Get the current user's ID or null if not authenticated
+export interface LikeResponse {
+  success: boolean;
+  message: string;
+  isLiked?: boolean;
+  likeCount?: number;
+  liked?: boolean;
+  newCount?: number;
+}
+
+// Function to check authentication
 export const checkAuthentication = async (): Promise<string | null> => {
   try {
-    const { data, error } = await supabase.auth.getUser();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     
-    if (error || !data.user) {
-      console.error('Authentication error:', error);
+    if (userError || !userData.user) {
       return null;
     }
     
-    return data.user.id;
+    return userData.user.id;
   } catch (error) {
-    console.error('Authentication error:', error);
+    console.error("Authentication error:", error);
     return null;
   }
 };
 
-// Check if a user has liked a specific item (post or reply)
-export const checkIfUserLiked = async (
-  tableName: 'forum_post_likes' | 'forum_reply_likes',
-  idField: string,
-  itemId: string,
+// Function to like a post
+export const likePost = async (postId: string): Promise<LikeResponse> => {
+  try {
+    const userId = await checkAuthentication();
+    
+    if (!userId) {
+      return {
+        success: false,
+        message: "Authentication required",
+        liked: false
+      };
+    }
+    
+    const result = await handleToggleLike(supabase, 'forum_post_likes', 'post_id', postId, userId);
+    
+    // Determine if the post is now liked based on the result
+    return {
+      ...result,
+      liked: result.isLiked
+    };
+    
+  } catch (error) {
+    console.error("Error in likePost:", error);
+    return {
+      success: false,
+      message: "Error toggling like",
+      liked: false
+    };
+  }
+};
+
+// Function to like a reply
+export const likeReply = async (replyId: string): Promise<LikeResponse> => {
+  try {
+    const userId = await checkAuthentication();
+    
+    if (!userId) {
+      return {
+        success: false,
+        message: "Authentication required",
+        liked: false
+      };
+    }
+    
+    const result = await handleToggleLike(supabase, 'forum_reply_likes', 'reply_id', replyId, userId);
+    
+    // Determine if the reply is now liked based on the result
+    return {
+      ...result,
+      liked: result.isLiked
+    };
+    
+  } catch (error) {
+    console.error("Error in likeReply:", error);
+    return {
+      success: false,
+      message: "Error toggling like",
+      liked: false
+    };
+  }
+};
+
+export const handleToggleLike = async (
+  supabase: SupabaseClient,
+  table: string,
+  field: string,
+  id: string,
   userId: string
-): Promise<boolean> => {
-  try {
-    if (tableName === 'forum_post_likes') {
-      const { data, error } = await supabase
-        .from('forum_post_likes')
-        .select('id')
-        .eq(idField, itemId)
-        .eq('user_id', userId)
-        .maybeSingle();
-        
-      if (error) {
-        console.error('Error checking post like status:', error);
-        return false;
-      }
-      
-      return !!data;
-    } else {
-      const { data, error } = await supabase
-        .from('forum_reply_likes')
-        .select('id')
-        .eq(idField, itemId)
-        .eq('user_id', userId)
-        .maybeSingle();
-        
-      if (error) {
-        console.error('Error checking reply like status:', error);
-        return false;
-      }
-      
-      return !!data;
-    }
-  } catch (error) {
-    console.error(`Error checking like status:`, error);
-    return false;
-  }
-};
-
-// Get the count of likes for a specific item (post or reply)
-export const getLikeCount = async (
-  tableName: 'forum_post_likes' | 'forum_reply_likes',
-  idField: string,
-  itemId: string
-): Promise<number> => {
-  try {
-    if (tableName === 'forum_post_likes') {
-      const { count, error } = await supabase
-        .from('forum_post_likes')
-        .select('id', { count: 'exact', head: true })
-        .eq(idField, itemId);
-        
-      if (error) {
-        console.error('Error getting post like count:', error);
-        return 0;
-      }
-      
-      return count || 0;
-    } else {
-      const { count, error } = await supabase
-        .from('forum_reply_likes')
-        .select('id', { count: 'exact', head: true })
-        .eq(idField, itemId);
-        
-      if (error) {
-        console.error('Error getting reply like count:', error);
-        return 0;
-      }
-      
-      return count || 0;
-    }
-  } catch (error) {
-    console.error(`Error getting like count:`, error);
-    return 0;
-  }
-};
-
-// Add a like to a specific item (post or reply)
-export const addLike = async (
-  tableName: 'forum_post_likes' | 'forum_reply_likes',
-  itemId: string,
-  idField: string
 ): Promise<LikeResponse> => {
   try {
-    const userId = await checkAuthentication();
-    
-    if (!userId) {
-      return { 
-        success: false, 
-        message: 'Vous devez être connecté pour aimer un contenu',
-        liked: false,
-        newCount: 0
-      };
-    }
-    
-    // Check if already liked
-    const alreadyLiked = await checkIfUserLiked(tableName, idField, itemId, userId);
-    
-    if (alreadyLiked) {
-      return { 
-        success: true, 
-        message: 'Vous avez déjà aimé ce contenu',
-        liked: true,
-        newCount: await getLikeCount(tableName, idField, itemId)
-      };
-    }
-    
-    // Add the like
-    if (tableName === 'forum_post_likes') {
-      const { error } = await supabase
-        .from('forum_post_likes')
-        .insert({
-          post_id: itemId,
-          user_id: userId
-        });
-        
-      if (error) {
-        console.error('Error adding post like:', error);
-        return { 
-          success: false, 
-          message: 'Erreur lors de l\'ajout du like',
-          liked: false,
-          newCount: 0
-        };
-      }
-    } else {
-      const { error } = await supabase
-        .from('forum_reply_likes')
-        .insert({
-          reply_id: itemId,
-          user_id: userId
-        });
-        
-      if (error) {
-        console.error('Error adding reply like:', error);
-        return { 
-          success: false, 
-          message: 'Erreur lors de l\'ajout du like',
-          liked: false,
-          newCount: 0
-        };
-      }
-    }
-    
-    const newCount = await getLikeCount(tableName, idField, itemId);
-    
-    return { 
-      success: true, 
-      message: 'Contenu aimé',
-      liked: true,
-      newCount
-    };
-  } catch (error) {
-    console.error(`Error adding like:`, error);
-    return { 
-      success: false, 
-      message: 'Une erreur est survenue',
-      liked: false,
-      newCount: 0
-    };
-  }
-};
+    // Check if the user has already liked this item
+    const { data: existingLike } = await supabase
+      .from(table)
+      .select('id')
+      .eq(field, id)
+      .eq('user_id', userId)
+      .single();
 
-// Remove a like from a specific item (post or reply)
-export const removeLike = async (
-  tableName: 'forum_post_likes' | 'forum_reply_likes',
-  itemId: string,
-  idField: string
-): Promise<LikeResponse> => {
-  try {
-    const userId = await checkAuthentication();
-    
-    if (!userId) {
-      return { 
-        success: false, 
-        message: 'Vous devez être connecté pour ne plus aimer un contenu',
-        liked: false,
-        newCount: 0
-      };
-    }
-    
-    // Check if already liked
-    const alreadyLiked = await checkIfUserLiked(tableName, idField, itemId, userId);
-    
-    if (!alreadyLiked) {
-      return { 
-        success: true, 
-        message: 'Vous n\'avez pas aimé ce contenu',
-        liked: false,
-        newCount: await getLikeCount(tableName, idField, itemId)
-      };
-    }
-    
-    // Remove the like
-    if (tableName === 'forum_post_likes') {
-      const { error } = await supabase
-        .from('forum_post_likes')
+    if (existingLike) {
+      // Unlike - remove the like
+      const { error: deleteError } = await supabase
+        .from(table)
         .delete()
-        .eq(idField, itemId)
+        .eq(field, id)
         .eq('user_id', userId);
-        
-      if (error) {
-        console.error('Error removing post like:', error);
-        return { 
-          success: false, 
-          message: 'Erreur lors de la suppression du like',
-          liked: true,
-          newCount: 0
-        };
-      }
+
+      if (deleteError) throw deleteError;
+
+      return {
+        success: true,
+        message: 'Like removed successfully',
+        isLiked: false,
+      };
     } else {
-      const { error } = await supabase
-        .from('forum_reply_likes')
-        .delete()
-        .eq(idField, itemId)
-        .eq('user_id', userId);
-        
-      if (error) {
-        console.error('Error removing reply like:', error);
-        return { 
-          success: false, 
-          message: 'Erreur lors de la suppression du like',
-          liked: true,
-          newCount: 0
-        };
-      }
+      // Like - add a new like
+      const { error: insertError } = await supabase
+        .from(table)
+        .insert({ [field]: id, user_id: userId });
+
+      if (insertError) throw insertError;
+
+      return {
+        success: true,
+        message: 'Liked successfully',
+        isLiked: true,
+      };
     }
-    
-    const newCount = await getLikeCount(tableName, idField, itemId);
-    
-    return { 
-      success: true, 
-      message: 'Like supprimé',
-      liked: false,
-      newCount
-    };
   } catch (error) {
-    console.error(`Error removing like:`, error);
-    return { 
-      success: false, 
-      message: 'Une erreur est survenue',
-      liked: true,
-      newCount: 0
+    console.error(`Error toggling like for ${table}:`, error);
+    toast.error(`Une erreur est survenue. Veuillez réessayer.`);
+    return {
+      success: false,
+      message: 'Error toggling like',
     };
   }
 };

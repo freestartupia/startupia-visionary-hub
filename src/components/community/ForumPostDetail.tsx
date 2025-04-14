@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,12 +6,10 @@ import { ArrowLeft } from 'lucide-react';
 import { ForumPost } from '@/types/community';
 import { 
   getForumPost, 
+  togglePostLike, 
+  toggleReplyLike, 
   incrementPostViews 
 } from '@/services/forumService';
-import { 
-  togglePostLike, 
-  toggleReplyLike 
-} from '@/services/forumLikeService';
 import { toast } from 'sonner';
 import PostContent from './forum/PostContent';
 import ReplyForm from './forum/ReplyForm';
@@ -34,7 +31,6 @@ const ForumPostDetail = () => {
         setIsLoading(true);
         const fetchedPost = await getForumPost(postId);
         setPost(fetchedPost);
-        // Incrémenter le compteur de vues
         incrementPostViews(postId);
       } catch (error) {
         console.error('Erreur lors du chargement du post:', error);
@@ -54,7 +50,6 @@ const ForumPostDetail = () => {
   const handleReplyAdded = async () => {
     if (!postId) return;
     
-    // Refresh the post data
     try {
       const updatedPost = await getForumPost(postId);
       setPost(updatedPost);
@@ -66,7 +61,6 @@ const ForumPostDetail = () => {
   
   const handleReplyToComment = (replyId: string) => {
     setReplyingTo(replyId);
-    // Faire défiler jusqu'au formulaire de réponse
     document.getElementById('reply-form')?.scrollIntoView({ behavior: 'smooth' });
   };
   
@@ -80,12 +74,11 @@ const ForumPostDetail = () => {
     try {
       const result = await togglePostLike(post.id);
       
-      // Mettre à jour l'état local
       setPost(prev => {
         if (!prev) return null;
         return {
           ...prev,
-          likes: result.newCount || prev.likes,
+          likes: result.newCount,
           isLiked: result.liked
         };
       });
@@ -105,7 +98,6 @@ const ForumPostDetail = () => {
     try {
       const result = await toggleReplyLike(replyId);
       
-      // Mettre à jour l'état local
       setPost(prev => {
         if (!prev) return null;
         
@@ -113,7 +105,7 @@ const ForumPostDetail = () => {
           if (reply.id === replyId) {
             return {
               ...reply,
-              likes: result.newCount || reply.likes,
+              likes: result.newCount,
               isLiked: result.liked
             };
           }
@@ -123,7 +115,7 @@ const ForumPostDetail = () => {
               if (nestedReply.id === replyId) {
                 return {
                   ...nestedReply,
-                  likes: result.newCount || nestedReply.likes,
+                  likes: result.newCount,
                   isLiked: result.liked
                 };
               }
@@ -177,10 +169,8 @@ const ForumPostDetail = () => {
         Retour au forum
       </Button>
       
-      {/* Post principal */}
       <PostContent post={post} onLike={handleLikePost} />
       
-      {/* Formulaire de réponse */}
       <ReplyForm 
         postId={post.id}
         user={user}
@@ -189,7 +179,6 @@ const ForumPostDetail = () => {
         onCancelReply={() => setReplyingTo(null)}
       />
       
-      {/* Liste des réponses */}
       <ReplyList 
         replies={post.replies}
         onLikeReply={handleLikeReply}

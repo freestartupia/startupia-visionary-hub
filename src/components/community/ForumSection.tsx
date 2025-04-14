@@ -4,8 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ForumPost } from '@/types/community';
-import { getForumPosts } from '@/services/forumService';
-import { togglePostLike } from '@/services/forumLikeService';
+import { getForumPosts, togglePostLike } from '@/services/forumService';
 import CreateForumPost from './CreateForumPost';
 import ForumPostList from './forum/ForumPostList';
 import ForumSearch from './forum/ForumSearch';
@@ -84,7 +83,7 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
       const updatedPosts = posts.map(post => 
         post.id === postId ? {
           ...post,
-          likes: result.newCount || post.likes,
+          likes: result.newCount,
           isLiked: result.liked
         } : post
       );
@@ -96,7 +95,7 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
         prevFiltered.map(post => 
           post.id === postId ? {
             ...post,
-            likes: result.newCount || post.likes,
+            likes: result.newCount,
             isLiked: result.liked
           } : post
         )

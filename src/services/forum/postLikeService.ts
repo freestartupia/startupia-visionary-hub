@@ -1,82 +1,67 @@
 
-import { LikeResponse } from '@/types/community';
-import { 
-  checkAuthentication, 
-  checkIfUserLiked, 
-  getLikeCount, 
-  addLike, 
-  removeLike 
-} from './likeUtils';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { likePost, checkAuthentication } from "./likeUtils";
+import type { LikeResponse } from "@/types/community";
 
-// Get like status for a post
-export const getPostLikeStatus = async (postId: string): Promise<{ liked: boolean; count: number }> => {
+// Function to check if a user has liked a post
+export const getPostLikeStatus = async (postId: string, userId: string): Promise<boolean> => {
   try {
-    const userId = await checkAuthentication();
-    if (!userId) {
-      return { liked: false, count: 0 };
+    const { data, error } = await supabase
+      .from('forum_post_likes')
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') { // PGRST116 is the error code for "no rows returned"
+      console.error("Error checking like status:", error);
+      return false;
     }
     
-    const liked = await checkIfUserLiked('forum_post_likes', 'post_id', postId, userId);
-    const count = await getLikeCount('forum_post_likes', 'post_id', postId);
-    
-    return { liked, count };
+    return !!data;
   } catch (error) {
-    console.error('Error getting post like status:', error);
-    return { liked: false, count: 0 };
+    console.error("Error in getPostLikeStatus:", error);
+    return false;
   }
 };
 
-// Toggle like status for a post
+// Function to toggle like on a post
 export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
   try {
     const userId = await checkAuthentication();
     
     if (!userId) {
-      return { 
-        success: false, 
-        message: 'Vous devez être connecté pour aimer un post',
+      toast.error("Vous devez être connecté pour liker un post");
+      return {
+        success: false,
+        message: "Authentication required",
         liked: false,
         newCount: 0
       };
     }
     
-    const isLiked = await checkIfUserLiked('forum_post_likes', 'post_id', postId, userId);
+    // Utiliser la fonction générique likePost
+    const likeResponse = await likePost(postId);
     
-    if (isLiked) {
-      return await unlikePost(postId);
-    } else {
-      return await likePost(postId);
-    }
-  } catch (error) {
-    console.error('Error toggling post like:', error);
-    return { 
-      success: false, 
-      message: 'Une erreur est survenue',
-      liked: false,
-      newCount: 0
+    // Get the current like count to return
+    const { data: postData } = await supabase
+      .from('forum_posts')
+      .select('likes')
+      .eq('id', postId)
+      .single();
+    
+    return {
+      success: likeResponse.success,
+      message: likeResponse.message,
+      liked: likeResponse.liked || false,
+      newCount: likeResponse.liked 
+        ? (postData?.likes || 0) + 1 
+        : (postData?.likes || 0)
     };
+    
+  } catch (error) {
+    console.error("Error in togglePostLike:", error);
+    throw error;
   }
-};
-
-// Get the number of likes for a post
-export const getPostLikeCount = async (postId: string): Promise<number> => {
-  return await getLikeCount('forum_post_likes', 'post_id', postId);
-};
-
-// Check if the current user has liked a post
-export const checkIfUserLikedPost = async (postId: string): Promise<boolean> => {
-  const userId = await checkAuthentication();
-  if (!userId) return false;
-  
-  return await checkIfUserLiked('forum_post_likes', 'post_id', postId, userId);
-};
-
-// Like a post
-export const likePost = async (postId: string): Promise<LikeResponse> => {
-  return await addLike('forum_post_likes', postId, 'post_id');
-};
-
-// Unlike a post
-export const unlikePost = async (postId: string): Promise<LikeResponse> => {
-  return await removeLike('forum_post_likes', postId, 'post_id');
 };

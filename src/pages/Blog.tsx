@@ -1,6 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import BlogPostCard from '@/components/blog/BlogPostCard';
@@ -9,60 +8,35 @@ import CategoryFilter from '@/components/blog/CategoryFilter';
 import SubmitArticleModal from '@/components/blog/SubmitArticleModal';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
+import { 
+  mockBlogPosts, 
+  getAllBlogCategories, 
+  getFeaturedPosts 
+} from '@/data/mockBlogPosts';
 import { BlogCategory, BlogPost } from '@/types/blog';
 import SEO from '@/components/SEO';
-import { fetchAllBlogPosts, fetchFeaturedBlogPosts, getAllBlogCategories } from '@/services/blogService';
-import { Skeleton } from '@/components/ui/skeleton';
 
 const Blog = () => {
+  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(mockBlogPosts);
   const [selectedCategory, setSelectedCategory] = useState<BlogCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
-  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
   
-  // Fetch all blog posts
-  const { 
-    data: allPosts = [], 
-    isLoading: isLoadingPosts,
-    error: postsError
-  } = useQuery({
-    queryKey: ['blogPosts'],
-    queryFn: fetchAllBlogPosts
-  });
-  
-  // Fetch featured blog posts
-  const { 
-    data: featuredPosts = [], 
-    isLoading: isLoadingFeatured 
-  } = useQuery({
-    queryKey: ['featuredBlogPosts'],
-    queryFn: fetchFeaturedBlogPosts
-  });
-  
-  // Fetch all categories
-  const { 
-    data: categories = [], 
-    isLoading: isLoadingCategories 
-  } = useQuery({
-    queryKey: ['blogCategories'],
-    queryFn: getAllBlogCategories
-  });
-  
-  // Update filtered posts when data changes
-  useEffect(() => {
-    filterPosts(searchQuery, selectedCategory);
-  }, [allPosts, searchQuery, selectedCategory]);
+  const categories = getAllBlogCategories();
+  const featuredPosts = getFeaturedPosts();
   
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    filterPosts(query, selectedCategory);
   };
   
   const handleCategoryChange = (category: BlogCategory | null) => {
     setSelectedCategory(category);
+    filterPosts(searchQuery, category);
   };
   
   const filterPosts = (query: string, category: BlogCategory | null) => {
-    let filtered = [...allPosts];
+    let filtered = [...mockBlogPosts];
     
     if (query) {
       const lowerQuery = query.toLowerCase();
@@ -117,16 +91,7 @@ const Blog = () => {
         </div>
         
         {/* Featured posts carousel */}
-        {(isLoadingFeatured) ? (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">À la une</h2>
-            <div className="grid gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="w-full h-64 bg-gray-800/50 rounded-lg animate-pulse" />
-              ))}
-            </div>
-          </div>
-        ) : featuredPosts.length > 0 ? (
+        {featuredPosts.length > 0 && (
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">À la une</h2>
             <div className="grid gap-6">
@@ -135,43 +100,25 @@ const Blog = () => {
               ))}
             </div>
           </div>
-        ) : null}
-        
-        {isLoadingCategories ? (
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-8 w-24 bg-gray-800/50 rounded-full animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <CategoryFilter 
-            categories={categories} 
-            selectedCategory={selectedCategory}
-            onSelectCategory={handleCategoryChange}
-          />
         )}
         
-        {isLoadingPosts ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton key={i} className="h-80 w-full rounded-lg bg-gray-800/50" />
-            ))}
-          </div>
-        ) : postsError ? (
-          <div className="text-center py-10">
-            <p className="text-white/60">Une erreur est survenue lors du chargement des articles.</p>
-          </div>
-        ) : filteredPosts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPosts.map(post => (
+        <CategoryFilter 
+          categories={categories} 
+          selectedCategory={selectedCategory}
+          onSelectCategory={handleCategoryChange}
+        />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredPosts.length > 0 ? (
+            filteredPosts.map(post => (
               <BlogPostCard key={post.id} post={post} />
-            ))}
-          </div>
-        ) : (
-          <div className="col-span-3 text-center py-10">
-            <p className="text-white/60">Aucun article trouvé avec ces critères.</p>
-          </div>
-        )}
+            ))
+          ) : (
+            <div className="col-span-3 text-center py-10">
+              <p className="text-white/60">Aucun article trouvé avec ces critères.</p>
+            </div>
+          )}
+        </div>
       </main>
 
       <Footer />

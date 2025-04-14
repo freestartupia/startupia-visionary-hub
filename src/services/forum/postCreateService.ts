@@ -1,8 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ForumPost, ForumCategory } from "@/types/community";
-import { toast } from "sonner";
 import { mapPostFromDB } from "@/utils/forumMappers";
+import { toast } from "sonner";
 
 // Function to create a new post
 export const createForumPost = async (
@@ -28,7 +28,11 @@ export const createForumPost = async (
       author_id: userData.user.id,
       author_name: authorName,
       author_avatar: authorAvatar,
-      tags: []
+      tags: [],
+      created_at: new Date().toISOString(),
+      is_pinned: false,
+      likes: 0,
+      views: 0
     };
     
     const { data, error } = await supabase
@@ -44,8 +48,7 @@ export const createForumPost = async (
     }
     
     toast.success("Discussion créée avec succès");
-    
-    return mapPostFromDB(data);
+    return mapPostFromDB({ ...data, replies: [] });
   } catch (error) {
     console.error("Error in createForumPost:", error);
     throw error;

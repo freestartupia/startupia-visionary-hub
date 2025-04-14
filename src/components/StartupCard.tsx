@@ -17,7 +17,7 @@ interface StartupCardProps {
 const StartupCard = ({ startup }: StartupCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [upvoteCount, setUpvoteCount] = useState(startup.upvoteCount || 0);
+  const [upvoteCount, setUpvoteCount] = useState(0);
   const [isUpvoted, setIsUpvoted] = useState(false);
   
   // Fetch real upvote count and user's upvote status

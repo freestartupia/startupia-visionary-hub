@@ -16,11 +16,10 @@ import AIEcosystem from "./pages/AIEcosystem";
 import CoFounder from "./pages/CoFounder";
 import Community from "./pages/Community";
 import Blog from "./pages/Blog";
-import Rankings from "./pages/Rankings";
+import Tools from "./pages/Tools";
 import ProductDetails from "./pages/ProductDetails";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import Tools from "./pages/Tools";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserProfile from "./pages/UserProfile";
 import CofounderProfileEdit from "./pages/CofounderProfileEdit";
@@ -51,8 +50,8 @@ const App = () => (
                 <Route path="/community" element={<Community />} />
                 <Route path="/community/post/:postId" element={<Community />} />
                 <Route path="/blog" element={<Blog />} />
-                <Route path="/rankings" element={<Rankings />} />
                 <Route path="/tools" element={<Tools />} />
+                <Route path="/rankings" element={<Navigate to="/tools" replace />} />
                 <Route path="/products" element={<Navigate to="/ecosystem" replace />} />
                 <Route path="/product/:id" element={<ProductDetails />} />
                 <Route path="/auth" element={<Auth />} />
@@ -69,4 +68,3 @@ const App = () => (
 );
 
 export default App;
-

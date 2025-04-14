@@ -1,14 +1,14 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ImageUploadProps {
-  onImageChange: (file: File | null) => void;
   imagePreview: string | null;
-  onImageRemove: () => void;
+  onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveImage: () => void;
   label?: string;
   accept?: string;
   maxSize?: number; // in MB
@@ -17,38 +17,11 @@ interface ImageUploadProps {
 const ImageUpload: React.FC<ImageUploadProps> = ({
   onImageChange,
   imagePreview,
-  onImageRemove,
+  onRemoveImage,
   label = "Image",
   accept = ".webp,.jpg,.jpeg,.png",
   maxSize = 2 // Default 2MB
 }) => {
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    
-    if (file) {
-      // Check file type
-      const fileType = file.type;
-      const validTypes = accept.split(',').map(type => {
-        return type.startsWith('.') ? 
-          `image/${type.substring(1)}` : 
-          type;
-      });
-      
-      if (!validTypes.includes(fileType) && !validTypes.some(type => fileType.includes(type.replace('.', '')))) {
-        toast.error(`Format d'image non supporté. Utilisez ${accept.replace(/\./g, '')} formats.`);
-        return;
-      }
-      
-      // Check file size
-      if (file.size > maxSize * 1024 * 1024) {
-        toast.error(`L'image est trop grande. La taille maximum est de ${maxSize}MB.`);
-        return;
-      }
-      
-      onImageChange(file);
-    }
-  };
-
   return (
     <div className="space-y-2">
       <Label htmlFor="image-upload" className="text-white">{label}</Label>
@@ -69,7 +42,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               type="file" 
               className="hidden" 
               accept={accept}
-              onChange={handleImageChange}
+              onChange={onImageChange}
             />
           </label>
         </div>
@@ -82,7 +55,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           />
           <button
             type="button"
-            onClick={onImageRemove}
+            onClick={onRemoveImage}
             className="absolute top-2 right-2 bg-black/70 p-1 rounded-full hover:bg-black"
           >
             <X className="h-5 w-5 text-white" />

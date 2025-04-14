@@ -18,9 +18,8 @@ import {
 import { BlogCategory, BlogPost } from '@/types/blog';
 import SEO from '@/components/SEO';
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 
 const Blog = () => {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -41,28 +40,37 @@ const Blog = () => {
       setIsLoading(true);
       try {
         // First check if user is admin
-        const admin = await checkIsAdmin();
-        setIsAdmin(admin);
-        
-        // Log admin status for debugging
-        console.log("Current user email:", user?.email);
-        console.log("Is admin:", admin);
+        if (user?.email) {
+          console.log("Current user email:", user.email);
+          const admin = await checkIsAdmin();
+          console.log("Is admin:", admin);
+          setIsAdmin(admin);
+          
+          if (admin) {
+            // For admins, show a prominent notification that they're in admin mode
+            toast({
+              title: "Mode administrateur activé",
+              description: "Vous avez accès aux fonctionnalités d'administration du blog.",
+            });
+          }
+        }
         
         // Fetch all data in parallel
-        const [posts, featured, allCategories] = await Promise.all([
-          fetchBlogPosts(),
-          fetchFeaturedPosts(),
-          getAllBlogCategories()
-        ]);
+        const posts = await fetchBlogPosts();
+        const featured = await fetchFeaturedPosts();
+        const allCategories = await getAllBlogCategories();
+        
+        console.log("Fetched posts:", posts.length);
+        console.log("Fetched categories:", allCategories);
         
         // If admin, count pending posts
-        if (admin) {
+        if (isAdmin) {
           const pendingPosts = posts.filter(post => post.status === 'pending');
           setPendingCount(pendingPosts.length);
         }
         
         // Filter out pending posts for regular display
-        const approvedPosts = posts.filter(post => post.status === 'approved' || (admin && post.status === 'pending'));
+        const approvedPosts = posts.filter(post => post.status === 'approved' || (isAdmin && post.status === 'pending'));
         
         setBlogPosts(approvedPosts);
         setFilteredPosts(approvedPosts);
@@ -80,12 +88,8 @@ const Blog = () => {
       }
     };
     
-    if (user) {
-      loadBlogData();
-    } else {
-      setIsLoading(false);
-    }
-  }, [toast, user]);
+    loadBlogData();
+  }, [toast, user, isAdmin]);
   
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -137,19 +141,27 @@ const Blog = () => {
             L'actualité de l'IA française : tendances, outils, levées de fonds et interviews
           </p>
           
-          {/* Admin Banner */}
+          {/* Admin Banner - VERY PROMINENT */}
           {isAdmin && (
-            <div className="mt-6 inline-flex">
+            <div className="mt-6 flex justify-center">
               <Button
                 asChild
                 size="lg"
-                className="bg-purple-600 text-white hover:bg-purple-700 transition-all animate-pulse"
+                className="bg-purple-600 text-white hover:bg-purple-700 transition-all animate-pulse px-8 py-6 text-lg"
               >
                 <Link to="/blog/admin">
-                  <ShieldAlert className="mr-2" size={18} />
+                  <ShieldAlert className="mr-2" size={22} />
                   Accéder à l'administration
                 </Link>
               </Button>
+            </div>
+          )}
+          
+          {/* Admin Debug Info */}
+          {user && (
+            <div className="mt-4 text-xs text-white/50">
+              Connecté en tant que: {user.email} 
+              {isAdmin ? " (Administrateur)" : " (Utilisateur standard)"}
             </div>
           )}
         </div>
@@ -157,9 +169,12 @@ const Blog = () => {
         {isAdmin && pendingCount > 0 && (
           <div className="mb-6">
             <Alert className="bg-black/20 border-startupia-turquoise text-white">
+              <AlertTitle className="flex items-center text-xl">
+                <ShieldAlert className="inline-block mr-2 h-5 w-5 text-startupia-turquoise" />
+                Mode Administrateur
+              </AlertTitle>
               <AlertDescription className="flex items-center justify-between">
                 <span>
-                  <ShieldAlert className="inline-block mr-2 h-4 w-4 text-startupia-turquoise" />
                   {pendingCount} article{pendingCount > 1 ? 's' : ''} en attente de modération
                 </span>
                 <Button asChild variant="outline" className="border-startupia-turquoise text-white hover:bg-startupia-turquoise/20">

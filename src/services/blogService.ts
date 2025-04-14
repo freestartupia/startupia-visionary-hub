@@ -25,86 +25,111 @@ const transformBlogPost = (post: any): BlogPost => {
 };
 
 export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('*')
-    .order('created_at', { ascending: false });
-  
-  if (error) {
-    console.error("Error fetching blog posts:", error);
-    throw error;
+  try {
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching blog posts:", error);
+      return [];
+    }
+    
+    // Transform each post to match our interface
+    return (data || []).map(transformBlogPost);
+  } catch (error) {
+    console.error("Exception fetching blog posts:", error);
+    return [];
   }
-  
-  // Transform each post to match our interface
-  return (data || []).map(transformBlogPost);
 };
 
 export const fetchFeaturedPosts = async (): Promise<BlogPost[]> => {
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('*')
-    .eq('featured', true)
-    .order('created_at', { ascending: false });
-  
-  if (error) {
-    console.error("Error fetching featured posts:", error);
-    throw error;
+  try {
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('featured', true)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching featured posts:", error);
+      return [];
+    }
+    
+    // Transform each post to match our interface
+    return (data || []).map(transformBlogPost);
+  } catch (error) {
+    console.error("Exception fetching featured posts:", error);
+    return [];
   }
-  
-  // Transform each post to match our interface
-  return (data || []).map(transformBlogPost);
 };
 
 export const getAllBlogCategories = async (): Promise<BlogCategory[]> => {
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('category');
-  
-  if (error) {
-    console.error("Error fetching blog categories:", error);
-    throw error;
+  try {
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('category');
+    
+    if (error) {
+      console.error("Error fetching blog categories:", error);
+      return [];
+    }
+    
+    // Extract unique categories
+    const categories = [...new Set(data.map(post => post.category))] as BlogCategory[];
+    return categories;
+  } catch (error) {
+    console.error("Exception fetching blog categories:", error);
+    return [];
   }
-  
-  // Extract unique categories
-  const categories = [...new Set(data.map(post => post.category))] as BlogCategory[];
-  return categories;
 };
 
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('*')
-    .eq('slug', slug)
-    .single();
-  
-  if (error) {
-    console.error("Error fetching blog post by slug:", error);
-    if (error.code === 'PGRST116') {
-      // No rows returned
+  try {
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+    
+    if (error) {
+      console.error("Error fetching blog post by slug:", error);
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        return null;
+      }
       return null;
     }
-    throw error;
+    
+    // Transform post to match our interface
+    return data ? transformBlogPost(data) : null;
+  } catch (error) {
+    console.error("Exception fetching blog post by slug:", error);
+    return null;
   }
-  
-  // Transform post to match our interface
-  return data ? transformBlogPost(data) : null;
 };
 
 // New functions for the moderation system
 
 export const fetchPendingPosts = async (): Promise<BlogPost[]> => {
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('*')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: false });
-  
-  if (error) {
-    console.error("Error fetching pending posts:", error);
-    throw error;
+  try {
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching pending posts:", error);
+      return [];
+    }
+    
+    return (data || []).map(transformBlogPost);
+  } catch (error) {
+    console.error("Exception fetching pending posts:", error);
+    return [];
   }
-  
-  return (data || []).map(transformBlogPost);
 };
 
 export const approvePost = async (postId: string): Promise<void> => {
@@ -156,6 +181,7 @@ export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | '
   }
 };
 
+// Simplified admin check that doesn't rely on RLS or user_roles table
 export const checkIsAdmin = async (): Promise<boolean> => {
   try {
     // First check if user is authenticated
@@ -164,22 +190,11 @@ export const checkIsAdmin = async (): Promise<boolean> => {
     
     console.log("Checking admin status for user:", user.email);
     
-    // Direct database check for admin role
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single();
+    // Hardcoded admin check for your email (temporary solution)
+    // In a production environment, this should be replaced with a proper role-based system
+    const adminEmails = ['skyzohd22@gmail.com']; // Add your admin email here
     
-    if (error) {
-      console.error("Error in direct admin check:", error);
-      // Fallback to RPC function
-      const { data: rpcData } = await supabase.rpc('is_admin');
-      return !!rpcData;
-    }
-    
-    return !!data;
+    return adminEmails.includes(user.email || '');
   } catch (error) {
     console.error("Error checking admin status:", error);
     return false;

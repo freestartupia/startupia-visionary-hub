@@ -23,7 +23,9 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
     if (!userId) {
       return { 
         success: false, 
-        message: 'Vous devez être connecté pour aimer une réponse' 
+        message: 'Vous devez être connecté pour aimer une réponse',
+        liked: false,
+        newCount: 0
       };
     }
     
@@ -38,7 +40,9 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
     console.error('Error toggling reply like:', error);
     return { 
       success: false, 
-      message: 'Une erreur est survenue' 
+      message: 'Une erreur est survenue',
+      liked: false,
+      newCount: 0
     };
   }
 };

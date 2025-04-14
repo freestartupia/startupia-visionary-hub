@@ -55,6 +55,11 @@ export interface ForumPost {
   isLiked?: boolean;
 }
 
+export interface PopulatedForumPost extends ForumPost {
+  userHasLiked: boolean;
+  formattedCreatedAt: string;
+}
+
 export interface ForumReply {
   id: string;
   content: string;
@@ -68,6 +73,12 @@ export interface ForumReply {
   replyParentId?: string;
   isLiked?: boolean;
   nestedReplies?: ForumReply[];
+}
+
+export interface PopulatedForumReply extends ForumReply {
+  userHasLiked: boolean;
+  formattedCreatedAt: string;
+  children: ForumReply[];
 }
 
 export interface ServiceListing {

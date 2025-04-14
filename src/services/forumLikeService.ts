@@ -2,8 +2,7 @@
 // Re-export all like-related services for backward compatibility
 export type { LikeResponse } from '@/types/community';
 export { 
-  checkAuthentication, 
-  safeRpcCall 
+  checkAuthentication
 } from './forum/likeUtils';
 export { 
   getPostLikeStatus, 

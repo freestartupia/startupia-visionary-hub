@@ -91,6 +91,7 @@ export type CofounderProfile = {
   projectStage?: ProjectStage;
   matches: string[]; // IDs of profiles that matched with this one
   user_id?: string; // L'ID de l'utilisateur propriétaire du profil
+  isCurrentUserProfile?: boolean; // Indique si ce profil appartient à l'utilisateur actuel
 };
 
 export type MatchNotification = {
@@ -150,7 +151,8 @@ export const convertDbProfileToApp = (profile: any): CofounderProfile => ({
   hasAIBadge: profile.has_ai_badge || false,
   projectName: profile.project_name,
   projectStage: profile.project_stage as ProjectStage,
-  matches: profile.matches || []
+  matches: profile.matches || [],
+  user_id: profile.user_id
 });
 
 export const convertAppProfileToDb = (profile: CofounderProfile): any => ({

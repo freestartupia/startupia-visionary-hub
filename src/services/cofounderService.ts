@@ -3,6 +3,11 @@ import { CofounderProfile, ProfileType, convertDbProfileToApp, convertAppProfile
 import { v4 as uuidv4 } from 'uuid';
 
 export const getCofounderProfiles = async (): Promise<CofounderProfile[]> => {
+  // Fetch user data first to get the current user ID
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+  
+  // Fetch cofounder profiles
   const { data, error } = await supabase
     .from('cofounder_profiles')
     .select('*');
@@ -12,7 +17,20 @@ export const getCofounderProfiles = async (): Promise<CofounderProfile[]> => {
     throw error;
   }
   
-  return data.map(profile => convertDbProfileToApp(profile));
+  // Map the results to the application format
+  const profiles = data.map(profile => {
+    const appProfile = convertDbProfileToApp(profile);
+    
+    // Mark if this profile belongs to the current user
+    if (userId && profile.user_id === userId) {
+      console.log("Found current user's profile:", profile.id);
+      appProfile.isCurrentUserProfile = true;
+    }
+    
+    return appProfile;
+  });
+  
+  return profiles;
 };
 
 export const getCofounderProfile = async (id: string): Promise<CofounderProfile> => {
@@ -127,6 +145,7 @@ export const updateCofounderProfile = async (profileData: Partial<CofounderProfi
     project_name: profileData.projectName || "",
     project_stage: profileData.projectStage || "",
     has_ai_badge: profileData.hasAIBadge || false,
+    user_id: userData.user.id, // Ensure user_id is set correctly
   };
   
   const { data, error } = await supabase

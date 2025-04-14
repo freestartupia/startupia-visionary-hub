@@ -16,6 +16,17 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   },
 });
 
-// Enable Row Level Security (RLS) for the relevant tables via SQL commands
-// To fix permission issues when inserting data, use SQL commands to create appropriate RLS policies
-// Note: Ces politiques ont été mises en place (voir les SQL queries exécutées)
+// RPC (Remote Procedure Call) functions
+// SQL functions that can be called from the client
+// Example: upvoteProduct function calls increment_product_upvotes via RPC
+/*
+CREATE OR REPLACE FUNCTION increment_product_upvotes(product_id UUID)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  UPDATE product_launches
+  SET upvotes = upvotes + 1
+  WHERE id = product_id;
+$$;
+*/

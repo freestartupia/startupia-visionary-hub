@@ -19,6 +19,8 @@ import { BlogCategory, BlogPost } from '@/types/blog';
 import SEO from '@/components/SEO';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const Blog = () => {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -32,6 +34,7 @@ const Blog = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [pendingCount, setPendingCount] = useState<number>(0);
   const { toast } = useToast();
+  const { user } = useAuth();
   
   useEffect(() => {
     const loadBlogData = async () => {
@@ -40,6 +43,10 @@ const Blog = () => {
         // First check if user is admin
         const admin = await checkIsAdmin();
         setIsAdmin(admin);
+        
+        // Log admin status for debugging
+        console.log("Current user email:", user?.email);
+        console.log("Is admin:", admin);
         
         // Fetch all data in parallel
         const [posts, featured, allCategories] = await Promise.all([
@@ -73,8 +80,12 @@ const Blog = () => {
       }
     };
     
-    loadBlogData();
-  }, [toast]);
+    if (user) {
+      loadBlogData();
+    } else {
+      setIsLoading(false);
+    }
+  }, [toast, user]);
   
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -125,6 +136,22 @@ const Blog = () => {
           <p className="text-xl text-white/80 max-w-2xl mx-auto">
             L'actualité de l'IA française : tendances, outils, levées de fonds et interviews
           </p>
+          
+          {/* Admin Banner */}
+          {isAdmin && (
+            <div className="mt-6 inline-flex">
+              <Button
+                asChild
+                size="lg"
+                className="bg-purple-600 text-white hover:bg-purple-700 transition-all animate-pulse"
+              >
+                <Link to="/blog/admin">
+                  <ShieldAlert className="mr-2" size={18} />
+                  Accéder à l'administration
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
         
         {isAdmin && pendingCount > 0 && (

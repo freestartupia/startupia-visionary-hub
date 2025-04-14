@@ -158,7 +158,27 @@ export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | '
 
 export const checkIsAdmin = async (): Promise<boolean> => {
   try {
-    const { data } = await supabase.rpc('is_admin');
+    // First check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+    
+    console.log("Checking admin status for user:", user.email);
+    
+    // Direct database check for admin role
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .single();
+    
+    if (error) {
+      console.error("Error in direct admin check:", error);
+      // Fallback to RPC function
+      const { data: rpcData } = await supabase.rpc('is_admin');
+      return !!rpcData;
+    }
+    
     return !!data;
   } catch (error) {
     console.error("Error checking admin status:", error);

@@ -2,9 +2,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UpvoteResponse } from "@/types/community";
 
+/**
+ * Toggle a vote (upvote or downvote) for a startup
+ * @param startupId The ID of the startup to vote for
+ * @param isUpvote Whether this is an upvote (true) or downvote (false)
+ * @returns Response with vote status and updated count
+ */
 export const toggleStartupVote = async (startupId: string, isUpvote: boolean): Promise<UpvoteResponse> => {
   try {
-    // Vérifier l'authentification
+    // Check authentication
     const { data: userData, error: authError } = await supabase.auth.getUser();
     if (authError || !userData.user) {
       return {
@@ -17,7 +23,7 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
     
     const userId = userData.user.id;
     
-    // Vérifier le vote existant
+    // Check for existing vote
     const { data: existingVote, error: voteError } = await supabase
       .from('startup_votes')
       .select('id, is_upvote')
@@ -30,7 +36,7 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       throw voteError;
     }
     
-    // Récupérer le nombre de votes actuels
+    // Get current vote count
     const { data: startupData, error: startupError } = await supabase
       .from('startups')
       .select('upvotes_count')
@@ -42,53 +48,36 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       throw startupError;
     }
     
+    // Calculate new vote count and prepare response
     const currentCount = startupData.upvotes_count || 0;
     let newCount = currentCount;
     let responseMessage = "";
     let isVoteUpvoted = false;
     
-    // Supprimer le vote existant si même type
-    if (existingVote && existingVote.is_upvote === isUpvote) {
-      await supabase
-        .from('startup_votes')
-        .delete()
-        .eq('id', existingVote.id);
-      
-      newCount = isUpvote ? Math.max(0, currentCount - 1) : currentCount + 1;
-      responseMessage = "Vote retiré";
-      isVoteUpvoted = false;
-    }
-    // Changer le vote s'il existe mais de type différent
-    else if (existingVote) {
-      await supabase
-        .from('startup_votes')
-        .update({ is_upvote: isUpvote })
-        .eq('id', existingVote.id);
-      
-      newCount = isUpvote ? currentCount + 2 : currentCount - 2;
-      responseMessage = isUpvote ? "Vote changé en positif" : "Vote changé en négatif";
-      isVoteUpvoted = isUpvote;
-    }
-    // Ajouter un nouveau vote
-    else {
-      await supabase
-        .from('startup_votes')
-        .insert({
-          startup_id: startupId,
-          user_id: userId,
-          is_upvote: isUpvote
-        });
-      
-      newCount = isUpvote ? currentCount + 1 : Math.max(0, currentCount - 1);
+    // Handle vote operation based on existing vote status
+    if (existingVote) {
+      if (existingVote.is_upvote === isUpvote) {
+        // Remove vote if clicking the same type again
+        await removeVote(existingVote.id);
+        newCount = adjustCount(currentCount, isUpvote, false);
+        responseMessage = "Vote retiré";
+      } else {
+        // Change vote type if different
+        await updateVoteType(existingVote.id, isUpvote);
+        newCount = adjustCount(currentCount, isUpvote, true);
+        responseMessage = isUpvote ? "Vote changé en positif" : "Vote changé en négatif";
+        isVoteUpvoted = isUpvote;
+      }
+    } else {
+      // Add new vote
+      await addNewVote(startupId, userId, isUpvote);
+      newCount = adjustCount(currentCount, isUpvote, false, true);
       responseMessage = isUpvote ? "Vote positif ajouté" : "Vote négatif ajouté";
       isVoteUpvoted = isUpvote;
     }
     
-    // Mettre à jour le nombre de votes de la startup
-    await supabase
-      .from('startups')
-      .update({ upvotes_count: newCount })
-      .eq('id', startupId);
+    // Update startup vote count
+    await updateStartupVoteCount(startupId, newCount);
     
     return {
       success: true,
@@ -108,6 +97,70 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
   }
 };
 
-// Fonctions de compatibilité
+/**
+ * Calculate the new vote count based on the vote operation
+ */
+const adjustCount = (
+  currentCount: number, 
+  isUpvote: boolean, 
+  isChangingVote: boolean = false,
+  isNewVote: boolean = false
+): number => {
+  if (isChangingVote) {
+    // When changing vote type, count changes by 2 (removing one type and adding another)
+    return isUpvote ? currentCount + 2 : currentCount - 2;
+  } else if (isNewVote) {
+    // When adding a new vote
+    return isUpvote ? currentCount + 1 : Math.max(0, currentCount - 1);
+  } else {
+    // When removing a vote
+    return isUpvote ? Math.max(0, currentCount - 1) : currentCount + 1;
+  }
+};
+
+/**
+ * Add a new vote to the database
+ */
+const addNewVote = async (startupId: string, userId: string, isUpvote: boolean) => {
+  return supabase
+    .from('startup_votes')
+    .insert({
+      startup_id: startupId,
+      user_id: userId,
+      is_upvote: isUpvote
+    });
+};
+
+/**
+ * Update an existing vote's type
+ */
+const updateVoteType = async (voteId: string, isUpvote: boolean) => {
+  return supabase
+    .from('startup_votes')
+    .update({ is_upvote: isUpvote })
+    .eq('id', voteId);
+};
+
+/**
+ * Remove a vote from the database
+ */
+const removeVote = async (voteId: string) => {
+  return supabase
+    .from('startup_votes')
+    .delete()
+    .eq('id', voteId);
+};
+
+/**
+ * Update the startup's vote count
+ */
+const updateStartupVoteCount = async (startupId: string, newCount: number) => {
+  return supabase
+    .from('startups')
+    .update({ upvotes_count: newCount })
+    .eq('id', startupId);
+};
+
+// Compatibility functions for existing code
 export const toggleStartupUpvote = (startupId: string) => toggleStartupVote(startupId, true);
 export const toggleStartupDownvote = (startupId: string) => toggleStartupVote(startupId, false);

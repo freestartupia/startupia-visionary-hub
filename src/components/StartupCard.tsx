@@ -33,9 +33,9 @@ const StartupCard = ({ startup }: StartupCardProps) => {
         // Check if user has upvoted
         if (user) {
           const { data: userUpvote, error: userError } = await supabase
-            .from('post_upvotes')
+            .from('startup_votes')
             .select('id, is_upvote')
-            .eq('post_id', startup.id)
+            .eq('startup_id', startup.id)
             .eq('user_id', user.id)
             .single();
             

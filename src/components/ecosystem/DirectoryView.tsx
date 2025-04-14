@@ -115,8 +115,8 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
       
       try {
         const { data, error } = await supabase
-          .from('post_upvotes')
-          .select('post_id, is_upvote')
+          .from('startup_votes')
+          .select('startup_id, is_upvote')
           .eq('user_id', user.id);
           
         if (error) {
@@ -128,13 +128,13 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           const newVotesState = { ...startupVotes };
           
           data.forEach(vote => {
-            if (newVotesState[vote.post_id]) {
+            if (newVotesState[vote.startup_id]) {
               if (vote.is_upvote) {
-                newVotesState[vote.post_id].upvoted = true;
-                newVotesState[vote.post_id].downvoted = false;
+                newVotesState[vote.startup_id].upvoted = true;
+                newVotesState[vote.startup_id].downvoted = false;
               } else {
-                newVotesState[vote.post_id].upvoted = false;
-                newVotesState[vote.post_id].downvoted = true;
+                newVotesState[vote.startup_id].upvoted = false;
+                newVotesState[vote.startup_id].downvoted = true;
               }
             }
           });
@@ -237,7 +237,58 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
       console.error('Error toggling vote:', error);
       toast.error("Erreur lors du vote");
       
-      setStartupVotes(prev => ({ ...prev }));
+      const refreshStartupVotes = async () => {
+        try {
+          const { data: startupData } = await supabase
+            .from('startups')
+            .select('id, upvotes_count')
+            .eq('id', startupId)
+            .single();
+          
+          if (startupData) {
+            setStartupVotes(prev => ({
+              ...prev,
+              [startupId]: {
+                ...prev[startupId],
+                count: startupData.upvotes_count || 0
+              }
+            }));
+          }
+          
+          if (user) {
+            const { data: userVote } = await supabase
+              .from('startup_votes')
+              .select('is_upvote')
+              .eq('startup_id', startupId)
+              .eq('user_id', user.id)
+              .single();
+              
+            if (userVote) {
+              setStartupVotes(prev => ({
+                ...prev,
+                [startupId]: {
+                  upvoted: userVote.is_upvote,
+                  downvoted: !userVote.is_upvote,
+                  count: prev[startupId].count
+                }
+              }));
+            } else {
+              setStartupVotes(prev => ({
+                ...prev,
+                [startupId]: {
+                  upvoted: false,
+                  downvoted: false,
+                  count: prev[startupId].count
+                }
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Error refreshing vote state:', error);
+        }
+      };
+      
+      refreshStartupVotes();
     }
   };
 

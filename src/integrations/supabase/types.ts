@@ -745,6 +745,38 @@ export type Database = {
         }
         Relationships: []
       }
+      startup_votes: {
+        Row: {
+          created_at: string
+          id: string
+          is_upvote: boolean | null
+          startup_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_upvote?: boolean | null
+          startup_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_upvote?: boolean | null
+          startup_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "startup_votes_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       startups: {
         Row: {
           ai_impact_score: number

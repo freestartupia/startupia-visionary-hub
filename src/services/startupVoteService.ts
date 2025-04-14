@@ -15,11 +15,11 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
       };
     }
     
-    // Check if user already upvoted this startup
-    const { data: existingUpvote } = await supabase
-      .from('post_upvotes')
+    // Check if user already voted this startup
+    const { data: existingVote } = await supabase
+      .from('startup_votes')
       .select('id, is_upvote')
-      .eq('post_id', startupId)
+      .eq('startup_id', startupId)
       .eq('user_id', userData.user.id)
       .single();
     
@@ -27,12 +27,12 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
     let message = "";
     let countDelta = 0;
     
-    // If already upvoted, remove the upvote
-    if (existingUpvote && existingUpvote.is_upvote === true) {
+    // If already upvoted, remove the vote
+    if (existingVote && existingVote.is_upvote === true) {
       const { error: deleteError } = await supabase
-        .from('post_upvotes')
+        .from('startup_votes')
         .delete()
-        .eq('post_id', startupId)
+        .eq('startup_id', startupId)
         .eq('user_id', userData.user.id);
         
       if (deleteError) {
@@ -50,15 +50,15 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
       upvoted = false;
     } 
     // If already downvoted, change to upvote
-    else if (existingUpvote && existingUpvote.is_upvote === false) {
+    else if (existingVote && existingVote.is_upvote === false) {
       const { error: updateError } = await supabase
-        .from('post_upvotes')
+        .from('startup_votes')
         .update({ is_upvote: true })
-        .eq('post_id', startupId)
+        .eq('startup_id', startupId)
         .eq('user_id', userData.user.id);
         
       if (updateError) {
-        console.error("Error updating upvote:", updateError);
+        console.error("Error updating vote:", updateError);
         return {
           success: false,
           message: "Impossible de mettre à jour votre vote",
@@ -74,9 +74,9 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
     // Otherwise, add an upvote
     else {
       const { error: insertError } = await supabase
-        .from('post_upvotes')
+        .from('startup_votes')
         .insert({
-          post_id: startupId,
+          startup_id: startupId,
           user_id: userData.user.id,
           is_upvote: true
         });
@@ -160,9 +160,9 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
     
     // Check if user already voted on this startup
     const { data: existingVote } = await supabase
-      .from('post_upvotes')
+      .from('startup_votes')
       .select('id, is_upvote')
-      .eq('post_id', startupId)
+      .eq('startup_id', startupId)
       .eq('user_id', userData.user.id)
       .single();
     
@@ -173,9 +173,9 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
     // If already downvoted, remove the vote
     if (existingVote && existingVote.is_upvote === false) {
       const { error: deleteError } = await supabase
-        .from('post_upvotes')
+        .from('startup_votes')
         .delete()
-        .eq('post_id', startupId)
+        .eq('startup_id', startupId)
         .eq('user_id', userData.user.id);
         
       if (deleteError) {
@@ -195,9 +195,9 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
     // If already upvoted, change to downvote
     else if (existingVote && existingVote.is_upvote === true) {
       const { error: updateError } = await supabase
-        .from('post_upvotes')
+        .from('startup_votes')
         .update({ is_upvote: false })
-        .eq('post_id', startupId)
+        .eq('startup_id', startupId)
         .eq('user_id', userData.user.id);
         
       if (updateError) {
@@ -217,9 +217,9 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
     // Otherwise, add a downvote
     else {
       const { error: insertError } = await supabase
-        .from('post_upvotes')
+        .from('startup_votes')
         .insert({
-          post_id: startupId,
+          startup_id: startupId,
           user_id: userData.user.id,
           is_upvote: false
         });

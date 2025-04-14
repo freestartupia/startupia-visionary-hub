@@ -138,28 +138,16 @@ export const addComment = async (
  */
 export const upvoteProduct = async (productId: string): Promise<boolean> => {
   try {
-    // First try using RPC if it exists
-    try {
-      const { error } = await supabase
-        .rpc('increment_product_upvotes', { product_id: productId });
-      
-      if (!error) {
-        return true;
-      }
-    } catch (rpcError) {
-      console.log('RPC not available, using fallback', rpcError);
-    }
-    
-    // Fallback if the RPC function doesn't exist
+    // First try direct update with increment
     const { error } = await supabase
       .from('product_launches')
-      .update({ upvotes: supabase.rpc('increment') })
+      .update({ upvotes: supabase.rpc('is_admin') ? 1 : 0 + 1 })
       .eq('id', productId);
     
     if (error) {
       console.error('Error upvoting product:', error);
       
-      // Second fallback - get current value and increment it
+      // Fallback - get current value and increment it
       const { data: currentProduct } = await supabase
         .from('product_launches')
         .select('upvotes')
@@ -174,7 +162,7 @@ export const upvoteProduct = async (productId: string): Promise<boolean> => {
           .eq('id', productId);
         
         if (updateError) {
-          console.error('Error in second fallback upvote:', updateError);
+          console.error('Error in fallback upvote:', updateError);
           return false;
         }
         return true;

@@ -21,7 +21,7 @@ export const checkAuthentication = async (): Promise<string | null> => {
 
 // Check if a user has liked a specific item (post or reply)
 export const checkIfUserLiked = async (
-  tableName: string,
+  tableName: 'forum_post_likes' | 'forum_reply_likes',
   idField: string,
   itemId: string,
   userId: string
@@ -52,7 +52,7 @@ export const checkIfUserLiked = async (
 
 // Get the count of likes for a specific item (post or reply)
 export const getLikeCount = async (
-  tableName: string,
+  tableName: 'forum_post_likes' | 'forum_reply_likes',
   idField: string,
   itemId: string
 ): Promise<number> => {
@@ -76,7 +76,7 @@ export const getLikeCount = async (
 
 // Add a like to a specific item (post or reply)
 export const addLike = async (
-  tableName: string,
+  tableName: 'forum_post_likes' | 'forum_reply_likes',
   itemId: string,
   idField: string
 ): Promise<LikeResponse> => {
@@ -143,7 +143,7 @@ export const addLike = async (
 
 // Remove a like from a specific item (post or reply)
 export const removeLike = async (
-  tableName: string,
+  tableName: 'forum_post_likes' | 'forum_reply_likes',
   itemId: string,
   idField: string
 ): Promise<LikeResponse> => {

@@ -38,8 +38,7 @@ const mapDbReplyToForumReply = (replyData: ForumReplyDB): ForumReply => {
     isLiked: false,
     parentId: replyData.parent_id,
     replyParentId: replyData.reply_parent_id || null,
-    formattedCreatedAt: formatReplyDate(replyData.created_at),
-    replies: []
+    nestedReplies: []
   };
 };
 
@@ -68,8 +67,8 @@ export const getRepliesForPost = async (postId: string): Promise<ForumReply[]> =
       
       return {
         ...formattedReply,
-        userHasLiked: liked,
-        replies: nestedReplies
+        isLiked: liked,
+        nestedReplies: nestedReplies
       };
     }));
 
@@ -100,9 +99,9 @@ export const getNestedReplies = async (replyId: string): Promise<ForumReply[]> =
       
       return {
         ...formattedReply,
-        userHasLiked: liked,
+        isLiked: liked,
         // Don't fetch deeper nested replies to avoid infinite recursion
-        replies: []
+        nestedReplies: []
       };
     }));
 
@@ -175,8 +174,8 @@ export const createReply = async (
       success: true, 
       reply: {
         ...reply,
-        userHasLiked: false,
-        replies: []
+        isLiked: false,
+        nestedReplies: []
       }, 
       error: null 
     };
@@ -188,4 +187,21 @@ export const createReply = async (
       error: "Erreur lors de la création de la réponse." 
     };
   }
+};
+
+// Add a reply to a post (wrapper function for backward compatibility)
+export const addReplyToPost = async (
+  postId: string,
+  content: string,
+  authorName?: string,
+  authorAvatar?: string | null,
+  replyParentId?: string | null
+): Promise<ForumReply | null> => {
+  const result = await createReply(content, postId, replyParentId || null);
+  
+  if (result.success && result.reply) {
+    return result.reply;
+  }
+  
+  return null;
 };

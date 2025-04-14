@@ -12,7 +12,8 @@ export {
 
 export { 
   getRepliesForPost, 
-  addReplyToPost 
+  createReply,
+  addReplyToPost
 } from './forum/replyService';
 
 // Export like-related services

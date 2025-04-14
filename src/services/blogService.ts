@@ -185,7 +185,17 @@ export const rejectPost = async (postId: string): Promise<void> => {
 export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | 'status'>): Promise<void> => {
   try {
     console.log("Submitting blog post:", post.title);
-    const { error, data } = await supabase
+    console.log("Post data to submit:", {
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt,
+      content: post.content,
+      category: post.category,
+      authorId: post.authorId,
+      tags: post.tags
+    });
+    
+    const { data, error } = await supabase
       .from('blog_posts')
       .insert([{
         title: post.title,
@@ -198,7 +208,7 @@ export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | '
         author_name: post.authorName,
         author_avatar: post.authorAvatar,
         tags: post.tags,
-        featured: post.featured,
+        featured: post.featured || false,
         reading_time: post.readingTime,
         status: 'pending'
       }])
@@ -206,6 +216,9 @@ export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | '
     
     if (error) {
       console.error("Error submitting blog post:", error);
+      console.error("Error code:", error.code);
+      console.error("Error details:", error.details);
+      console.error("Error hint:", error.hint);
       throw new Error(error.message || "Failed to submit blog post");
     }
     
@@ -228,13 +241,22 @@ export const checkIsAdmin = async (): Promise<boolean> => {
     
     console.log("Checking admin status for user:", user.email);
     
-    // Hardcoded admin check for your email (temporary solution)
-    // In a production environment, this should be replaced with a proper role-based system
-    const adminEmails = ['skyzohd22@gmail.com']; // Add your admin email here
-    const isAdmin = adminEmails.includes(user.email || '');
+    // Use the is_admin function we created in SQL
+    const { data, error } = await supabase.rpc('is_admin', { uid: user.id });
     
-    console.log(`User ${user.email} admin status:`, isAdmin);
-    return isAdmin;
+    if (error) {
+      console.error("Error checking admin status with RPC:", error);
+      
+      // Fallback to hardcoded admin check for your email (temporary solution)
+      const adminEmails = ['skyzohd22@gmail.com'];
+      const isAdmin = adminEmails.includes(user.email || '');
+      
+      console.log(`Using fallback admin check for ${user.email}: ${isAdmin}`);
+      return isAdmin;
+    }
+    
+    console.log(`User ${user.email} admin status from RPC:`, data);
+    return data === true;
   } catch (error) {
     console.error("Error checking admin status:", error);
     return false;

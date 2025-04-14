@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from "@/types/startup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +10,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { toggleStartupUpvote, toggleStartupDownvote } from "@/services/startupVoteService";
 
 interface DirectoryViewProps {
   searchQuery: string;
@@ -85,7 +85,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           setStartups(transformedData);
           setFilteredStartups(transformedData);
           
-          // Initialize voting state
           const votesState: Record<string, { upvoted: boolean, downvoted: boolean, count: number }> = {};
           transformedData.forEach(startup => {
             votesState[startup.id] = { 
@@ -111,7 +110,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
   }, []);
   
   useEffect(() => {
-    // Check user's votes if logged in
     const checkUserVotes = async () => {
       if (!user) return;
       
@@ -188,24 +186,19 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
       return;
     }
     
-    // Get current vote state
-    const currentVoteState = startupVotes[startupId];
-    const alreadyVotedSameWay = isUpvote ? currentVoteState.upvoted : currentVoteState.downvoted;
-    
     try {
-      // Apply optimistic update
       setStartupVotes(prev => {
         const newState = { ...prev };
+        const currentVoteState = prev[startupId];
+        const alreadyVotedSameWay = isUpvote ? currentVoteState.upvoted : currentVoteState.downvoted;
         
         if (alreadyVotedSameWay) {
-          // Remove vote
           newState[startupId] = {
             upvoted: false,
             downvoted: false,
             count: isUpvote ? prev[startupId].count - 1 : prev[startupId].count + 1
           };
         } else {
-          // Add new vote or change vote
           const wasOppositeVote = isUpvote ? prev[startupId].downvoted : prev[startupId].upvoted;
           const countDelta = wasOppositeVote ? 2 : 1;
           
@@ -221,60 +214,29 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
         return newState;
       });
       
-      if (alreadyVotedSameWay) {
-        // Delete the vote
-        const { error } = await supabase
-          .from('post_upvotes')
-          .delete()
-          .eq('post_id', startupId)
-          .eq('user_id', user.id);
-          
-        if (error) throw error;
+      const response = isUpvote
+        ? await toggleStartupUpvote(startupId)
+        : await toggleStartupDownvote(startupId);
         
-      } else {
-        // Check if there's an existing vote to be replaced
-        const { data } = await supabase
-          .from('post_upvotes')
-          .select('id')
-          .eq('post_id', startupId)
-          .eq('user_id', user.id);
-          
-        if (data && data.length > 0) {
-          // Update the vote
-          const { error } = await supabase
-            .from('post_upvotes')
-            .update({ is_upvote: isUpvote })
-            .eq('post_id', startupId)
-            .eq('user_id', user.id);
-            
-          if (error) throw error;
-        } else {
-          // Insert new vote
-          const { error } = await supabase
-            .from('post_upvotes')
-            .insert({
-              post_id: startupId,
-              user_id: user.id,
-              is_upvote: isUpvote
-            });
-            
-          if (error) throw error;
-        }
+      if (!response.success) {
+        throw new Error(response.message);
       }
       
-      // Update the startup's upvote count in the database
-      const { error } = await supabase
-        .from('startups')
-        .update({ upvotes_count: startupVotes[startupId].count })
-        .eq('id', startupId);
-        
-      if (error) throw error;
+      setStartupVotes(prev => ({
+        ...prev,
+        [startupId]: {
+          upvoted: response.upvoted,
+          downvoted: !response.upvoted,
+          count: response.newCount
+        }
+      }));
+      
+      toast.success(response.message);
       
     } catch (error) {
       console.error('Error toggling vote:', error);
       toast.error("Erreur lors du vote");
       
-      // Revert optimistic update on error
       setStartupVotes(prev => ({ ...prev }));
     }
   };
@@ -400,7 +362,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
               </Card>
             </Link>
             
-            {/* Vote buttons overlay - positioned absolutely to prevent navigation */}
             <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center z-10" 
                  onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center bg-black/40 border border-startupia-turquoise/30 rounded-full overflow-hidden p-0.5">

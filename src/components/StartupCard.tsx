@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toggleStartupUpvote } from "@/services/startupVoteService";
 
 interface StartupCardProps {
   startup: Startup;
@@ -76,56 +77,30 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     }
     
     try {
-      if (isUpvoted) {
-        // Remove upvote
-        const { error } = await supabase
-          .from('post_upvotes')
-          .delete()
-          .eq('post_id', startup.id)
-          .eq('user_id', user.id);
-          
-        if (error) {
-          console.error('Error removing upvote:', error);
-          toast.error("Erreur lors du retrait du vote");
-          return;
-        }
-          
-        setUpvoteCount(prev => Math.max(0, prev - 1));
-        setIsUpvoted(false);
-        toast.success(`Vote retiré pour ${startup.name}`);
-      } else {
-        // Add upvote
-        const { error } = await supabase
-          .from('post_upvotes')
-          .insert({
-            post_id: startup.id,
-            user_id: user.id,
-            is_upvote: true
-          });
-          
-        if (error) {
-          console.error('Error adding upvote:', error);
-          toast.error("Erreur lors du vote");
-          return;
-        }
-          
-        setUpvoteCount(prev => prev + 1);
-        setIsUpvoted(true);
-        toast.success(`Vous avez upvoté ${startup.name}`);
+      // Apply optimistic update
+      const newUpvoteCount = isUpvoted ? upvoteCount - 1 : upvoteCount + 1;
+      setUpvoteCount(newUpvoteCount);
+      setIsUpvoted(!isUpvoted);
+      
+      // Call the service function
+      const response = await toggleStartupUpvote(startup.id);
+      
+      if (!response.success) {
+        throw new Error(response.message);
       }
       
-      // Update the startup's upvote count in the database
-      const { error } = await supabase
-        .from('startups')
-        .update({ upvotes_count: isUpvoted ? upvoteCount - 1 : upvoteCount + 1 })
-        .eq('id', startup.id);
-        
-      if (error) {
-        console.error('Error updating startup upvote count:', error);
-      }
+      // Update with the server response
+      setUpvoteCount(response.newCount);
+      setIsUpvoted(response.upvoted);
+      toast.success(response.message);
+      
     } catch (error) {
       console.error('Error toggling upvote:', error);
       toast.error("Erreur lors du vote");
+      
+      // Revert optimistic update on error
+      setUpvoteCount(startup.upvoteCount || 0);
+      setIsUpvoted(false);
     }
   };
 

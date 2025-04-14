@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { BlogPost, BlogCategory } from "@/types/blog";
 
@@ -133,7 +132,6 @@ export const fetchPendingPosts = async (): Promise<BlogPost[]> => {
     }
     
     console.log("Pending posts fetched:", data?.length);
-    console.log("Pending posts data:", data);
     
     return (data || []).map(transformBlogPost);
   } catch (error) {
@@ -192,6 +190,8 @@ export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | '
       content: post.content,
       category: post.category,
       authorId: post.authorId,
+      authorName: post.authorName,
+      authorAvatar: post.authorAvatar,
       tags: post.tags
     });
     
@@ -229,7 +229,7 @@ export const submitBlogPost = async (post: Omit<BlogPost, 'id' | 'createdAt' | '
   }
 };
 
-// Simplified admin check that doesn't rely on RLS or user_roles table
+// Updated admin check that uses the security definer function
 export const checkIsAdmin = async (): Promise<boolean> => {
   try {
     // First check if user is authenticated
@@ -246,11 +246,8 @@ export const checkIsAdmin = async (): Promise<boolean> => {
     
     if (error) {
       console.error("Error checking admin status with RPC:", error);
-      
-      // Fallback to hardcoded admin check for your email (temporary solution)
-      const adminEmails = ['skyzohd22@gmail.com'];
-      const isAdmin = adminEmails.includes(user.email || '');
-      
+      // Fallback to email check if RPC fails
+      const isAdmin = user.email === 'skyzohd22@gmail.com';
       console.log(`Using fallback admin check for ${user.email}: ${isAdmin}`);
       return isAdmin;
     }

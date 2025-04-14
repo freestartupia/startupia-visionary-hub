@@ -25,6 +25,7 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
     
     let upvoted = false;
     let message = "";
+    let countDelta = 0;
     
     // If already upvoted, remove the upvote
     if (existingUpvote && existingUpvote.is_upvote === true) {
@@ -44,16 +45,7 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
         };
       }
       
-      // Decrease the upvote count directly
-      const { error: updateCountError } = await supabase
-        .from('startups')
-        .update({ upvotes_count: supabase.sql`upvotes_count - 1` })
-        .eq('id', startupId);
-        
-      if (updateCountError) {
-        console.error("Error updating startup upvote count:", updateCountError);
-      }
-      
+      countDelta = -1;
       message = "Vote retiré";
       upvoted = false;
     } 
@@ -75,16 +67,7 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
         };
       }
       
-      // Increase the upvote count by 2 (removing downvote + adding upvote)
-      const { error: updateCountError } = await supabase
-        .from('startups')
-        .update({ upvotes_count: supabase.sql`upvotes_count + 2` })
-        .eq('id', startupId);
-        
-      if (updateCountError) {
-        console.error("Error updating startup upvote count:", updateCountError);
-      }
-      
+      countDelta = 2; // +2 because we're removing a downvote (-1) and adding an upvote (+1)
       message = "Vote modifié";
       upvoted = true;
     }
@@ -108,18 +91,32 @@ export const toggleStartupUpvote = async (startupId: string): Promise<UpvoteResp
         };
       }
       
-      // Increase the upvote count
+      countDelta = 1;
+      message = "Vote ajouté";
+      upvoted = true;
+    }
+    
+    // Update the upvote count
+    if (countDelta !== 0) {
+      // Get current count first
+      const { data: currentData } = await supabase
+        .from('startups')
+        .select('upvotes_count')
+        .eq('id', startupId)
+        .single();
+        
+      const currentCount = currentData?.upvotes_count || 0;
+      const newCount = currentCount + countDelta;
+      
+      // Update with the calculated value
       const { error: updateCountError } = await supabase
         .from('startups')
-        .update({ upvotes_count: supabase.sql`upvotes_count + 1` })
+        .update({ upvotes_count: newCount })
         .eq('id', startupId);
         
       if (updateCountError) {
         console.error("Error updating startup upvote count:", updateCountError);
       }
-      
-      message = "Vote ajouté";
-      upvoted = true;
     }
     
     // Get the current upvote count
@@ -171,6 +168,7 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
     
     let downvoted = false;
     let message = "";
+    let countDelta = 0;
     
     // If already downvoted, remove the vote
     if (existingVote && existingVote.is_upvote === false) {
@@ -190,16 +188,7 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
         };
       }
       
-      // Increase the upvote count (removing a downvote increases the count)
-      const { error: updateCountError } = await supabase
-        .from('startups')
-        .update({ upvotes_count: supabase.sql`upvotes_count + 1` })
-        .eq('id', startupId);
-        
-      if (updateCountError) {
-        console.error("Error updating startup upvote count:", updateCountError);
-      }
-      
+      countDelta = 1; // Removing a downvote increases the count
       message = "Vote retiré";
       downvoted = false;
     } 
@@ -221,16 +210,7 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
         };
       }
       
-      // Decrease the upvote count by 2 (removing upvote + adding downvote)
-      const { error: updateCountError } = await supabase
-        .from('startups')
-        .update({ upvotes_count: supabase.sql`upvotes_count - 2` })
-        .eq('id', startupId);
-        
-      if (updateCountError) {
-        console.error("Error updating startup upvote count:", updateCountError);
-      }
-      
+      countDelta = -2; // -2 because we're removing an upvote (+1) and adding a downvote (-1)
       message = "Vote modifié";
       downvoted = true;
     }
@@ -254,18 +234,32 @@ export const toggleStartupDownvote = async (startupId: string): Promise<UpvoteRe
         };
       }
       
-      // Decrease the upvote count
+      countDelta = -1;
+      message = "Vote négatif ajouté";
+      downvoted = true;
+    }
+    
+    // Update the upvote count
+    if (countDelta !== 0) {
+      // Get current count first
+      const { data: currentData } = await supabase
+        .from('startups')
+        .select('upvotes_count')
+        .eq('id', startupId)
+        .single();
+        
+      const currentCount = currentData?.upvotes_count || 0;
+      const newCount = currentCount + countDelta;
+      
+      // Update with the calculated value
       const { error: updateCountError } = await supabase
         .from('startups')
-        .update({ upvotes_count: supabase.sql`upvotes_count - 1` })
+        .update({ upvotes_count: newCount })
         .eq('id', startupId);
         
       if (updateCountError) {
         console.error("Error updating startup upvote count:", updateCountError);
       }
-      
-      message = "Vote négatif ajouté";
-      downvoted = true;
     }
     
     // Get the current upvote count

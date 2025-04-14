@@ -49,7 +49,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
         {/* Header with photo and name */}
         <div className="flex items-center mb-4">
           <Avatar className="w-16 h-16">
-            {profile.photoUrl ? (
+            {profile.photoUrl && profile.photoUrl.trim() !== "" ? (
               <AvatarImage 
                 src={profile.photoUrl} 
                 alt={profile.name}

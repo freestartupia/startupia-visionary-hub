@@ -52,21 +52,6 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     
     fetchUpvoteData();
   }, [startup.id, user]);
-  
-  // Generate stars for AI Impact Score
-  const renderStars = (score: number) => {
-    return Array(5)
-      .fill(0)
-      .map((_, i) => (
-        <Star
-          key={i}
-          size={16}
-          className={`${
-            i < score ? "text-startupia-turquoise fill-startupia-turquoise" : "text-gray-600"
-          }`}
-        />
-      ));
-  };
 
   const handleVote = async (e: React.MouseEvent) => {
     e.preventDefault();

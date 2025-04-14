@@ -1,8 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
-import { mockStartups } from '@/data/mockStartups';
 import StartupCard from '@/components/StartupCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import DirectoryView from '@/components/ecosystem/DirectoryView';
 import SEO from '@/components/SEO';
+import { Startup } from '@/types/startup';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const AIEcosystem = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,25 +32,83 @@ const AIEcosystem = () => {
   const [sortOrder, setSortOrder] = useState('trending');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'directory'
+  const [startups, setStartups] = useState<Startup[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [aiTools, setAiTools] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Get all unique sectors from startups
-  const categories = Array.from(new Set(mockStartups.map(startup => startup.sector)));
-  
-  // Get all unique AI tools
-  const aiTools = Array.from(new Set(mockStartups.flatMap(startup => startup.aiTools)));
+  // Fetch startups from Supabase
+  useEffect(() => {
+    const fetchStartups = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('startups')
+          .select('*');
+          
+        if (error) {
+          console.error('Error fetching startups:', error);
+          toast.error('Erreur lors du chargement des startups');
+        } else if (data) {
+          // Transform data to match Startup type
+          const transformedData: Startup[] = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            logoUrl: item.logo_url || '',
+            shortDescription: item.short_description,
+            longTermVision: item.long_term_vision || '',
+            founders: item.founders || [],
+            aiUseCases: item.ai_use_cases || '',
+            aiTools: item.ai_tools || [],
+            sector: item.sector,
+            businessModel: item.business_model,
+            maturityLevel: item.maturity_level,
+            aiImpactScore: item.ai_impact_score,
+            tags: item.tags || [],
+            websiteUrl: item.website_url,
+            pitchDeckUrl: item.pitch_deck_url,
+            crunchbaseUrl: item.crunchbase_url,
+            notionUrl: item.notion_url,
+            dateAdded: item.date_added,
+            viewCount: item.view_count,
+            isFeatured: item.is_featured,
+            upvoteCount: item.upvotes_count || 0,
+          }));
+          
+          setStartups(transformedData);
+          
+          // Extract categories and AI tools
+          const uniqueCategories = Array.from(new Set(data.map(startup => startup.sector)));
+          const uniqueAiTools = Array.from(new Set(data.flatMap(startup => startup.ai_tools || [])));
+          
+          setCategories(uniqueCategories);
+          setAiTools(uniqueAiTools);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error('Une erreur est survenue');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    fetchStartups();
+  }, []);
+  
   // Filter and sort startups based on search, category, and sort order
   const filterStartups = () => {
-    let filtered = [...mockStartups];
+    if (isLoading) return [];
+    
+    let filtered = [...startups];
     
     // Apply search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter((startup) =>
         startup.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         startup.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        startup.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+        (startup.tags && startup.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
       );
     }
     
@@ -60,17 +120,20 @@ const AIEcosystem = () => {
     // Sort startups
     switch (sortOrder) {
       case 'trending':
-        filtered.sort((a, b) => b.aiImpactScore - a.aiImpactScore);
+        filtered.sort((a, b) => (b.upvoteCount || 0) - (a.upvoteCount || 0));
         break;
       case 'newest':
-        filtered = filtered.reverse();
+        filtered.sort((a, b) => {
+          const dateA = a.dateAdded ? new Date(a.dateAdded).getTime() : 0;
+          const dateB = b.dateAdded ? new Date(b.dateAdded).getTime() : 0;
+          return dateB - dateA;
+        });
         break;
       case 'alphabetical':
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
       case 'votes':
-        // Using aiImpactScore as a proxy for votes until we implement real voting
-        filtered.sort((a, b) => b.aiImpactScore - a.aiImpactScore);
+        filtered.sort((a, b) => (b.upvoteCount || 0) - (a.upvoteCount || 0));
         break;
     }
     
@@ -87,16 +150,6 @@ const AIEcosystem = () => {
     }
     
     toast.info("Cette fonctionnalité sera bientôt disponible");
-  };
-
-  const handleVote = (startupId: string) => {
-    if (!user) {
-      toast.error("Vous devez être connecté pour voter");
-      navigate('/auth');
-      return;
-    }
-    
-    toast.success("Votre vote a été pris en compte");
   };
 
   return (
@@ -250,12 +303,31 @@ const AIEcosystem = () => {
           </TabsList>
           
           <TabsContent value="all" className="mt-6">
-            {viewMode === 'directory' ? (
+            {isLoading ? (
+              <div className="space-y-4">
+                {Array(4).fill(0).map((_, i) => (
+                  <Card key={i} className="p-4 bg-black/30 border border-startupia-turquoise/20">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <Skeleton className="w-16 h-16 md:w-20 md:h-20 rounded-lg" />
+                      <div className="flex-grow">
+                        <Skeleton className="h-6 w-48 mb-2" />
+                        <Skeleton className="h-4 w-full max-w-md mb-4" />
+                        <div className="flex flex-wrap gap-2">
+                          <Skeleton className="h-6 w-20" />
+                          <Skeleton className="h-6 w-20" />
+                          <Skeleton className="h-6 w-20" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : viewMode === 'directory' ? (
               <DirectoryView searchQuery={searchQuery} showFilters={false} />
             ) : (
               <>
                 {filteredStartups.length > 0 ? (
-                  renderStartupGrid(filteredStartups, handleVote, user !== null)
+                  renderStartupGrid(filteredStartups, user !== null)
                 ) : (
                   <div className="text-center py-16">
                     <p className="text-white/70 text-xl">Aucune startup ne correspond à votre recherche</p>
@@ -266,22 +338,59 @@ const AIEcosystem = () => {
           </TabsContent>
           
           <TabsContent value="featured" className="mt-6">
-            {viewMode === 'directory' ? (
+            {isLoading ? (
+              <div className="space-y-4">
+                {Array(2).fill(0).map((_, i) => (
+                  <Card key={i} className="p-4 bg-black/30 border border-startupia-turquoise/20">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <Skeleton className="w-16 h-16 md:w-20 md:h-20 rounded-lg" />
+                      <div className="flex-grow">
+                        <Skeleton className="h-6 w-48 mb-2" />
+                        <Skeleton className="h-4 w-full max-w-md mb-4" />
+                        <div className="flex flex-wrap gap-2">
+                          <Skeleton className="h-6 w-20" />
+                          <Skeleton className="h-6 w-20" />
+                          <Skeleton className="h-6 w-20" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : viewMode === 'directory' ? (
               <DirectoryView searchQuery="" showFilters={false} />
             ) : (
               renderStartupGrid(
                 filteredStartups.filter(s => s.aiImpactScore >= 4),
-                handleVote,
                 user !== null
               )
             )}
           </TabsContent>
           
           <TabsContent value="recent" className="mt-6">
-            {viewMode === 'directory' ? (
+            {isLoading ? (
+              <div className="space-y-4">
+                {Array(2).fill(0).map((_, i) => (
+                  <Card key={i} className="p-4 bg-black/30 border border-startupia-turquoise/20">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <Skeleton className="w-16 h-16 md:w-20 md:h-20 rounded-lg" />
+                      <div className="flex-grow">
+                        <Skeleton className="h-6 w-48 mb-2" />
+                        <Skeleton className="h-4 w-full max-w-md mb-4" />
+                        <div className="flex flex-wrap gap-2">
+                          <Skeleton className="h-6 w-20" />
+                          <Skeleton className="h-6 w-20" />
+                          <Skeleton className="h-6 w-20" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : viewMode === 'directory' ? (
               <DirectoryView searchQuery="" showFilters={false} />
             ) : (
-              renderStartupGrid(filteredStartups.slice(0, 4), handleVote, user !== null)
+              renderStartupGrid(filteredStartups.slice(0, 4), user !== null)
             )}
           </TabsContent>
         </Tabs>
@@ -294,8 +403,7 @@ const AIEcosystem = () => {
 
 // Helper function to render the startup grid with Product Hunt style
 const renderStartupGrid = (
-  startups: typeof mockStartups, 
-  onVote: (id: string) => void,
+  startups: Startup[], 
   canVote: boolean
 ) => {
   if (startups.length === 0) {
@@ -309,80 +417,7 @@ const renderStartupGrid = (
   return (
     <div className="space-y-4">
       {startups.map((startup) => (
-        <Card 
-          key={startup.id} 
-          className="p-4 bg-black/30 border border-startupia-turquoise/20 hover:border-startupia-turquoise/50 transition-all hover:bg-black/40"
-        >
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Logo */}
-            <div className="flex-shrink-0">
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden bg-startupia-turquoise/10 flex items-center justify-center">
-                {startup.logoUrl ? (
-                  <img 
-                    src={startup.logoUrl} 
-                    alt={`${startup.name} logo`} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-2xl font-bold text-startupia-turquoise">
-                    {startup.name.charAt(0)}
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            {/* Content */}
-            <div className="flex-grow">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="text-xl font-bold">{startup.name}</h2>
-                  <p className="text-sm text-white/70">{startup.shortDescription}</p>
-                </div>
-                
-                {/* Vote counter */}
-                <div className="flex flex-col items-center">
-                  <Button 
-                    variant="ghost" 
-                    className="hover:bg-startupia-turquoise/20 space-x-1"
-                    onClick={() => onVote(startup.id)}
-                    disabled={!canVote}
-                  >
-                    <ThumbsUp size={18} />
-                    <span>{50 + Math.floor(Math.random() * 200)}</span>
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-2 mt-3">
-                <Badge className="bg-startupia-turquoise/20 border-none text-startupia-turquoise hover:bg-startupia-turquoise/30">
-                  {startup.sector}
-                </Badge>
-                
-                {startup.aiTools.slice(0, 2).map((tool) => (
-                  <Badge key={tool} variant="outline" className="bg-black/40 border-white/20">
-                    {tool}
-                  </Badge>
-                ))}
-                
-                {startup.aiTools.length > 2 && (
-                  <Badge variant="outline" className="bg-black/40 border-white/20">
-                    +{startup.aiTools.length - 2} autres
-                  </Badge>
-                )}
-                
-                <div className="ml-auto">
-                  <Button 
-                    variant="outline" 
-                    className="border-startupia-turquoise hover:bg-startupia-turquoise/20"
-                    onClick={() => window.location.href = `/startup/${startup.id}`}
-                  >
-                    Découvrir
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
+        <StartupCard key={startup.id} startup={startup} />
       ))}
     </div>
   );

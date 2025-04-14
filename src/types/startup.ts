@@ -69,11 +69,12 @@ export type Startup = {
   pitchDeckUrl?: string;
   crunchbaseUrl?: string;
   notionUrl?: string;
-  // New fields for Radar IA
+  // New fields
   dateAdded?: string; // ISO date string
   viewCount?: number;
   isFeatured?: boolean;
   fundingRounds?: FundingRound[];
+  upvoteCount?: number; // Added to support real upvote counts
 };
 
 export type FundingRound = {

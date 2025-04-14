@@ -24,14 +24,9 @@ const StartupCard = ({ startup }: StartupCardProps) => {
   useEffect(() => {
     const fetchUpvoteData = async () => {
       try {
-        // Get upvote count
-        const { data: upvotes, error: countError } = await supabase
-          .from('post_upvotes')
-          .select('id')
-          .eq('post_id', startup.id);
-          
-        if (!countError && upvotes) {
-          setUpvoteCount(upvotes.length);
+        // Get upvote count from the startup directly
+        if (typeof startup.upvoteCount === 'number') {
+          setUpvoteCount(startup.upvoteCount);
         }
         
         // Check if user has upvoted
@@ -53,7 +48,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     };
     
     fetchUpvoteData();
-  }, [startup.id, user]);
+  }, [startup.id, startup.upvoteCount, user]);
   
   // Generate stars for AI Impact Score
   const renderStars = (score: number) => {
@@ -161,7 +156,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
         <CardContent className="p-4">
           <p className="text-white/80 text-sm line-clamp-2 mb-3">{startup.shortDescription}</p>
           <div className="flex flex-wrap gap-1">
-            {startup.tags.slice(0, 3).map((tag, index) => (
+            {startup.tags && startup.tags.slice(0, 3).map((tag, index) => (
               <span
                 key={index}
                 className="text-xs px-2 py-1 rounded-full bg-startupia-turquoise/10 text-startupia-turquoise"
@@ -169,7 +164,7 @@ const StartupCard = ({ startup }: StartupCardProps) => {
                 {tag}
               </span>
             ))}
-            {startup.tags.length > 3 && (
+            {startup.tags && startup.tags.length > 3 && (
               <span className="text-xs px-2 py-1 rounded-full bg-startupia-turquoise/10 text-white/60">
                 +{startup.tags.length - 3}
               </span>

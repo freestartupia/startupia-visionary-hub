@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { UpvoteResponse } from "@/types/community";
 
@@ -22,54 +23,89 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
       .eq('user_id', userData.user.id)
       .single();
     
-    let message = "";
-    let countDelta = 0;
-    let resultIsUpvoted = false;
-    
-    // If vote exists, we need to handle removal or change
-    if (existingVote) {
-      // If same vote type, remove the vote
-      if (existingVote.is_upvote === isUpvote) {
-        const { error: deleteError } = await supabase
-          .from('startup_votes')
-          .delete()
-          .eq('id', existingVote.id);
-          
-        if (deleteError) {
-          console.error("Error removing vote:", deleteError);
-          return {
-            success: false,
-            message: "Impossible de supprimer votre vote",
-            upvoted: existingVote.is_upvote,
-            newCount: 0
-          };
-        }
+    // If vote exists with the same type, remove it
+    if (existingVote && existingVote.is_upvote === isUpvote) {
+      const { error: deleteError } = await supabase
+        .from('startup_votes')
+        .delete()
+        .eq('id', existingVote.id);
         
-        countDelta = isUpvote ? -1 : 1; // Upvote removal: -1, Downvote removal: +1
-        message = "Vote retiré";
-        resultIsUpvoted = false;
-      } 
-      // If different vote type, change the vote
-      else {
-        const { error: updateError } = await supabase
-          .from('startup_votes')
-          .update({ is_upvote: isUpvote })
-          .eq('id', existingVote.id);
-          
-        if (updateError) {
-          console.error("Error updating vote:", updateError);
-          return {
-            success: false,
-            message: "Impossible de mettre à jour votre vote",
-            upvoted: existingVote.is_upvote,
-            newCount: 0
-          };
-        }
-        
-        countDelta = isUpvote ? 2 : -2; // From down to up: +2, From up to down: -2
-        message = "Vote modifié";
-        resultIsUpvoted = isUpvote;
+      if (deleteError) {
+        console.error("Error removing vote:", deleteError);
+        return {
+          success: false,
+          message: "Impossible de supprimer votre vote",
+          upvoted: existingVote.is_upvote,
+          newCount: 0
+        };
       }
+      
+      // After removal, get the updated count
+      const { data: updatedData } = await supabase
+        .from('startups')
+        .select('upvotes_count')
+        .eq('id', startupId)
+        .single();
+        
+      const currentCount = updatedData?.upvotes_count || 0;
+      
+      // Adjust count after vote removal
+      const newCount = isUpvote ? Math.max(0, currentCount - 1) : Math.max(0, currentCount + 1);
+      
+      // Update count in database
+      await supabase
+        .from('startups')
+        .update({ upvotes_count: newCount })
+        .eq('id', startupId);
+      
+      return {
+        success: true,
+        message: "Vote retiré",
+        upvoted: false,
+        newCount
+      };
+    } 
+    // If vote exists with different type, change it
+    else if (existingVote && existingVote.is_upvote !== isUpvote) {
+      const { error: updateError } = await supabase
+        .from('startup_votes')
+        .update({ is_upvote: isUpvote })
+        .eq('id', existingVote.id);
+        
+      if (updateError) {
+        console.error("Error updating vote:", updateError);
+        return {
+          success: false,
+          message: "Impossible de mettre à jour votre vote",
+          upvoted: existingVote.is_upvote,
+          newCount: 0
+        };
+      }
+      
+      // After change, get the updated count
+      const { data: updatedData } = await supabase
+        .from('startups')
+        .select('upvotes_count')
+        .eq('id', startupId)
+        .single();
+        
+      const currentCount = updatedData?.upvotes_count || 0;
+      
+      // Adjust count after vote change
+      const newCount = isUpvote ? Math.max(0, currentCount + 2) : Math.max(0, currentCount - 2);
+      
+      // Update count in database
+      await supabase
+        .from('startups')
+        .update({ upvotes_count: newCount })
+        .eq('id', startupId);
+      
+      return {
+        success: true,
+        message: "Vote modifié",
+        upvoted: isUpvote,
+        newCount
+      };
     }
     // If no existing vote, add a new vote
     else {
@@ -91,58 +127,31 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
         };
       }
       
-      countDelta = isUpvote ? 1 : -1; // New upvote: +1, New downvote: -1
-      message = isUpvote ? "Vote ajouté" : "Vote négatif ajouté";
-      resultIsUpvoted = isUpvote;
-    }
-    
-    // Update the vote count atomically
-    if (countDelta !== 0) {
-      // Get current count
-      const { data: currentData } = await supabase
+      // After insertion, get the updated count
+      const { data: updatedData } = await supabase
         .from('startups')
         .select('upvotes_count')
         .eq('id', startupId)
         .single();
         
-      const currentCount = currentData?.upvotes_count || 0;
-      // Ensure count never goes below 0
-      const newCount = Math.max(0, currentCount + countDelta);
+      const currentCount = updatedData?.upvotes_count || 0;
       
-      // Update with the calculated value
-      const { error: updateCountError } = await supabase
+      // Adjust count after new vote
+      const newCount = isUpvote ? currentCount + 1 : Math.max(0, currentCount - 1);
+      
+      // Update count in database
+      await supabase
         .from('startups')
         .update({ upvotes_count: newCount })
         .eq('id', startupId);
-        
-      if (updateCountError) {
-        console.error("Error updating startup upvote count:", updateCountError);
-      }
       
-      // Return the new count from our calculation
       return {
         success: true,
-        message,
-        upvoted: resultIsUpvoted,
+        message: isUpvote ? "Vote ajouté" : "Vote négatif ajouté",
+        upvoted: isUpvote,
         newCount
       };
     }
-    
-    // Fallback to fetching count if no change was made
-    const { data: startupData } = await supabase
-      .from('startups')
-      .select('upvotes_count')
-      .eq('id', startupId)
-      .single();
-      
-    const newCount = startupData?.upvotes_count || 0;
-    
-    return {
-      success: true,
-      message,
-      upvoted: resultIsUpvoted,
-      newCount
-    };
   } catch (error) {
     console.error("Error in toggleStartupVote:", error);
     return {

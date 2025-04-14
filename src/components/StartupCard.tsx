@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Star, ThumbsUp } from "lucide-react";
@@ -22,16 +21,13 @@ const StartupCard = ({ startup }: StartupCardProps) => {
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [isVoting, setIsVoting] = useState(false);
   
-  // Fetch real upvote count and user's upvote status
   useEffect(() => {
     const fetchUpvoteData = async () => {
       try {
-        // Get upvote count from the startup directly
         if (typeof startup.upvoteCount === 'number') {
           setUpvoteCount(startup.upvoteCount);
         }
         
-        // Check if user has upvoted
         if (user) {
           const { data: userUpvote, error: userError } = await supabase
             .from('startup_votes')
@@ -52,7 +48,6 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     fetchUpvoteData();
   }, [startup.id, startup.upvoteCount, user]);
   
-  // Generate stars for AI Impact Score
   const renderStars = (score: number) => {
     return Array(5)
       .fill(0)
@@ -77,33 +72,19 @@ const StartupCard = ({ startup }: StartupCardProps) => {
       return;
     }
     
-    // Prevent multiple rapid clicks
     if (isVoting) return;
+    setIsVoting(true);
     
     try {
-      setIsVoting(true);
-      
-      // Store previous values to restore on error
-      const previousUpvoteCount = upvoteCount;
-      const previousIsUpvoted = isUpvoted;
-      
-      // Apply optimistic update (only update UI)
-      const newUpvoteCount = isUpvoted ? upvoteCount - 1 : upvoteCount + 1;
-      setUpvoteCount(newUpvoteCount);
-      setIsUpvoted(!isUpvoted);
-      
-      // Call the service function
       const response = await toggleStartupUpvote(startup.id);
       
       if (!response.success) {
         throw new Error(response.message);
       }
       
-      // Update with the server response
       setUpvoteCount(response.newCount);
       setIsUpvoted(response.upvoted);
       
-      // Only show toast on successful toggle
       if (response.message) {
         toast.success(response.message);
       }
@@ -111,13 +92,8 @@ const StartupCard = ({ startup }: StartupCardProps) => {
     } catch (error) {
       console.error('Error toggling upvote:', error);
       toast.error("Erreur lors du vote");
-      
-      // Revert optimistic update on error
-      setUpvoteCount(startup.upvoteCount || 0);
-      setIsUpvoted(false);
     } finally {
-      // Allow voting again after a short delay
-      setTimeout(() => setIsVoting(false), 500);
+      setTimeout(() => setIsVoting(false), 1000);
     }
   };
 

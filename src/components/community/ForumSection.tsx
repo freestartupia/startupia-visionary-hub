@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ForumPost } from '@/types/community';
 import { getForumPosts, togglePostLike } from '@/services/forumService';
+import { togglePostUpvote } from '@/services/forumUpvoteService';
 import CreateForumPost from './CreateForumPost';
 import ForumPostList from './forum/ForumPostList';
 import ForumSearch from './forum/ForumSearch';
@@ -79,7 +80,7 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     try {
       const result = await togglePostLike(postId);
       
-      // Mettre à jour l'état local
+      // Update local state
       const updatedPosts = posts.map(post => 
         post.id === postId ? {
           ...post,
@@ -103,6 +104,68 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
       
     } catch (error) {
       console.error('Erreur lors du like:', error);
+    }
+  };
+  
+  const handleUpvotePost = async (e: React.MouseEvent, postId: string) => {
+    e.stopPropagation();
+    
+    if (requireAuth && !user) {
+      toast.error("Vous devez être connecté pour upvoter un post");
+      navigate('/auth');
+      return;
+    }
+    
+    try {
+      const result = await togglePostUpvote(postId);
+      
+      // Update local state
+      const updatedPosts = posts.map(post => 
+        post.id === postId ? {
+          ...post,
+          upvotesCount: result.newCount,
+          isUpvoted: result.upvoted
+        } : post
+      );
+      
+      // Sort by upvotes and then by creation date for ties
+      const sortedPosts = [...updatedPosts].sort((a, b) => {
+        const upvoteDiff = (b.upvotesCount || 0) - (a.upvotesCount || 0);
+        
+        // If upvote counts are equal, sort by creation date (older first)
+        if (upvoteDiff === 0) {
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        }
+        
+        return upvoteDiff;
+      });
+      
+      setPosts(sortedPosts);
+      
+      // Also update filtered posts with the same sorting
+      const updatedFiltered = filteredPosts.map(post => 
+        post.id === postId ? {
+          ...post,
+          upvotesCount: result.newCount,
+          isUpvoted: result.upvoted
+        } : post
+      );
+      
+      const sortedFiltered = [...updatedFiltered].sort((a, b) => {
+        const upvoteDiff = (b.upvotesCount || 0) - (a.upvotesCount || 0);
+        
+        // If upvote counts are equal, sort by creation date (older first)
+        if (upvoteDiff === 0) {
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        }
+        
+        return upvoteDiff;
+      });
+      
+      setFilteredPosts(sortedFiltered);
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'upvote:', error);
     }
   };
 
@@ -133,6 +196,7 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
         posts={filteredPosts}
         isLoading={isLoading}
         onLikePost={handleLikePost}
+        onUpvotePost={handleUpvotePost}
         onPostCreated={fetchPosts}
         requireAuth={requireAuth}
       />

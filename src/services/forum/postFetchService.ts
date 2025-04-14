@@ -5,6 +5,7 @@ import { mapPostFromDB } from "@/utils/forumMappers";
 import { toast } from "sonner";
 import { getPostLikeStatus } from "./postLikeService";
 import { getRepliesForPost } from "../../services/forumReplyService";
+import { checkPostUpvote } from "../forumUpvoteService";
 
 // Function to get all forum posts
 export const getForumPosts = async (): Promise<ForumPost[]> => {
@@ -12,7 +13,8 @@ export const getForumPosts = async (): Promise<ForumPost[]> => {
     const { data: postsData, error: postsError } = await supabase
       .from('forum_posts')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('upvotes_count', { ascending: false }) // Order by upvotes first
+      .order('created_at', { ascending: true });    // Then by date (older first for tie breakers)
       
     if (postsError) {
       console.error("Error fetching posts:", postsError);
@@ -20,7 +22,7 @@ export const getForumPosts = async (): Promise<ForumPost[]> => {
       throw postsError;
     }
     
-    // Get current user for like status
+    // Get current user for like and upvote status
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id;
     
@@ -33,11 +35,14 @@ export const getForumPosts = async (): Promise<ForumPost[]> => {
       
       // Check if user liked the post
       let isLiked = false;
+      let isUpvoted = false;
+      
       if (userId) {
         isLiked = await getPostLikeStatus(post.id, userId);
+        isUpvoted = await checkPostUpvote(post.id);
       }
       
-      return { ...post, replies, isLiked };
+      return { ...post, replies, isLiked, isUpvoted };
     }));
     
     return postsWithReplies;
@@ -74,11 +79,14 @@ export const getForumPost = async (postId: string): Promise<ForumPost> => {
     
     // Check if user liked the post
     let isLiked = false;
+    let isUpvoted = false;
+    
     if (userId) {
       isLiked = await getPostLikeStatus(postId, userId);
+      isUpvoted = await checkPostUpvote(postId);
     }
     
-    return { ...post, replies, isLiked };
+    return { ...post, replies, isLiked, isUpvoted };
   } catch (error) {
     console.error("Error in getForumPost:", error);
     toast.error("Impossible de charger la discussion");

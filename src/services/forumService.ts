@@ -3,3 +3,4 @@
 export * from './forumPostService';
 export * from './forumReplyService';
 export * from './forumLikeService';
+export * from './forumUpvoteService';

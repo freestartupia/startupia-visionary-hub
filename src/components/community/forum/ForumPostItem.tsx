@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ThumbsUp, MessageCircle, Eye, Pin } from 'lucide-react';
+import { ThumbsUp, MessageCircle, Eye, Pin, ArrowUp } from 'lucide-react';
 import { ForumPost } from '@/types/community';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -12,6 +12,7 @@ interface ForumPostItemProps {
   post: ForumPost;
   onViewPost: (postId: string) => void;
   onLikePost: (e: React.MouseEvent, postId: string) => void;
+  onUpvotePost?: (e: React.MouseEvent, postId: string) => void;
   requireAuth?: boolean;
 }
 
@@ -19,6 +20,7 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
   post, 
   onViewPost, 
   onLikePost,
+  onUpvotePost,
   requireAuth = false 
 }) => {
   const formatDate = (dateString: string) => {
@@ -77,6 +79,18 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
         </div>
         
         <div className="flex gap-4">
+          {onUpvotePost && (
+            <AuthRequired forActiveParticipation={true}>
+              <button 
+                onClick={(e) => onUpvotePost(e, post.id)}
+                className={`flex items-center gap-1 ${post.isUpvoted ? "text-startupia-turquoise" : "text-white/60 hover:text-white"}`}
+              >
+                <ArrowUp size={16} />
+                <span>{post.upvotesCount || 0}</span>
+              </button>
+            </AuthRequired>
+          )}
+          
           <AuthRequired forActiveParticipation={true}>
             <button 
               onClick={(e) => onLikePost(e, post.id)}

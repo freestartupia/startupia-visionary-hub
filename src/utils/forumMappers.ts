@@ -17,8 +17,10 @@ export const mapPostFromDB = (post: any): ForumPost => {
     likes: post.likes || 0,
     views: post.views || 0,
     isPinned: post.is_pinned || false,
+    upvotesCount: post.upvotes_count || 0,
     replies: [],
-    isLiked: false
+    isLiked: false,
+    isUpvoted: false
   };
 };
 

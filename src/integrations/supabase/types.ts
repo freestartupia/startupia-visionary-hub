@@ -268,6 +268,7 @@ export type Database = {
           tags: string[] | null
           title: string
           updated_at: string | null
+          upvotes_count: number
           views: number | null
         }
         Insert: {
@@ -283,6 +284,7 @@ export type Database = {
           tags?: string[] | null
           title: string
           updated_at?: string | null
+          upvotes_count?: number
           views?: number | null
         }
         Update: {
@@ -298,6 +300,7 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string | null
+          upvotes_count?: number
           views?: number | null
         }
         Relationships: []
@@ -455,6 +458,35 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      post_upvotes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_upvotes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_comments: {
         Row: {

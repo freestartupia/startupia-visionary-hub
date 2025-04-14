@@ -1,4 +1,3 @@
-
 export type ForumCategory = 
   | 'Général'
   | 'Tech & Dev IA'
@@ -53,6 +52,8 @@ export interface ForumPost {
   views: number;
   isPinned?: boolean;
   isLiked?: boolean;
+  upvotesCount?: number; // New field for upvotes
+  isUpvoted?: boolean;   // Track if current user upvoted
 }
 
 export interface ForumReply {
@@ -135,5 +136,12 @@ export interface LikeResponse {
   success: boolean;
   message: string;
   liked: boolean;
+  newCount: number;
+}
+
+export interface UpvoteResponse {
+  success: boolean;
+  message: string;
+  upvoted: boolean;
   newCount: number;
 }

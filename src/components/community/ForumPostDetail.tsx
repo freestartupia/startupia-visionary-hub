@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowUp } from 'lucide-react';
 import { ForumPost } from '@/types/community';
 import { 
   getForumPost, 
@@ -11,6 +11,7 @@ import {
   toggleReplyLike, 
   incrementPostViews 
 } from '@/services/forumService';
+import { togglePostUpvote } from '@/services/forumUpvoteService';
 import { toast } from 'sonner';
 import PostContent from './forum/PostContent';
 import ReplyForm from './forum/ReplyForm';
@@ -86,6 +87,30 @@ const ForumPostDetail = () => {
       
     } catch (error) {
       console.error('Erreur lors du like:', error);
+    }
+  };
+  
+  const handleUpvotePost = async () => {
+    if (!user || !post) {
+      toast.error('Vous devez être connecté pour upvoter');
+      navigate('/auth');
+      return;
+    }
+    
+    try {
+      const result = await togglePostUpvote(post.id);
+      
+      setPost(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          upvotesCount: result.newCount,
+          isUpvoted: result.upvoted
+        };
+      });
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'upvote:', error);
     }
   };
   
@@ -172,7 +197,11 @@ const ForumPostDetail = () => {
         </Button>
       </div>
       
-      <PostContent post={post} onLike={handleLikePost} />
+      <PostContent 
+        post={post} 
+        onLike={handleLikePost} 
+        onUpvote={handleUpvotePost}
+      />
       
       <ReplyForm 
         postId={post.id}

@@ -1,21 +1,19 @@
 
 import React from 'react';
-import { ThumbsUp, Eye, Calendar, Tag, Link2 } from 'lucide-react';
 import { ForumPost } from '@/types/community';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { Card, CardContent } from '@/components/ui/card';
+import { ThumbsUp, Eye, MessageCircle, Pin, ArrowUp } from 'lucide-react';
 
 interface PostContentProps {
   post: ForumPost;
   onLike: () => void;
+  onUpvote?: () => void;
 }
 
-const PostContent: React.FC<PostContentProps> = ({ post, onLike }) => {
+const PostContent: React.FC<PostContentProps> = ({ post, onLike, onUpvote }) => {
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'dd MMMM yyyy à HH:mm', { locale: fr });
@@ -32,95 +30,70 @@ const PostContent: React.FC<PostContentProps> = ({ post, onLike }) => {
       .toUpperCase();
   };
 
-  const copyLinkToClipboard = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    // Vous pouvez ajouter un toast ici
-  };
-
   return (
-    <Card className="glass-card overflow-hidden border-white/10">
-      <div className="bg-gradient-to-r from-startupia-turquoise/10 to-transparent p-4">
-        <div className="flex justify-between mb-1">
-          <Badge variant="outline" className="bg-white/10 text-xs font-medium py-1 px-2 rounded">
+    <div className="glass-card rounded-xl overflow-hidden">
+      <div className="p-6">
+        <div className="flex flex-wrap gap-2 mb-3">
+          <Badge variant="outline" className="bg-white/10">
             {post.category}
           </Badge>
           
-          <div className="flex items-center gap-2 text-xs text-white/60">
-            <Calendar size={14} />
-            {formatDate(post.createdAt)}
-          </div>
+          {post.isPinned && (
+            <Badge className="bg-startupia-turquoise/20 text-startupia-turquoise flex items-center gap-1">
+              <Pin size={14} className="shrink-0" />
+              Épinglé
+            </Badge>
+          )}
         </div>
-        
-        <h1 className="text-2xl md:text-3xl font-bold mt-2">{post.title}</h1>
-      </div>
       
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <Avatar className="h-10 w-10 mr-3">
-              <AvatarImage src={post.authorAvatar || '/placeholder.svg'} alt={post.authorName} />
-              <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="font-semibold">{post.authorName}</div>
-              <div className="text-xs text-white/60">Auteur</div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1 text-white/60">
-              <Eye size={16} />
-              <span>{post.views}</span>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={copyLinkToClipboard} 
-              className="text-white/60 hover:text-white hover:bg-white/10"
-            >
-              <Link2 size={16} />
-            </Button>
+        <h1 className="text-2xl md:text-3xl font-bold mb-4">{post.title}</h1>
+        
+        <div className="flex items-center mb-6">
+          <Avatar className="h-10 w-10 mr-3">
+            <AvatarImage src={post.authorAvatar || ''} alt={post.authorName} />
+            <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="font-medium">{post.authorName}</div>
+            <div className="text-sm text-white/60">{formatDate(post.createdAt)}</div>
           </div>
         </div>
         
-        <div className="post-content text-white/90 leading-relaxed mb-6">
-          {post.content.split('\n').map((paragraph, idx) => (
-            <p key={idx} className="mb-4">
-              {paragraph}
-            </p>
-          ))}
+        <div className="prose prose-invert max-w-full mb-6">
+          <p className="whitespace-pre-line">{post.content}</p>
         </div>
         
-        {post.tags && post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            <Tag size={16} className="text-white/60 mr-1" />
-            {post.tags.map((tag, idx) => (
-              <Badge key={idx} variant="outline" className="bg-white/5">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        )}
-        
-        <Separator className="my-6 bg-white/10" />
-        
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-white/60">
-            {post.replies.length} réponse{post.replies.length !== 1 ? 's' : ''}
-          </div>
-          
-          <Button 
-            onClick={onLike} 
-            variant="outline" 
-            className={`flex items-center gap-2 ${post.isLiked ? "bg-startupia-turquoise/20 text-startupia-turquoise border-startupia-turquoise/30" : ""}`}
+        <div className="flex flex-wrap gap-4 pt-4 border-t border-white/10">
+          <button 
+            onClick={onLike}
+            className={`flex items-center gap-1.5 ${post.isLiked ? "text-startupia-turquoise" : "text-white/60 hover:text-white"}`}
           >
-            <ThumbsUp size={16} />
-            J'aime ({post.likes})
-          </Button>
+            <ThumbsUp size={18} />
+            <span>{post.likes} j'aime{post.likes > 1 ? 's' : ''}</span>
+          </button>
+
+          {onUpvote && (
+            <button 
+              onClick={onUpvote}
+              className={`flex items-center gap-1.5 ${post.isUpvoted ? "text-startupia-turquoise" : "text-white/60 hover:text-white"}`}
+            >
+              <ArrowUp size={18} />
+              <span>{post.upvotesCount || 0} vote{(post.upvotesCount || 0) > 1 ? 's' : ''}</span>
+            </button>
+          )}
+          
+          <div className="flex items-center gap-1.5 text-white/60">
+            <MessageCircle size={18} />
+            <span>{post.replies?.length || 0} réponse{post.replies?.length !== 1 ? 's' : ''}</span>
+          </div>
+          
+          <div className="flex items-center gap-1.5 text-white/60">
+            <Eye size={18} />
+            <span>{post.views} vue{post.views !== 1 ? 's' : ''}</span>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

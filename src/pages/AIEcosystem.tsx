@@ -25,6 +25,7 @@ import SEO from '@/components/SEO';
 import { Startup } from '@/types/startup';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Sector } from '@/types/startup';
 
 const AIEcosystem = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,7 +41,6 @@ const AIEcosystem = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Fetch startups from Supabase
   useEffect(() => {
     const fetchStartups = async () => {
       setIsLoading(true);
@@ -53,13 +53,10 @@ const AIEcosystem = () => {
           console.error('Error fetching startups:', error);
           toast.error('Erreur lors du chargement des startups');
         } else if (data) {
-          // Transform data to match Startup type
           const transformedData: Startup[] = data.map(item => {
-            // Parse founders from JSON
             let parsedFounders = [];
             try {
               if (item.founders) {
-                // Handle founders as a JSON string or already parsed object
                 if (typeof item.founders === 'string') {
                   parsedFounders = JSON.parse(item.founders);
                 } else if (Array.isArray(item.founders)) {
@@ -73,7 +70,6 @@ const AIEcosystem = () => {
               parsedFounders = [];
             }
             
-            // Ensure aiTools is AITool[] type
             const typedAiTools = item.ai_tools ? item.ai_tools.map(tool => tool as any) : [];
             
             return {
@@ -85,7 +81,7 @@ const AIEcosystem = () => {
               founders: parsedFounders,
               aiUseCases: item.ai_use_cases || '',
               aiTools: typedAiTools,
-              sector: item.sector,
+              sector: item.sector as Sector,
               businessModel: item.business_model,
               maturityLevel: item.maturity_level,
               aiImpactScore: item.ai_impact_score,
@@ -103,7 +99,6 @@ const AIEcosystem = () => {
           
           setStartups(transformedData);
           
-          // Extract categories and AI tools
           const uniqueCategories = Array.from(new Set(data.map(startup => startup.sector)));
           const uniqueAiTools = Array.from(new Set(data.flatMap(startup => startup.ai_tools || [])));
           
@@ -119,15 +114,13 @@ const AIEcosystem = () => {
     };
 
     fetchStartups();
-  }, [showSubmitModal]); // Refetch when the modal is closed after submission
-  
-  // Filter and sort startups based on search, category, and sort order
+  }, [showSubmitModal]);
+
   const filterStartups = () => {
     if (isLoading) return [];
     
     let filtered = [...startups];
     
-    // Apply search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter((startup) =>
         startup.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -136,12 +129,10 @@ const AIEcosystem = () => {
       );
     }
     
-    // Apply category filter
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(startup => startup.sector === selectedCategory);
     }
     
-    // Sort startups
     switch (sortOrder) {
       case 'trending':
         filtered.sort((a, b) => (b.upvoteCount || 0) - (a.upvoteCount || 0));
@@ -177,7 +168,6 @@ const AIEcosystem = () => {
         description="Découvrez les meilleures startups IA françaises, les outils d'intelligence artificielle du moment, et connectez-vous à une communauté active d'innovateurs. Rejoignez le hub de l'IA en France !"
       />
       
-      {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
       <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
@@ -194,7 +184,6 @@ const AIEcosystem = () => {
           </p>
         </div>
 
-        {/* Search and filters bar */}
         <div className="flex flex-col md:flex-row gap-4 mb-8 max-w-5xl mx-auto">
           <div className="relative flex-grow">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50" />
@@ -250,7 +239,6 @@ const AIEcosystem = () => {
           </div>
         </div>
 
-        {/* Advanced filters panel */}
         {showFilters && (
           <Card className="p-4 mb-6 bg-black/30 border border-startupia-turquoise/30">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -303,7 +291,6 @@ const AIEcosystem = () => {
           </Card>
         )}
         
-        {/* Tabs for different views */}
         <Tabs defaultValue="all" className="mb-6">
           <TabsList className="bg-black/30 border border-startupia-turquoise/20">
             <TabsTrigger value="all" className="data-[state=active]:bg-startupia-turquoise/20">
@@ -414,7 +401,6 @@ const AIEcosystem = () => {
         </Tabs>
       </main>
 
-      {/* Submit Startup Modal */}
       <SubmitStartupModal 
         open={showSubmitModal} 
         onOpenChange={setShowSubmitModal}
@@ -428,7 +414,6 @@ const AIEcosystem = () => {
   );
 };
 
-// Helper function to render the startup grid with Product Hunt style
 const renderStartupGrid = (
   startups: Startup[], 
   canVote: boolean

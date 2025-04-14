@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { Startup } from "@/types/startup";
+import { Startup, Sector } from "@/types/startup";
 import StartupCard from "@/components/StartupCard";
 import StartupFilters from "@/components/StartupFilters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,7 +20,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
   const [sectors, setSectors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch startups from supabase
   useEffect(() => {
     const fetchStartups = async () => {
       setIsLoading(true);
@@ -34,19 +32,15 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           console.error('Error fetching startups:', error);
           toast.error('Erreur lors du chargement des startups');
         } else if (data) {
-          // Transform data to match Startup type
           const transformedData: Startup[] = data.map(item => {
-            // Parse founders from JSON
             let parsedFounders = [];
             try {
               if (item.founders) {
-                // Handle founders as a JSON string or already parsed object
                 if (typeof item.founders === 'string') {
                   parsedFounders = JSON.parse(item.founders);
                 } else if (Array.isArray(item.founders)) {
                   parsedFounders = item.founders;
                 } else if (typeof item.founders === 'object') {
-                  // Try to convert the object to an array if possible
                   parsedFounders = [item.founders];
                 }
               }
@@ -55,7 +49,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
               parsedFounders = [];
             }
             
-            // Ensure aiTools is AITool[] type
             const typedAiTools = item.ai_tools ? item.ai_tools.map(tool => tool as any) : [];
             
             return {
@@ -67,7 +60,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
               founders: parsedFounders,
               aiUseCases: item.ai_use_cases || '',
               aiTools: typedAiTools,
-              sector: item.sector,
+              sector: item.sector as Sector,
               businessModel: item.business_model,
               maturityLevel: item.maturity_level,
               aiImpactScore: item.ai_impact_score,
@@ -86,7 +79,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           setStartups(transformedData);
           setFilteredStartups(transformedData);
           
-          // Get unique sectors for category tabs
           const uniqueSectors = Array.from(new Set(data.map(startup => startup.sector)));
           setSectors(uniqueSectors);
         }
@@ -101,7 +93,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     fetchStartups();
   }, []);
   
-  // Filter startups based on search query
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredStartups(startups);
@@ -117,7 +108,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     setFilteredStartups(filtered);
   }, [searchQuery, startups]);
   
-  // Filter by active category
   useEffect(() => {
     if (activeCategory === "all") {
       setFilteredStartups(startups);
@@ -133,14 +123,12 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
 
   return (
     <div className="mb-16">
-      {/* Filters panel */}
       {showFilters && (
         <div className="mt-4 mb-8">
           <StartupFilters startups={startups} setFilteredStartups={setFilteredStartups} />
         </div>
       )}
       
-      {/* Category tabs */}
       <Tabs 
         value={activeCategory} 
         onValueChange={setActiveCategory}
@@ -208,7 +196,6 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
   );
 };
 
-// Helper function to render the startup grid
 const renderStartupGrid = (startups: Startup[]) => {
   if (startups.length === 0) {
     return (

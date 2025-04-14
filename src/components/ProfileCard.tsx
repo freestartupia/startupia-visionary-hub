@@ -27,18 +27,28 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
     const fetchUserAvatar = async () => {
       if (user && profile.user_id === user.id) {
         try {
+          console.log("Fetching avatar for user:", user.id);
           const { data, error } = await supabase
             .from('profiles')
             .select('avatar_url')
             .eq('id', user.id)
             .single();
           
-          if (!error && data && data.avatar_url) {
+          if (error) {
+            console.error("Error fetching avatar:", error);
+          } else if (data && data.avatar_url) {
+            console.log("Found avatar URL:", data.avatar_url);
             setUserAvatar(data.avatar_url);
+          } else {
+            console.log("No avatar URL found in profiles table");
           }
         } catch (error) {
-          console.error("Error fetching user avatar:", error);
+          console.error("Exception fetching user avatar:", error);
         }
+      } else {
+        console.log("Not fetching avatar - user condition not met:", 
+          user ? "User logged in" : "No user", 
+          profile.user_id === user?.id ? "Profile belongs to user" : "Profile doesn't belong to user");
       }
     };
     
@@ -64,6 +74,15 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
       .toUpperCase()
       .substring(0, 2);
   };
+
+  // Debug current avatar state
+  console.log("Avatar rendering state:", {
+    userAvatar,
+    photoUrl: profile.photoUrl,
+    userId: user?.id,
+    profileUserId: profile.user_id,
+    isCurrentUser: user?.id === profile.user_id
+  });
 
   return (
     <>

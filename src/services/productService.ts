@@ -1,272 +1,289 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { ProductComment, ProductLaunch, ProductLaunchStatus } from '@/types/productLaunch';
-import { v4 as uuidv4 } from 'uuid';
+import { supabase, incrementValue } from '@/integrations/supabase/client';
+import { ProductLaunch, ProductComment, ProductLaunchStatus } from '@/types/productLaunch';
+import { Database } from '@/integrations/supabase/types';
 
-/**
- * Récupère un produit par son ID
- */
-export const fetchProductById = async (id: string): Promise<ProductLaunch | null> => {
+export async function fetchProductLaunches(): Promise<ProductLaunch[]> {
   try {
     const { data, error } = await supabase
       .from('product_launches')
-      .select('*, product_comments(*)')
+      .select(`
+        *,
+        comments:product_comments(*)
+      `)
+      .order('upvotes', { ascending: false }); // Ordre décroissant par nombre de votes
+    
+    if (error) {
+      console.error('Error fetching product launches:', error);
+      throw error;
+    }
+    
+    if (!data) return [];
+    
+    // Transform data to match ProductLaunch type
+    return data.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      logoUrl: item.logo_url || '',
+      tagline: item.tagline,
+      description: item.description,
+      launchDate: item.launch_date,
+      createdBy: item.created_by,
+      creatorAvatarUrl: item.creator_avatar_url,
+      websiteUrl: item.website_url,
+      demoUrl: item.demo_url || undefined,
+      category: item.category,
+      upvotes: item.upvotes,
+      comments: item.comments ? mapComments(item.comments) : [],
+      status: item.status as ProductLaunchStatus,
+      startupId: item.startup_id || undefined,
+      mediaUrls: item.media_urls || [],
+      betaSignupUrl: item.beta_signup_url || undefined,
+      featuredOrder: item.featured_order,
+      badgeCode: item.badge_code || undefined
+    }));
+  } catch (error) {
+    console.error('Failed to fetch product launches:', error);
+    return [];
+  }
+}
+
+export async function fetchProductById(id: string): Promise<ProductLaunch | null> {
+  try {
+    const { data, error } = await supabase
+      .from('product_launches')
+      .select(`
+        *,
+        comments:product_comments(*)
+      `)
       .eq('id', id)
       .single();
     
     if (error) {
-      console.error('Error fetching product by ID:', error);
+      console.error('Error fetching product:', error);
       return null;
     }
     
     if (!data) return null;
     
-    // Map database fields to ProductLaunch interface
+    // Transform to ProductLaunch type
     return {
       id: data.id,
       name: data.name,
-      logoUrl: data.logo_url,
+      logoUrl: data.logo_url || '',
       tagline: data.tagline,
       description: data.description,
       launchDate: data.launch_date,
       createdBy: data.created_by,
       creatorAvatarUrl: data.creator_avatar_url,
       websiteUrl: data.website_url,
-      demoUrl: data.demo_url,
+      demoUrl: data.demo_url || undefined,
+      category: data.category,
+      upvotes: data.upvotes,
+      comments: data.comments ? mapComments(data.comments) : [],
+      status: data.status as ProductLaunchStatus,
+      startupId: data.startup_id || undefined,
+      mediaUrls: data.media_urls || [],
+      betaSignupUrl: data.beta_signup_url || undefined,
+      featuredOrder: data.featured_order,
+      badgeCode: data.badge_code || undefined
+    };
+  } catch (error) {
+    console.error('Failed to fetch product:', error);
+    return null;
+  }
+}
+
+export async function addComment(
+  productId: string, 
+  content: string, 
+  userName: string, 
+  userId?: string, 
+  userAvatar?: string, 
+  parentId?: string
+): Promise<ProductComment | null> {
+  try {
+    const { data, error } = await supabase
+      .from('product_comments')
+      .insert({
+        product_id: productId,
+        user_id: userId,
+        user_name: userName,
+        user_avatar: userAvatar,
+        content,
+        parent_id: parentId
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error adding comment:', error);
+      return null;
+    }
+    
+    if (!data) return null;
+    
+    return {
+      id: data.id,
+      userId: data.user_id,
+      userName: data.user_name,
+      userAvatar: data.user_avatar,
+      content: data.content,
+      createdAt: data.created_at,
+      likes: data.likes,
+      replies: []
+    };
+  } catch (error) {
+    console.error('Failed to add comment:', error);
+    return null;
+  }
+}
+
+export async function upvoteProduct(productId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('product_launches')
+      .select('upvotes')
+      .eq('id', productId)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching product upvotes:', error);
+      return false;
+    }
+    
+    const currentUpvotes = data?.upvotes || 0;
+    const newUpvotes = currentUpvotes + 1;
+    
+    const { error: updateError } = await supabase
+      .from('product_launches')
+      .update({ upvotes: newUpvotes })
+      .eq('id', productId);
+    
+    if (updateError) {
+      console.error('Error upvoting product:', updateError);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to upvote product:', error);
+    return false;
+  }
+}
+
+export async function createProduct(product: Omit<ProductLaunch, 'id' | 'upvotes' | 'comments'>): Promise<ProductLaunch | null> {
+  try {
+    // Prepare data for insertion
+    const productData = {
+      name: product.name,
+      logo_url: product.logoUrl,
+      tagline: product.tagline,
+      description: product.description,
+      launch_date: product.launchDate,
+      created_by: product.createdBy,
+      creator_avatar_url: product.creatorAvatarUrl,
+      website_url: product.websiteUrl,
+      demo_url: product.demoUrl,
+      category: product.category,
+      status: product.status,
+      startup_id: product.startupId,
+      media_urls: product.mediaUrls,
+      beta_signup_url: product.betaSignupUrl,
+      featured_order: product.featuredOrder,
+      badge_code: product.badgeCode
+    };
+
+    const { data, error } = await supabase
+      .from('product_launches')
+      .insert(productData)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+    
+    if (!data) return null;
+
+    // Return the created product
+    return {
+      id: data.id,
+      name: data.name,
+      logoUrl: data.logo_url || '',
+      tagline: data.tagline,
+      description: data.description,
+      launchDate: data.launch_date,
+      createdBy: data.created_by,
+      creatorAvatarUrl: data.creator_avatar_url,
+      websiteUrl: data.website_url,
+      demoUrl: data.demo_url || undefined,
       category: data.category,
       upvotes: data.upvotes || 0,
-      comments: (data.product_comments || []).map(comment => ({
+      comments: [],
+      status: data.status as ProductLaunchStatus,
+      startupId: data.startup_id || undefined,
+      mediaUrls: data.media_urls || [],
+      betaSignupUrl: data.beta_signup_url || undefined,
+      featuredOrder: data.featured_order,
+      badgeCode: data.badge_code || undefined
+    };
+  } catch (error) {
+    console.error('Failed to create product:', error);
+    return null;
+  }
+}
+
+// Helper function to map DB comments to ProductComment type
+function mapComments(comments: any[]): ProductComment[] {
+  // First, group comments by parent_id
+  const commentMap: Record<string, any[]> = {};
+  const topLevelComments: ProductComment[] = [];
+  
+  comments.forEach(comment => {
+    if (!commentMap[comment.id]) {
+      commentMap[comment.id] = [];
+    }
+    
+    if (comment.parent_id) {
+      if (!commentMap[comment.parent_id]) {
+        commentMap[comment.parent_id] = [];
+      }
+      commentMap[comment.parent_id].push(comment);
+    } else {
+      topLevelComments.push({
         id: comment.id,
         userId: comment.user_id,
         userName: comment.user_name,
         userAvatar: comment.user_avatar,
         content: comment.content,
         createdAt: comment.created_at,
-        likes: comment.likes || 0
-      })),
-      status: (data.status as ProductLaunchStatus) || 'upcoming',
-      mediaUrls: data.media_urls,
-      betaSignupUrl: data.beta_signup_url,
-      startupId: data.startup_id,
-      featuredOrder: data.featured_order
-    };
-  } catch (error) {
-    console.error('Error in fetchProductById:', error);
-    return null;
+        likes: comment.likes,
+        replies: []
+      });
+    }
+  });
+  
+  // Then recursively build the comment tree
+  function addReplies(comments: ProductComment[]): ProductComment[] {
+    return comments.map(comment => {
+      const replies = commentMap[comment.id] || [];
+      return {
+        ...comment,
+        replies: replies.length > 0 ? addReplies(replies.map(reply => ({
+          id: reply.id,
+          userId: reply.user_id,
+          userName: reply.user_name,
+          userAvatar: reply.user_avatar,
+          content: reply.content,
+          createdAt: reply.created_at,
+          likes: reply.likes,
+          replies: []
+        }))) : []
+      };
+    });
   }
-};
-
-/**
- * Récupère tous les produits lancés
- */
-export const fetchAllProducts = async (): Promise<ProductLaunch[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('product_launches')
-      .select('*')
-      .order('launch_date', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching all products:', error);
-      return [];
-    }
-    
-    // Map database fields to ProductLaunch interface
-    return (data || []).map(item => ({
-      id: item.id,
-      name: item.name,
-      logoUrl: item.logo_url,
-      tagline: item.tagline,
-      description: item.description,
-      launchDate: item.launch_date,
-      createdBy: item.created_by,
-      creatorAvatarUrl: item.creator_avatar_url,
-      websiteUrl: item.website_url,
-      demoUrl: item.demo_url,
-      category: item.category,
-      upvotes: item.upvotes || 0,
-      comments: [],
-      status: (item.status as ProductLaunchStatus) || 'upcoming',
-      mediaUrls: item.media_urls,
-      betaSignupUrl: item.beta_signup_url,
-      startupId: item.startup_id,
-      featuredOrder: item.featured_order
-    }));
-  } catch (error) {
-    console.error('Error in fetchAllProducts:', error);
-    return [];
-  }
-};
-
-/**
- * Ajoute un commentaire à un produit
- */
-export const addComment = async (
-  productId: string, 
-  content: string, 
-  userName: string
-): Promise<boolean> => {
-  try {
-    const commentId = uuidv4();
-    
-    const { error } = await supabase
-      .from('product_comments')
-      .insert([{
-        id: commentId,
-        product_id: productId,
-        user_id: 'anonymous', // Utilisateur anonyme pour l'instant
-        user_name: userName,
-        content: content,
-        created_at: new Date().toISOString(),
-        likes: 0
-      }]);
-    
-    if (error) {
-      console.error('Error adding comment:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in addComment:', error);
-    return false;
-  }
-};
-
-/**
- * Incrémente le nombre de votes d'un produit
- */
-export const upvoteProduct = async (productId: string): Promise<boolean> => {
-  try {
-    // First try direct update with increment
-    const { error } = await supabase
-      .from('product_launches')
-      .update({ upvotes: supabase.rpc('is_admin') ? 1 : 0 + 1 })
-      .eq('id', productId);
-    
-    if (error) {
-      console.error('Error upvoting product:', error);
-      
-      // Fallback - get current value and increment it
-      const { data: currentProduct } = await supabase
-        .from('product_launches')
-        .select('upvotes')
-        .eq('id', productId)
-        .single();
-      
-      if (currentProduct) {
-        const newCount = (currentProduct.upvotes || 0) + 1;
-        const { error: updateError } = await supabase
-          .from('product_launches')
-          .update({ upvotes: newCount })
-          .eq('id', productId);
-        
-        if (updateError) {
-          console.error('Error in fallback upvote:', updateError);
-          return false;
-        }
-        return true;
-      }
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error in upvoteProduct:', error);
-    return false;
-  }
-};
-
-/**
- * Crée un nouveau produit
- */
-export const createProduct = async (product: Partial<ProductLaunch>): Promise<string | null> => {
-  try {
-    const productId = product.id || uuidv4();
-    
-    // Map the ProductLaunch interface to database fields
-    const { error } = await supabase
-      .from('product_launches')
-      .insert([{
-        id: productId,
-        name: product.name,
-        logo_url: product.logoUrl,
-        tagline: product.tagline,
-        description: product.description,
-        launch_date: product.launchDate,
-        created_by: product.createdBy,
-        creator_avatar_url: product.creatorAvatarUrl,
-        website_url: product.websiteUrl,
-        demo_url: product.demoUrl,
-        category: product.category || [],
-        upvotes: 0,
-        status: product.status,
-        media_urls: product.mediaUrls,
-        beta_signup_url: product.betaSignupUrl,
-        startup_id: product.startupId,
-        featured_order: product.featuredOrder
-      }]);
-    
-    if (error) {
-      console.error('Error creating product:', error);
-      return null;
-    }
-    
-    return productId;
-  } catch (error) {
-    console.error('Error in createProduct:', error);
-    return null;
-  }
-};
-
-// Fonction pour rechercher des produits par critères
-export const searchProducts = async (
-  query: string, 
-  category?: string
-): Promise<ProductLaunch[]> => {
-  try {
-    let searchQuery = supabase
-      .from('product_launches')
-      .select('*');
-    
-    if (query) {
-      searchQuery = searchQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,tagline.ilike.%${query}%`);
-    }
-    
-    if (category && category !== 'Tous') {
-      searchQuery = searchQuery.contains('category', [category]);
-    }
-    
-    const { data, error } = await searchQuery.order('launch_date', { ascending: false });
-    
-    if (error) {
-      console.error('Error searching products:', error);
-      return [];
-    }
-    
-    // Map database fields to ProductLaunch interface
-    return (data || []).map(item => ({
-      id: item.id,
-      name: item.name,
-      logoUrl: item.logo_url,
-      tagline: item.tagline,
-      description: item.description,
-      launchDate: item.launch_date,
-      createdBy: item.created_by,
-      creatorAvatarUrl: item.creator_avatar_url,
-      websiteUrl: item.website_url,
-      demoUrl: item.demo_url,
-      category: item.category,
-      upvotes: item.upvotes || 0,
-      comments: [],
-      status: (item.status as ProductLaunchStatus) || 'upcoming',
-      mediaUrls: item.media_urls,
-      betaSignupUrl: item.beta_signup_url,
-      startupId: item.startup_id,
-      featuredOrder: item.featured_order
-    }));
-  } catch (error) {
-    console.error('Error in searchProducts:', error);
-    return [];
-  }
-};
+  
+  return addReplies(topLevelComments);
+}

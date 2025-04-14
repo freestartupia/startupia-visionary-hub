@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/navbar/Navbar';
@@ -108,7 +109,7 @@ const ProductForm = () => {
           title: "Produit créé avec succès",
           description: "Votre produit a été enregistré et sera bientôt visible."
         });
-        navigate(`/product/${result}`);
+        navigate(`/product/${result.id}`);
       } else {
         toast({
           title: "Erreur",
@@ -130,6 +131,7 @@ const ProductForm = () => {
 
   return (
     <div className="min-h-screen bg-hero-pattern text-white">
+      {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
       <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-gold/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>

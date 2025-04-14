@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -32,8 +31,8 @@ const navLinks: NavLink[] = [
     label: "Blog & Actualités"
   },
   {
-    path: '/tools',
-    label: "Outils IA"
+    path: '/rankings',
+    label: "Classements & Tendances"
   }
 ];
 

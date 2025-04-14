@@ -9,63 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      blog_posts: {
-        Row: {
-          author_avatar: string | null
-          author_id: string | null
-          author_name: string
-          category: string
-          content: string
-          cover_image: string | null
-          created_at: string
-          excerpt: string
-          featured: boolean | null
-          id: string
-          reading_time: string
-          slug: string
-          status: string
-          tags: string[] | null
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          author_avatar?: string | null
-          author_id?: string | null
-          author_name: string
-          category: string
-          content: string
-          cover_image?: string | null
-          created_at?: string
-          excerpt: string
-          featured?: boolean | null
-          id?: string
-          reading_time: string
-          slug: string
-          status?: string
-          tags?: string[] | null
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          author_avatar?: string | null
-          author_id?: string | null
-          author_name?: string
-          category?: string
-          content?: string
-          cover_image?: string | null
-          created_at?: string
-          excerpt?: string
-          featured?: boolean | null
-          id?: string
-          reading_time?: string
-          slug?: string
-          status?: string
-          tags?: string[] | null
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       cofounder_profiles: {
         Row: {
           ai_tools: string[] | null
@@ -785,36 +728,12 @@ export type Database = {
         }
         Relationships: []
       }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      is_admin: {
-        Args: { uid: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

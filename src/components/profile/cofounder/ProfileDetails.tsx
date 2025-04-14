@@ -41,7 +41,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ form }) => {
             <SelectValue placeholder="Sélectionner un stade" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="non_specifie">Sélectionner un stade</SelectItem>
+            <SelectItem value="">Sélectionner un stade</SelectItem>
             <SelectItem value="Idée">Idée</SelectItem>
             <SelectItem value="MVP">MVP</SelectItem>
             <SelectItem value="Beta">Beta</SelectItem>

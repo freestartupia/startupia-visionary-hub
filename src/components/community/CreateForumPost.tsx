@@ -39,15 +39,6 @@ const CreateForumPost: React.FC<CreateForumPostProps> = ({ onPostCreated }) => {
   const navigate = useNavigate();
   const createPostMutation = useCreateForumPost();
 
-  const handleOpenChange = (open: boolean) => {
-    if (open && !user) {
-      toast.error('Vous devez être connecté pour créer un post');
-      navigate('/auth');
-      return;
-    }
-    setIsOpen(open);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -103,7 +94,7 @@ const CreateForumPost: React.FC<CreateForumPostProps> = ({ onPostCreated }) => {
   ];
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="bg-startupia-turquoise hover:bg-startupia-turquoise/90">
           <PlusCircle size={18} className="mr-2" />

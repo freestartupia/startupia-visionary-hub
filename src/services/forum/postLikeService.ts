@@ -1,8 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { likePost, checkAuthentication } from "./likeUtils";
-import type { LikeResponse } from "@/types/community";
+import { LikeResponse, checkAuthentication, safeRpcCall } from "./likeUtils";
 
 // Function to check if a user has liked a post
 export const getPostLikeStatus = async (postId: string, userId: string): Promise<boolean> => {
@@ -41,25 +40,70 @@ export const togglePostLike = async (postId: string): Promise<LikeResponse> => {
       };
     }
     
-    // Utiliser la fonction générique likePost
-    const likeResponse = await likePost(postId);
-    
-    // Get the current like count to return
-    const { data: postData } = await supabase
-      .from('forum_posts')
-      .select('likes')
-      .eq('id', postId)
+    // Check if user already liked the post
+    const { data: existingLike, error: likeError } = await supabase
+      .from('forum_post_likes')
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
       .single();
+      
+    if (likeError && likeError.code !== 'PGRST116') {
+      console.error("Error checking existing like:", likeError);
+      throw likeError;
+    }
     
-    return {
-      success: likeResponse.success,
-      message: likeResponse.message,
-      liked: likeResponse.liked || false,
-      newCount: likeResponse.liked 
-        ? (postData?.likes || 0) + 1 
-        : (postData?.likes || 0)
-    };
-    
+    if (existingLike) {
+      // Unlike: Remove like from database
+      const { error: unlikeError } = await supabase
+        .from('forum_post_likes')
+        .delete()
+        .eq('id', existingLike.id);
+        
+      if (unlikeError) {
+        console.error("Error unliking post:", unlikeError);
+        throw unlikeError;
+      }
+      
+      // Decrement likes count using RPC function
+      const { data, error } = await safeRpcCall<{ new_count: number }>(
+        'toggle_post_like', 
+        { post_id: postId, user_id: userId }
+      );
+      
+      return {
+        success: true,
+        message: "Post unliked successfully",
+        liked: false,
+        newCount: data?.new_count || 0
+      };
+    } else {
+      // Like: Add new like to database
+      const { error: addLikeError } = await supabase
+        .from('forum_post_likes')
+        .insert({
+          post_id: postId,
+          user_id: userId
+        });
+        
+      if (addLikeError) {
+        console.error("Error liking post:", addLikeError);
+        throw addLikeError;
+      }
+      
+      // Increment likes count using RPC function
+      const { data, error } = await safeRpcCall<{ new_count: number }>(
+        'toggle_post_like', 
+        { post_id: postId, user_id: userId }
+      );
+      
+      return {
+        success: true,
+        message: "Post liked successfully",
+        liked: true,
+        newCount: data?.new_count || 0
+      };
+    }
   } catch (error) {
     console.error("Error in togglePostLike:", error);
     throw error;

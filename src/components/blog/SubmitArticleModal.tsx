@@ -1,7 +1,5 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import slugify from 'slugify';
+import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,10 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from '@/contexts/AuthContext';
-import { toast as sonnerToast } from 'sonner';
-import { BlogCategory } from '@/types/blog';
-import { submitBlogPost } from '@/services/blogService';
 
 interface SubmitArticleModalProps {
   open: boolean;
@@ -27,110 +21,15 @@ interface SubmitArticleModalProps {
 
 const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formValues, setFormValues] = useState({
-    title: '',
-    excerpt: '',
-    content: '',
-    category: '' as BlogCategory,
-    tags: ''
-  });
 
-  // Redirect to authentication page if not logged in
-  const handleAuthRequired = () => {
-    sonnerToast.error("Vous devez être connecté pour soumettre un article");
-    onOpenChange(false);
-    navigate('/auth');
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { id, value } = e.target;
-    setFormValues(prev => ({ ...prev, [id]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-
-    setIsSubmitting(true);
-    try {
-      // Create a slug from the title
-      const slug = slugify(formValues.title, { lower: true, strict: true });
-      
-      // Split tags by comma
-      const tags = formValues.tags.split(',').map(tag => tag.trim()).filter(Boolean);
-      
-      // Submit the post
-      await submitBlogPost({
-        title: formValues.title,
-        slug,
-        excerpt: formValues.excerpt,
-        content: `<p>${formValues.content.replace(/\n/g, '</p><p>')}</p>`,
-        category: formValues.category as BlogCategory,
-        authorId: user.id,
-        authorName: user.user_metadata?.first_name 
-          ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`
-          : user.email?.split('@')[0] || 'Anonymous',
-        authorAvatar: user.user_metadata?.avatar_url,
-        tags,
-        readingTime: `${Math.max(1, Math.ceil(formValues.content.length / 1000))} min`,
-      });
-      
-      toast({
-        title: "Article soumis !",
-        description: "Votre article a été soumis avec succès et est en attente d'approbation par un modérateur.",
-      });
-      
-      // Reset form and close modal
-      setFormValues({
-        title: '',
-        excerpt: '',
-        content: '',
-        category: '' as BlogCategory,
-        tags: ''
-      });
-      onOpenChange(false);
-      
-    } catch (error) {
-      console.error("Error submitting article:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la soumission de votre article. Veuillez réessayer.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    toast({
+      title: "Article soumis !",
+      description: "Nous examinerons votre article et reviendrons vers vous rapidement.",
+    });
+    onOpenChange(false);
   };
-
-  // If user is not authenticated, show a message and option to login
-  if (!user) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px] bg-black border border-startupia-turquoise/30">
-          <DialogHeader>
-            <DialogTitle className="text-white">Authentification requise</DialogTitle>
-            <DialogDescription>
-              Vous devez être connecté pour soumettre un article sur Startupia.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center justify-center p-4">
-            <p className="text-white/70 mb-4 text-center">
-              Créez un compte ou connectez-vous pour partager vos connaissances avec la communauté.
-            </p>
-            <Button 
-              onClick={handleAuthRequired}
-              className="bg-startupia-turquoise text-black hover:bg-startupia-deep-turquoise"
-            >
-              Se connecter / S'inscrire
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -143,47 +42,24 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <Label htmlFor="name">Nom</Label>
+            <Input id="name" placeholder="Votre nom" className="bg-black/30" />
+          </div>
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" placeholder="votre@email.com" className="bg-black/30" />
+          </div>
+          <div>
             <Label htmlFor="title">Titre de l'article</Label>
-            <Input 
-              id="title" 
-              value={formValues.title}
-              onChange={handleInputChange}
-              placeholder="Titre accrocheur de votre article" 
-              className="bg-black/30" 
-              required
-            />
+            <Input id="title" placeholder="Titre accrocheur de votre article" className="bg-black/30" />
           </div>
           <div>
             <Label htmlFor="excerpt">Résumé</Label>
-            <Textarea 
-              id="excerpt" 
-              value={formValues.excerpt}
-              onChange={handleInputChange}
-              placeholder="Bref résumé de votre article (max 150 mots)" 
-              className="bg-black/30" 
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="content">Contenu</Label>
-            <Textarea 
-              id="content" 
-              value={formValues.content}
-              onChange={handleInputChange}
-              placeholder="Contenu de votre article" 
-              className="bg-black/30 min-h-[200px]" 
-              required
-            />
+            <Textarea id="excerpt" placeholder="Bref résumé de votre article (max 150 mots)" className="bg-black/30" />
           </div>
           <div>
             <Label htmlFor="category">Catégorie</Label>
-            <select 
-              id="category" 
-              value={formValues.category}
-              onChange={handleInputChange}
-              className="w-full rounded-md border border-input bg-black/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground"
-              required
-            >
+            <select id="category" className="w-full rounded-md border border-input bg-black/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground">
               <option value="">Sélectionner une catégorie</option>
               <option value="Actualités">Actualités</option>
               <option value="Growth">Growth</option>
@@ -191,26 +67,11 @@ const SubmitArticleModal = ({ open, onOpenChange }: SubmitArticleModalProps) => 
               <option value="Interviews">Interviews</option>
               <option value="Outils">Outils</option>
               <option value="Levées de fonds">Levées de fonds</option>
-              <option value="Startup du mois">Startup du mois</option>
             </select>
           </div>
-          <div>
-            <Label htmlFor="tags">Tags (séparés par des virgules)</Label>
-            <Input 
-              id="tags" 
-              value={formValues.tags}
-              onChange={handleInputChange}
-              placeholder="IA, StartUp, Marketing, etc." 
-              className="bg-black/30" 
-            />
-          </div>
           <DialogFooter>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="bg-startupia-turquoise text-black hover:bg-startupia-deep-turquoise"
-            >
-              {isSubmitting ? 'Soumission en cours...' : 'Soumettre'}
+            <Button type="submit" className="bg-startupia-turquoise text-black hover:bg-startupia-deep-turquoise">
+              Soumettre
             </Button>
           </DialogFooter>
         </form>

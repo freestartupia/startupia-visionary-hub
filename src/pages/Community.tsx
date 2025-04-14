@@ -8,6 +8,7 @@ import ForumSection from '@/components/community/ForumSection';
 import ServicesMarketplace from '@/components/community/ServicesMarketplace';
 import ResourcesLibrary from '@/components/community/ResourcesLibrary';
 import CollaborativeProjects from '@/components/community/CollaborativeProjects';
+import CommunityFeed from '@/components/community/CommunityFeed';
 import ForumPostDetail from '@/components/community/ForumPostDetail';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -29,7 +30,7 @@ const Community = () => {
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tabFromUrl = searchParams.get('tab');
-    if (tabFromUrl && ['forum', 'services', 'resources', 'projects'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['forum', 'services', 'resources', 'projects', 'feed'].includes(tabFromUrl)) {
       setActiveTab(tabFromUrl);
     }
   }, [location]);
@@ -70,11 +71,12 @@ const Community = () => {
           <ForumPostDetail />
         ) : (
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-6xl mx-auto">
-            <TabsList className="grid grid-cols-4 mb-8">
+            <TabsList className="grid grid-cols-5 mb-8">
               <TabsTrigger value="forum">Forum IA</TabsTrigger>
               <TabsTrigger value="services">Services</TabsTrigger>
               <TabsTrigger value="resources">Formations</TabsTrigger>
               <TabsTrigger value="projects">Projets</TabsTrigger>
+              <TabsTrigger value="feed">Fil d'actu</TabsTrigger>
             </TabsList>
             
             <TabsContent value="forum" className="mt-0">
@@ -91,6 +93,10 @@ const Community = () => {
             
             <TabsContent value="projects" className="mt-0">
               <CollaborativeProjects requireAuth={true} />
+            </TabsContent>
+            
+            <TabsContent value="feed" className="mt-0">
+              <CommunityFeed requireAuth={true} />
             </TabsContent>
           </Tabs>
         )}

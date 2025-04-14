@@ -1,17 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ResourceFormat, ResourceListing } from '@/types/community';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockResources } from '@/data/mockCommunityData';
+import { supabase } from '@/integrations/supabase/client';
 import ResourceFilters from './resource/ResourceFilters';
 import ResourceCard from './resource/ResourceCard';
 import LoadingState from './resource/LoadingState';
 import ErrorState from './resource/ErrorState';
 import EmptyResourcesState from './resource/EmptyResourcesState';
-import ShareResourceModal from './resource/ShareResourceModal';
-import { fetchResources } from '@/services/resourceListingService';
 
 interface ResourcesLibraryProps {
   requireAuth?: boolean;
@@ -20,9 +19,6 @@ interface ResourcesLibraryProps {
 const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false }) => {
   const [selectedFormat, setSelectedFormat] = useState<ResourceFormat | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [resources, setResources] = useState<ResourceListing[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -31,34 +27,23 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
     'Bootcamp', 'Cours', 'Podcast', 'Autre'
   ];
   
-  useEffect(() => {
-    const loadResources = async () => {
-      setIsLoading(true);
-      try {
-        // Try to fetch from Supabase first
-        const resourceData = await fetchResources();
-        
-        if (resourceData.length > 0) {
-          setResources(resourceData);
-        } else {
-          // Fallback to mock data if no resources found
-          setResources(mockResources);
-        }
-      } catch (error) {
-        console.error("Error loading resources:", error);
-        // Fallback to mock data on error
-        setResources(mockResources);
-      } finally {
-        setIsLoading(false);
+  // Utiliser React Query pour récupérer les formations depuis Supabase
+  const { data: resources = [], isLoading, error } = useQuery({
+    queryKey: ['resources'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('resource_listings')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Erreur lors de la récupération des formations:', error);
+        throw error;
       }
-    };
-
-    const timer = setTimeout(() => {
-      loadResources();
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
+      
+      return data as ResourceListing[];
+    }
+  });
   
   // Filtrer les ressources en fonction du format sélectionné et du terme de recherche
   const filteredResources = resources.filter(resource => {
@@ -95,21 +80,19 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
       return;
     }
     
-    setIsModalOpen(true);
+    toast.success("Fonctionnalité en développement");
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleResourceSuccess = (newResource: ResourceListing) => {
-    // In a real application, we would refresh the data from Supabase
-    // For now, we'll just add the new resource to our local state
-    setResources([newResource, ...resources]);
-  };
-
   if (isLoading) {
     return <LoadingState />;
+  }
+
+  if (error) {
+    return <ErrorState />;
   }
 
   return (
@@ -137,13 +120,6 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
       ) : (
         <EmptyResourcesState handleShareResource={handleShareResource} />
       )}
-      
-      <ShareResourceModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={handleResourceSuccess}
-        formats={formats}
-      />
     </div>
   );
 };

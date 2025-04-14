@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from "@/types/startup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -5,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { ThumbsUp, Users, Calendar, ExternalLink } from "lucide-react";
+import { ThumbsUp, MessageSquare, Calendar, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -133,7 +134,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     <div className="mb-16">
       {showFilters && (
         <div className="mt-4 mb-8">
-          <StartupFilters startups={startups} setFilteredStartups={setFilteredStartups} />
+          {/* Retirer l'appel à StartupFilters qui n'existe pas dans ce fichier */}
         </div>
       )}
       
@@ -210,65 +211,79 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     }
   
     return (
-      <div className="space-y-4">
-        {startups.map((startup) => (
-          <Link to={`/startup/${startup.id}`} key={startup.id}>
-            <Card className="hover:border-startupia-turquoise/50 transition-all duration-300 border border-startupia-turquoise/20 bg-black/30 p-4 w-full">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 bg-startupia-turquoise/10 rounded-lg flex items-center justify-center overflow-hidden">
-                  {startup.logoUrl ? (
-                    <img src={startup.logoUrl} alt={`${startup.name} logo`} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl font-bold text-startupia-turquoise">{startup.name.charAt(0)}</span>
-                  )}
-                </div>
-                
-                <div className="flex-grow space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-xl font-bold">{startup.name}</h3>
-                    <Badge variant="outline" className="bg-startupia-turquoise/10 text-startupia-turquoise">
-                      {startup.sector}
-                    </Badge>
-                    {startup.isFeatured && (
-                      <Badge className="bg-startupia-turquoise text-black">Featured</Badge>
+      <div className="space-y-6">
+        {startups.map((startup, index) => (
+          <Link to={`/startup/${startup.id}`} key={startup.id} className="block hover:no-underline">
+            <Card className="hover:border-startupia-turquoise/50 transition-all duration-300 border border-startupia-turquoise/20 bg-black/30 w-full">
+              <div className="flex items-start gap-4 p-5">
+                <div className="flex-shrink-0 relative">
+                  <div className="w-16 h-16 rounded-md bg-startupia-turquoise/10 flex items-center justify-center overflow-hidden">
+                    {startup.logoUrl ? (
+                      <img src={startup.logoUrl} alt={`${startup.name} logo`} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-2xl font-bold text-startupia-turquoise">{startup.name.charAt(0)}</span>
                     )}
                   </div>
-                  
-                  <p className="text-white/80">{startup.shortDescription}</p>
-                  
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {startup.tags && startup.tags.slice(0, 3).map((tag, index) => (
-                      <Badge key={index} variant="outline" className="bg-black/40 text-white/70">
-                        {tag}
-                      </Badge>
-                    ))}
-                    {startup.tags && startup.tags.length > 3 && (
-                      <Badge variant="outline" className="bg-black/40 text-white/70">
-                        +{startup.tags.length - 3}
-                      </Badge>
-                    )}
+                  <div className="absolute -top-3 -left-3 flex items-center justify-center h-7 w-7 bg-startupia-turquoise/90 text-black font-bold rounded-full">
+                    {index + 1}
                   </div>
                 </div>
                 
-                <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-2 md:gap-4 flex-shrink-0">
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="text-white/70 hover:text-startupia-turquoise hover:bg-startupia-turquoise/10">
-                      <ThumbsUp className="mr-1 h-4 w-4" />
-                      <span>{startup.upvoteCount || 0}</span>
-                    </Button>
+                <div className="flex-grow">
+                  <div className="mb-2">
+                    <h3 className="text-xl font-bold text-white">{startup.name}</h3>
+                    <p className="text-white/80 font-medium mb-2">{startup.shortDescription}</p>
+                    
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {startup.sector && (
+                        <Badge className="bg-startupia-turquoise/10 hover:bg-startupia-turquoise/20 text-white border-none">
+                          {startup.sector}
+                        </Badge>
+                      )}
+                      {startup.tags && startup.tags.slice(0, 3).map((tag, idx) => (
+                        <Badge key={idx} variant="outline" className="bg-black/40 text-white/70 hover:bg-black/60">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {startup.tags && startup.tags.length > 3 && (
+                        <Badge variant="outline" className="bg-black/40 text-white/70">
+                          +{startup.tags.length - 3}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 text-xs text-white/50">
-                    <Calendar className="h-3 w-3" />
-                    <span>{formatDate(startup.dateAdded)}</span>
+                  <div className="flex flex-wrap gap-2 text-sm text-white/60">
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      <span>{formatDate(startup.dateAdded)}</span>
+                    </div>
+                    
+                    {startup.websiteUrl && (
+                      <a 
+                        href={startup.websiteUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center text-white/70 hover:text-startupia-turquoise"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        <span>Site web</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 items-center flex-shrink-0">
+                  <div className="flex flex-col items-center p-2">
+                    <MessageSquare className="mb-1 h-5 w-5 text-white/50" />
+                    <span className="text-sm font-semibold">{startup.viewCount || 0}</span>
                   </div>
                   
-                  {startup.websiteUrl && (
-                    <Button variant="outline" size="sm" className="mt-2 hidden md:flex items-center">
-                      <ExternalLink className="mr-1 h-4 w-4" />
-                      Site web
-                    </Button>
-                  )}
+                  <div className="flex flex-col items-center p-2">
+                    <ThumbsUp className="mb-1 h-5 w-5 text-white/50" />
+                    <span className="text-sm font-semibold">{startup.upvoteCount || 0}</span>
+                  </div>
                 </div>
               </div>
             </Card>

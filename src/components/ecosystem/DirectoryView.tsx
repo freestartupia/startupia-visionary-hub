@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from "@/types/startup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +24,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
   const [sectors, setSectors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [startupVotes, setStartupVotes] = useState<Record<string, { upvoted: boolean, downvoted: boolean, count: number }>>({});
+  const [processingVotes, setProcessingVotes] = useState<Record<string, boolean>>({});
   const { user } = useAuth();
 
   useEffect(() => {
@@ -86,7 +86,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
           setStartups(transformedData);
           setFilteredStartups(transformedData);
           
-          // Initialize vote state for each startup
+          // Initialize empty vote state for each startup
           const votesState: Record<string, { upvoted: boolean, downvoted: boolean, count: number }> = {};
           transformedData.forEach(startup => {
             votesState[startup.id] = { 
@@ -111,11 +111,13 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     fetchStartups();
   }, []);
   
+  // Check user votes
   useEffect(() => {
     const checkUserVotes = async () => {
       if (!user) return;
       
       try {
+        // Get user's votes for all startups in a single query
         const { data, error } = await supabase
           .from('startup_votes')
           .select('startup_id, is_upvote')
@@ -127,17 +129,17 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
         }
         
         if (data && data.length > 0) {
+          // Start with current state
           const newVotesState = { ...startupVotes };
           
+          // Update with user's actual votes from database
           data.forEach(vote => {
             if (newVotesState[vote.startup_id]) {
-              if (vote.is_upvote) {
-                newVotesState[vote.startup_id].upvoted = true;
-                newVotesState[vote.startup_id].downvoted = false;
-              } else {
-                newVotesState[vote.startup_id].upvoted = false;
-                newVotesState[vote.startup_id].downvoted = true;
-              }
+              newVotesState[vote.startup_id] = {
+                ...newVotesState[vote.startup_id],
+                upvoted: vote.is_upvote,
+                downvoted: !vote.is_upvote
+              };
             }
           });
           
@@ -148,9 +150,12 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
       }
     };
     
-    checkUserVotes();
-  }, [user, startupVotes]);
+    if (Object.keys(startupVotes).length > 0) {
+      checkUserVotes();
+    }
+  }, [user, startups]);
   
+  // Filter startups by search query
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredStartups(startups);
@@ -166,6 +171,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     setFilteredStartups(filtered);
   }, [searchQuery, startups]);
   
+  // Filter startups by category
   useEffect(() => {
     if (activeCategory === "all") {
       setFilteredStartups(startups);
@@ -179,131 +185,69 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
     setFilteredStartups(filtered);
   }, [activeCategory, startups]);
 
+  // Handle vote click
   const handleVote = async (e: React.MouseEvent, startupId: string, isUpvote: boolean) => {
     e.preventDefault();
     e.stopPropagation();
     
+    // Ensure we're authenticated
     if (!user) {
       toast.error("Vous devez être connecté pour voter");
       return;
     }
     
-    try {
-      // Fix: Make sure the startup exists in the state before accessing it
-      if (!startupVotes[startupId]) {
-        setStartupVotes(prev => ({
-          ...prev,
-          [startupId]: { upvoted: false, downvoted: false, count: 0 }
-        }));
-        return;
-      }
-      
-      setStartupVotes(prev => {
-        const newState = { ...prev };
-        const currentVoteState = prev[startupId];
-        
-        // Skip if the state for this startup doesn't exist yet
-        if (!currentVoteState) return prev;
-        
-        const alreadyVotedSameWay = isUpvote ? currentVoteState.upvoted : currentVoteState.downvoted;
-        
-        if (alreadyVotedSameWay) {
-          newState[startupId] = {
-            upvoted: false,
-            downvoted: false,
-            count: isUpvote ? prev[startupId].count - 1 : prev[startupId].count + 1
-          };
-        } else {
-          const wasOppositeVote = isUpvote ? prev[startupId].downvoted : prev[startupId].upvoted;
-          const countDelta = wasOppositeVote ? 2 : 1;
-          
-          newState[startupId] = {
-            upvoted: isUpvote,
-            downvoted: !isUpvote,
-            count: isUpvote 
-              ? prev[startupId].count + countDelta 
-              : prev[startupId].count - countDelta
-          };
-        }
-        
-        return newState;
-      });
-      
-      const response = isUpvote
-        ? await toggleStartupUpvote(startupId)
-        : await toggleStartupDownvote(startupId);
-        
-      if (!response.success) {
-        throw new Error(response.message);
-      }
-      
+    // Prevent multiple clicks - if this startup is already being processed, ignore the click
+    if (processingVotes[startupId]) {
+      return;
+    }
+    
+    // Initialize vote state for this startup if it doesn't exist
+    if (!startupVotes[startupId]) {
       setStartupVotes(prev => ({
         ...prev,
-        [startupId]: {
-          upvoted: response.upvoted,
-          downvoted: !response.upvoted,
-          count: response.newCount
-        }
+        [startupId]: { upvoted: false, downvoted: false, count: 0 }
       }));
+    }
+    
+    // Set the processing flag
+    setProcessingVotes(prev => ({
+      ...prev,
+      [startupId]: true
+    }));
+    
+    try {
+      // Call the vote service
+      const response = isUpvote 
+        ? await toggleStartupUpvote(startupId)
+        : await toggleStartupDownvote(startupId);
       
-      toast.success(response.message);
-      
+      if (response.success) {
+        // Update the vote state with the result from the server
+        setStartupVotes(prev => ({
+          ...prev,
+          [startupId]: {
+            upvoted: response.upvoted,
+            downvoted: !response.upvoted && response.message !== "Vote retiré", // Only set downvoted if it wasn't a removal
+            count: response.newCount
+          }
+        }));
+        
+        // Optional feedback
+        toast.success(response.message);
+      } else {
+        toast.error(response.message || "Erreur lors du vote");
+      }
     } catch (error) {
       console.error('Error toggling vote:', error);
-      toast.error("Erreur lors du vote");
-      
-      const refreshStartupVotes = async () => {
-        try {
-          const { data: startupData } = await supabase
-            .from('startups')
-            .select('id, upvotes_count')
-            .eq('id', startupId)
-            .single();
-          
-          if (startupData) {
-            setStartupVotes(prev => ({
-              ...prev,
-              [startupId]: {
-                ...prev[startupId],
-                count: startupData.upvotes_count || 0
-              }
-            }));
-          }
-          
-          if (user) {
-            const { data: userVote } = await supabase
-              .from('startup_votes')
-              .select('is_upvote')
-              .eq('startup_id', startupId)
-              .eq('user_id', user.id)
-              .single();
-              
-            if (userVote) {
-              setStartupVotes(prev => ({
-                ...prev,
-                [startupId]: {
-                  upvoted: userVote.is_upvote,
-                  downvoted: !userVote.is_upvote,
-                  count: prev[startupId]?.count || 0
-                }
-              }));
-            } else {
-              setStartupVotes(prev => ({
-                ...prev,
-                [startupId]: {
-                  upvoted: false,
-                  downvoted: false,
-                  count: prev[startupId]?.count || 0
-                }
-              }));
-            }
-          }
-        } catch (error) {
-          console.error('Error refreshing vote state:', error);
-        }
-      };
-      
-      refreshStartupVotes();
+      toast.error("Une erreur s'est produite lors du vote");
+    } finally {
+      // Clear the processing flag after a minimum of 1 second to prevent double-clicks
+      setTimeout(() => {
+        setProcessingVotes(prev => ({
+          ...prev,
+          [startupId]: false
+        }));
+      }, 1000);
     }
   };
 
@@ -438,6 +382,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                     startupVotes[startup.id]?.upvoted ? 'text-startupia-turquoise' : 'text-white/70'
                   }`}
                   onClick={(e) => handleVote(e, startup.id, true)}
+                  disabled={processingVotes[startup.id]}
                 >
                   <ArrowUp className="h-5 w-5" />
                 </Button>
@@ -453,6 +398,7 @@ const DirectoryView = ({ searchQuery, showFilters }: DirectoryViewProps) => {
                     startupVotes[startup.id]?.downvoted ? 'text-startupia-turquoise' : 'text-white/70'
                   }`}
                   onClick={(e) => handleVote(e, startup.id, false)}
+                  disabled={processingVotes[startup.id]}
                 >
                   <ArrowDown className="h-5 w-5" />
                 </Button>

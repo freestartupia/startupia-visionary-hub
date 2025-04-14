@@ -3,6 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { UpvoteResponse } from "@/types/community";
 import { toast } from "sonner";
 
+// Define an interface for the response from our Supabase RPC function
+interface HandleStartupVoteResponse {
+  message: string;
+  is_upvoted: boolean;
+  new_count: number;
+}
+
 /**
  * Toggle a vote on a startup
  * This is a simplified, more reliable implementation
@@ -53,13 +60,16 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
     let isVoteUpvoted = false;
     
     // Begin transaction using a function
-    const { data, error } = await supabase.rpc('handle_startup_vote', {
-      p_startup_id: startupId,
-      p_user_id: userId,
-      p_is_upvote: isUpvote,
-      p_existing_vote_id: existingVote?.id || null,
-      p_was_upvote: existingVote?.is_upvote || null
-    });
+    const { data, error } = await supabase.rpc<HandleStartupVoteResponse>(
+      'handle_startup_vote', 
+      {
+        p_startup_id: startupId,
+        p_user_id: userId,
+        p_is_upvote: isUpvote,
+        p_existing_vote_id: existingVote?.id || null,
+        p_was_upvote: existingVote?.is_upvote || null
+      }
+    );
     
     if (error) {
       console.error("Error in vote transaction:", error);
@@ -69,9 +79,9 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
     // Return the new state based on the transaction result
     return {
       success: true,
-      message: data.message,
-      upvoted: data.is_upvoted,
-      newCount: data.new_count
+      message: data?.message || "Vote mis à jour",
+      upvoted: data?.is_upvoted || false,
+      newCount: data?.new_count || 0
     };
   } catch (error) {
     console.error("Error in toggleStartupVote:", error);

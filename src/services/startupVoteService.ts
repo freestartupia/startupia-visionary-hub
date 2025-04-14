@@ -60,35 +60,30 @@ export const toggleStartupVote = async (startupId: string, isUpvote: boolean): P
     let isVoteUpvoted = false;
     
     // Begin transaction using a function
+    // Note: We need to use a different approach to specify RPC types
     const { data, error } = await supabase
-      .rpc<HandleStartupVoteResponse, {
-        p_startup_id: string;
-        p_user_id: string;
-        p_is_upvote: boolean;
-        p_existing_vote_id: string | null;
-        p_was_upvote: boolean | null;
-      }>(
-        'handle_startup_vote', 
-        {
-          p_startup_id: startupId,
-          p_user_id: userId,
-          p_is_upvote: isUpvote,
-          p_existing_vote_id: existingVote?.id || null,
-          p_was_upvote: existingVote?.is_upvote || null
-        }
-      );
+      .rpc('handle_startup_vote', {
+        p_startup_id: startupId,
+        p_user_id: userId,
+        p_is_upvote: isUpvote,
+        p_existing_vote_id: existingVote?.id || null,
+        p_was_upvote: existingVote?.is_upvote || null
+      });
     
     if (error) {
       console.error("Error in vote transaction:", error);
       throw error;
     }
     
+    // Cast the response to our interface type
+    const typedData = data as HandleStartupVoteResponse;
+    
     // Return the new state based on the transaction result
     return {
       success: true,
-      message: data?.message || "Vote mis à jour",
-      upvoted: data?.is_upvoted || false,
-      newCount: data?.new_count || 0
+      message: typedData?.message || "Vote mis à jour",
+      upvoted: typedData?.is_upvoted || false,
+      newCount: typedData?.new_count || 0
     };
   } catch (error) {
     console.error("Error in toggleStartupVote:", error);

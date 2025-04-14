@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Bell, LogOut, Settings } from 'lucide-react';
+import { User, Bell, LogOut, Settings, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { checkUserHasRole } from '@/services/roleService';
 
 interface UserMenuProps {
   isMobile?: boolean;
@@ -24,13 +25,21 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
   const { user, signOut } = useAuth();
   const [notificationCount, setNotificationCount] = useState(0);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isModerator, setIsModerator] = useState(false);
 
-  // Fetch user profile and notifications count when user is logged in
+  // Check user roles and fetch user profile when user is logged in
   useEffect(() => {
     if (!user) return;
 
     const fetchUserData = async () => {
       try {
+        // Check if user has admin or moderator role
+        const adminRole = await checkUserHasRole('admin');
+        const moderatorRole = await checkUserHasRole('moderator');
+        setIsAdmin(adminRole);
+        setIsModerator(moderatorRole);
+        
         // Fetch user profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
@@ -136,6 +145,20 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
               Mon profil
             </Link>
           </Button>
+          
+          {(isAdmin || isModerator) && (
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-white/80 hover:text-white hover:bg-white/5"
+              asChild
+            >
+              <Link to="/admin">
+                <Shield size={16} className="mr-2" />
+                Administration
+              </Link>
+            </Button>
+          )}
+          
           <Button 
             variant="ghost" 
             className="w-full justify-start text-white/80 hover:text-white hover:bg-white/5"
@@ -216,6 +239,16 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
               )}
             </Link>
           </DropdownMenuItem>
+          
+          {(isAdmin || isModerator) && (
+            <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer">
+              <Link to="/admin" className="flex w-full">
+                <Shield className="mr-2 h-4 w-4" />
+                <span>Administration</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
+          
           <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer">
             <Link to="/profile?tab=settings" className="flex w-full">
               <Settings className="mr-2 h-4 w-4" />

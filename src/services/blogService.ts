@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { BlogPost, BlogCategory } from '@/types/blog';
+import { checkUserHasRole } from './roleService';
 
 // Map database response to BlogPost type
 const mapDbPostToBlogPost = (dbPost: any): BlogPost => {
@@ -178,6 +179,15 @@ export const getAllBlogCategories = async (): Promise<BlogCategory[]> => {
 
 export const getBlogPostsByStatus = async (status: 'pending' | 'published' | 'rejected'): Promise<BlogPost[]> => {
   try {
+    // Check if user has admin or moderator role
+    const isAdmin = await checkUserHasRole('admin');
+    const isModerator = await checkUserHasRole('moderator');
+    
+    if (!isAdmin && !isModerator) {
+      console.error('Unauthorized access to moderation functions');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from('blog_posts')
       .select('*')
@@ -211,10 +221,11 @@ export const updateBlogPostStatus = async (
       };
     }
 
-    // TODO: Implement an admin role check
-    const isAdmin = userData.user.email === 'skyzohd22@gmail.com'; // Hardcoded admin email for now
+    // Check if user has admin or moderator role
+    const isAdmin = await checkUserHasRole('admin');
+    const isModerator = await checkUserHasRole('moderator');
     
-    if (!isAdmin) {
+    if (!isAdmin && !isModerator) {
       return { 
         success: false, 
         error: 'Vous n\'avez pas les permissions pour modérer des articles' 

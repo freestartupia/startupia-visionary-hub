@@ -10,7 +10,7 @@ export const fetchProductById = async (id: string): Promise<ProductLaunch | null
   try {
     const { data, error } = await supabase
       .from('product_launches')
-      .select('*, comments(*)')
+      .select('*, product_comments(*)')
       .eq('id', id)
       .single();
     
@@ -19,7 +19,29 @@ export const fetchProductById = async (id: string): Promise<ProductLaunch | null
       return null;
     }
     
-    return data;
+    if (!data) return null;
+    
+    // Map database fields to ProductLaunch interface
+    return {
+      id: data.id,
+      name: data.name,
+      logoUrl: data.logo_url,
+      tagline: data.tagline,
+      description: data.description,
+      launchDate: data.launch_date,
+      createdBy: data.created_by,
+      creatorAvatarUrl: data.creator_avatar_url,
+      websiteUrl: data.website_url,
+      demoUrl: data.demo_url,
+      category: data.category,
+      upvotes: data.upvotes || 0,
+      comments: data.product_comments || [],
+      status: data.status,
+      mediaUrls: data.media_urls,
+      betaSignupUrl: data.beta_signup_url,
+      startupId: data.startup_id,
+      featuredOrder: data.featured_order
+    };
   } catch (error) {
     console.error('Error in fetchProductById:', error);
     return null;
@@ -34,14 +56,34 @@ export const fetchAllProducts = async (): Promise<ProductLaunch[]> => {
     const { data, error } = await supabase
       .from('product_launches')
       .select('*')
-      .order('launchDate', { ascending: false });
+      .order('launch_date', { ascending: false });
     
     if (error) {
       console.error('Error fetching all products:', error);
       return [];
     }
     
-    return data || [];
+    // Map database fields to ProductLaunch interface
+    return (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      logoUrl: item.logo_url,
+      tagline: item.tagline,
+      description: item.description,
+      launchDate: item.launch_date,
+      createdBy: item.created_by,
+      creatorAvatarUrl: item.creator_avatar_url,
+      websiteUrl: item.website_url,
+      demoUrl: item.demo_url,
+      category: item.category,
+      upvotes: item.upvotes || 0,
+      comments: [],
+      status: item.status,
+      mediaUrls: item.media_urls,
+      betaSignupUrl: item.beta_signup_url,
+      startupId: item.startup_id,
+      featuredOrder: item.featured_order
+    }));
   } catch (error) {
     console.error('Error in fetchAllProducts:', error);
     return [];
@@ -58,20 +100,17 @@ export const addComment = async (
 ): Promise<boolean> => {
   try {
     const commentId = uuidv4();
-    const comment: Partial<ProductComment> = {
-      id: commentId,
-      userId: 'anonymous', // Utilisateur anonyme pour l'instant
-      userName,
-      content,
-      createdAt: new Date().toISOString(),
-      likes: 0
-    };
     
     const { error } = await supabase
       .from('product_comments')
       .insert([{
-        ...comment,
-        product_id: productId
+        id: commentId,
+        product_id: productId,
+        user_id: 'anonymous', // Utilisateur anonyme pour l'instant
+        user_name: userName,
+        content: content,
+        created_at: new Date().toISOString(),
+        likes: 0
       }]);
     
     if (error) {
@@ -91,22 +130,48 @@ export const addComment = async (
  */
 export const upvoteProduct = async (productId: string): Promise<boolean> => {
   try {
+    // First try using RPC if it exists
+    try {
+      const { error } = await supabase
+        .rpc('increment_product_upvotes', { product_id: productId });
+      
+      if (!error) {
+        return true;
+      }
+    } catch (rpcError) {
+      console.log('RPC not available, using fallback', rpcError);
+    }
+    
+    // Fallback if the RPC function doesn't exist
     const { error } = await supabase
-      .rpc('increment_product_upvotes', { product_id: productId });
+      .from('product_launches')
+      .update({ upvotes: supabase.rpc('increment').single() })
+      .eq('id', productId);
     
     if (error) {
       console.error('Error upvoting product:', error);
       
-      // Fallback si la fonction RPC n'existe pas
-      const { error: updateError } = await supabase
+      // Second fallback - get current value and increment it
+      const { data: currentProduct } = await supabase
         .from('product_launches')
-        .update({ upvotes: supabase.sql`upvotes + 1` })
-        .eq('id', productId);
+        .select('upvotes')
+        .eq('id', productId)
+        .single();
       
-      if (updateError) {
-        console.error('Error in fallback upvote:', updateError);
-        return false;
+      if (currentProduct) {
+        const newCount = (currentProduct.upvotes || 0) + 1;
+        const { error: updateError } = await supabase
+          .from('product_launches')
+          .update({ upvotes: newCount })
+          .eq('id', productId);
+        
+        if (updateError) {
+          console.error('Error in second fallback upvote:', updateError);
+          return false;
+        }
+        return true;
       }
+      return false;
     }
     
     return true;
@@ -122,13 +187,28 @@ export const upvoteProduct = async (productId: string): Promise<boolean> => {
 export const createProduct = async (product: Partial<ProductLaunch>): Promise<string | null> => {
   try {
     const productId = product.id || uuidv4();
+    
+    // Map the ProductLaunch interface to database fields
     const { error } = await supabase
       .from('product_launches')
       .insert([{
-        ...product,
         id: productId,
+        name: product.name,
+        logo_url: product.logoUrl,
+        tagline: product.tagline,
+        description: product.description,
+        launch_date: product.launchDate,
+        created_by: product.createdBy,
+        creator_avatar_url: product.creatorAvatarUrl,
+        website_url: product.websiteUrl,
+        demo_url: product.demoUrl,
+        category: product.category || [],
         upvotes: 0,
-        comments: []
+        status: product.status,
+        media_urls: product.mediaUrls,
+        beta_signup_url: product.betaSignupUrl,
+        startup_id: product.startupId,
+        featured_order: product.featuredOrder
       }]);
     
     if (error) {
@@ -161,14 +241,34 @@ export const searchProducts = async (
       searchQuery = searchQuery.contains('category', [category]);
     }
     
-    const { data, error } = await searchQuery.order('launchDate', { ascending: false });
+    const { data, error } = await searchQuery.order('launch_date', { ascending: false });
     
     if (error) {
       console.error('Error searching products:', error);
       return [];
     }
     
-    return data || [];
+    // Map database fields to ProductLaunch interface
+    return (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      logoUrl: item.logo_url,
+      tagline: item.tagline,
+      description: item.description,
+      launchDate: item.launch_date,
+      createdBy: item.created_by,
+      creatorAvatarUrl: item.creator_avatar_url,
+      websiteUrl: item.website_url,
+      demoUrl: item.demo_url,
+      category: item.category,
+      upvotes: item.upvotes || 0,
+      comments: [],
+      status: item.status,
+      mediaUrls: item.media_urls,
+      betaSignupUrl: item.beta_signup_url,
+      startupId: item.startup_id,
+      featuredOrder: item.featured_order
+    }));
   } catch (error) {
     console.error('Error in searchProducts:', error);
     return [];

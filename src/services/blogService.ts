@@ -34,6 +34,11 @@ export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
       
     if (error) {
       console.error('Erreur lors de la récupération des articles:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de récupérer les articles",
+        variant: "destructive",
+      });
       return [];
     }
     
@@ -66,6 +71,7 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
 
 export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
+    // Vérification simple de l'utilisateur, sans dépendre de la table user_roles
     const { data: userData } = await supabase.auth.getUser();
     
     if (!userData.user) {
@@ -77,6 +83,7 @@ export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost 
       return null;
     }
 
+    // Création des données de l'article, simplifiée
     const postData = {
       title: post.title,
       slug: post.slug || post.title?.toLowerCase().replace(/\s+/g, '-'),
@@ -91,9 +98,10 @@ export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost 
       tags: post.tags || [],
       featured: false,
       reading_time: post.readingTime || '1 min',
-      status: post.status || 'draft'
+      status: post.status || 'published' // Changé de 'draft' à 'published' par défaut
     };
 
+    // Insertion simplifiée
     const { data, error } = await supabase
       .from('blog_posts')
       .insert(postData)
@@ -129,6 +137,7 @@ export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost 
 
 export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
+    // Vérification simple de l'utilisateur
     const { data: userData } = await supabase.auth.getUser();
     
     if (!userData.user) {

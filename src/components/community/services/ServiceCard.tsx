@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Calendar, Linkedin, Mail, Instagram, ExternalLink } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
@@ -71,14 +72,6 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     console.log("Contact clicked for service:", service.title);
   };
 
-  const getProviderAvatar = () => {
-    return service.providerAvatar || undefined;
-  };
-
-  const getProviderInitials = () => {
-    return getInitials(service.providerName || 'U');
-  };
-
   return (
     <Card key={service.id} className="glass-card hover-scale transition-transform duration-300 flex flex-col h-full">
       <CardHeader>
@@ -107,12 +100,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
             <AvatarImage 
-              src={getProviderAvatar()} 
-              alt={service.providerName || 'Prestataire'} 
+              src={service.providerAvatar} 
+              alt={service.providerName || ''} 
             />
-            <AvatarFallback>{getProviderInitials()}</AvatarFallback>
+            <AvatarFallback>{service.providerName ? getInitials(service.providerName) : 'U'}</AvatarFallback>
           </Avatar>
-          <span className="font-medium">{service.providerName || 'Utilisateur'}</span>
+          <span className="font-medium">{service.providerName}</span>
         </div>
         <div className="flex gap-2 w-full">
           {service.linkedinUrl && (

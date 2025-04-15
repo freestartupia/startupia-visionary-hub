@@ -75,6 +75,28 @@ export const fetchServices = async (): Promise<ServiceListing[]> => {
 
 export const addService = async (service: ServiceListing): Promise<ServiceListing | null> => {
   try {
+    // Ensure profile data is included
+    if (service.providerId) {
+      // Fetch profile data from the profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, avatar_url')
+        .eq('id', service.providerId)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching profile data:', profileError);
+      } else if (profileData) {
+        // Set provider name and avatar from profile
+        const fullName = [profileData.first_name, profileData.last_name]
+          .filter(Boolean)
+          .join(' ');
+          
+        service.providerName = fullName || service.providerName;
+        service.providerAvatar = profileData.avatar_url || service.providerAvatar;
+      }
+    }
+    
     const dbService = mapServiceListingToDb(service);
     
     const { data, error } = await supabase

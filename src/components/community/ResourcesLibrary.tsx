@@ -1,14 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ResourceFormat, ResourceListing } from '@/types/community';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockResources } from '@/data/mockCommunityData';
-import ResourceFilters from './resource/ResourceFilters';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { mockResourceListings } from '@/data/mockCommunityData';
 import ResourceCard from './resource/ResourceCard';
-import LoadingState from './resource/LoadingState';
-import ErrorState from './resource/ErrorState';
+import ResourceFilters from './resource/ResourceFilters';
 import EmptyResourcesState from './resource/EmptyResourcesState';
 import ShareResourceModal from './resource/ShareResourceModal';
 import { fetchResources } from '@/services/resourceListingService';
@@ -18,75 +17,63 @@ interface ResourcesLibraryProps {
 }
 
 const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false }) => {
+  const [resources, setResources] = useState<ResourceListing[]>([]);
   const [selectedFormat, setSelectedFormat] = useState<ResourceFormat | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [resources, setResources] = useState<ResourceListing[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPaidOnly, setIsPaidOnly] = useState<boolean | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const formats: (ResourceFormat | 'all')[] = [
-    'all', 'Vidéo', 'Article', 'E-book', 'Webinaire', 
-    'Bootcamp', 'Cours', 'Podcast', 'Autre'
+    'all', 'Vidéo', 'Article', 'E-book', 'Webinaire', 'Bootcamp', 'Cours', 'Podcast', 'Autre'
   ];
   
   useEffect(() => {
     const loadResources = async () => {
-      setIsLoading(true);
       try {
-        // Try to fetch from Supabase first
+        setIsLoading(true);
+        // Try to fetch from API first
         const resourceData = await fetchResources();
         
         if (resourceData.length > 0) {
           setResources(resourceData);
         } else {
-          // Fallback to mock data if no resources found
-          setResources(mockResources);
+          console.log("No resources found in the database, using mock data");
+          setResources(mockResourceListings);
         }
       } catch (error) {
         console.error("Error loading resources:", error);
-        // Fallback to mock data on error
-        setResources(mockResources);
+        // Fallback to mock data
+        setResources(mockResourceListings);
       } finally {
-        setIsLoading(false);
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
       }
     };
 
-    const timer = setTimeout(() => {
-      loadResources();
-    }, 1000);
-    
-    return () => clearTimeout(timer);
+    loadResources();
   }, []);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
   
-  // Filtrer les ressources en fonction du format sélectionné et du terme de recherche
-  const filteredResources = resources.filter(resource => {
-    const matchesFormat = selectedFormat === 'all' || resource.format === selectedFormat;
-    const matchesSearch = searchTerm === '' || 
+  const filteredResources = resources
+    .filter(resource => selectedFormat === 'all' || resource.format === selectedFormat)
+    .filter(resource => 
+      (isPaidOnly === null) || 
+      (isPaidOnly === true && resource.is_paid) || 
+      (isPaidOnly === false && !resource.is_paid)
+    )
+    .filter(resource => 
+      searchTerm === '' || 
       resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      resource.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesFormat && matchesSearch;
-  });
-  
-  const getInitials = (name: string | null): string => {
-    if (!name) return "??"; // Protection contre les noms null ou undefined
-    
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase();
-  };
-  
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short'
-    });
-  };
+      resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      resource.target_audience.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   const handleShareResource = () => {
     if (requireAuth && !user) {
@@ -98,51 +85,70 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
     setIsModalOpen(true);
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
   const handleResourceSuccess = (newResource: ResourceListing) => {
-    // In a real application, we would refresh the data from Supabase
-    // For now, we'll just add the new resource to our local state
     setResources([newResource, ...resources]);
+    toast.success("Votre ressource a été ajoutée avec succès!");
   };
 
+  const handleResourceDeleted = (resourceId: string) => {
+    // Remove the deleted resource from our local state
+    setResources(resources.filter(resource => resource.id !== resourceId));
+  };
+
+  // Loading state
   if (isLoading) {
-    return <LoadingState />;
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row gap-4 justify-between">
+          <Skeleton className="h-10 w-full md:w-1/2" />
+          <Skeleton className="h-10 w-full md:w-48" />
+        </div>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-8 w-24" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} className="h-64 w-full" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <ResourceFilters
+      <ResourceFilters 
         searchTerm={searchTerm}
         handleSearch={handleSearch}
-        handleShareResource={handleShareResource}
         selectedFormat={selectedFormat}
         setSelectedFormat={setSelectedFormat}
+        handleShareResource={handleShareResource}
         formats={formats}
+        isPaidOnly={isPaidOnly}
+        setIsPaidOnly={setIsPaidOnly}
       />
       
-      {filteredResources.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredResources.map((resource) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredResources.length > 0 ? (
+          filteredResources.map((resource) => (
             <ResourceCard 
               key={resource.id} 
-              resource={resource} 
-              getInitials={getInitials} 
-              formatDate={formatDate} 
+              resource={resource}
+              onDelete={handleResourceDeleted} 
             />
-          ))}
-        </div>
-      ) : (
-        <EmptyResourcesState handleShareResource={handleShareResource} />
-      )}
-      
-      <ShareResourceModal
+          ))
+        ) : (
+          <EmptyResourcesState handleShareResource={handleShareResource} />
+        )}
+      </div>
+
+      <ShareResourceModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleResourceSuccess}
-        formats={formats}
+        formats={formats.filter(f => f !== 'all') as ResourceFormat[]}
       />
     </div>
   );

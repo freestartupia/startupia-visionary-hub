@@ -1,73 +1,136 @@
 
 import React from 'react';
-import { ExternalLink, ThumbsUp, Users } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { ExternalLink, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ResourceListing } from '@/types/community';
+import { formatDate } from '@/components/community/forum/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { deleteResource } from '@/services/resourceListingService';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ResourceCardProps {
   resource: ResourceListing;
-  getInitials: (name: string | null) => string;
-  formatDate: (dateString: string) => string;
+  onDelete?: (resourceId: string) => void;
 }
 
-const ResourceCard: React.FC<ResourceCardProps> = ({ 
-  resource, 
-  getInitials,
-  formatDate 
-}) => {
+const ResourceCard: React.FC<ResourceCardProps> = ({ resource, onDelete }) => {
+  const { user } = useAuth();
+  const isOwner = user && resource.author_id === user.id;
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
+  
+  const handleDeleteResource = async () => {
+    if (!isOwner) {
+      toast.error("Vous n'êtes pas autorisé à supprimer cette ressource");
+      return;
+    }
+    
+    try {
+      const success = await deleteResource(resource.id);
+      
+      if (success) {
+        toast.success("Ressource supprimée avec succès");
+        if (onDelete) {
+          onDelete(resource.id);
+        }
+      } else {
+        throw new Error("Échec de la suppression");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression de la ressource:", error);
+      toast.error("Erreur lors de la suppression de la ressource");
+    }
+  };
+
   return (
     <Card className="glass-card hover-scale transition-transform duration-300 flex flex-col h-full">
       <CardHeader>
         <div className="flex justify-between items-start mb-2">
           <Badge>{resource.format}</Badge>
-          <div className="flex items-center space-x-2">
-            {resource.is_paid ? (
-              <Badge variant="outline" className="text-yellow-300 border-yellow-300">
-                {resource.price}
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-green-400 border-green-400">
-                Gratuit
-              </Badge>
-            )}
-            {resource.community_validated && (
-              <Badge variant="secondary" className="flex items-center">
-                <Users className="h-3 w-3 mr-1" />
-                Validé
-              </Badge>
-            )}
-          </div>
+          <span className="text-sm text-white/60">
+            {formatDate(resource.created_at)}
+          </span>
         </div>
-        <h3 className="text-xl font-semibold">{resource.title}</h3>
+        <div className="flex justify-between items-start">
+          <h3 className="text-xl font-semibold">{resource.title}</h3>
+          {isOwner && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-white/60 hover:text-red-500 hover:bg-red-500/10">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action ne peut pas être annulée. La ressource sera définitivement supprimée.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteResource} className="bg-red-500 hover:bg-red-600">
+                    Supprimer
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="flex-grow">
         <p className="text-white/80 mb-4">{resource.description}</p>
         <div className="text-white/80">
-          <strong>Public cible:</strong> {resource.target_audience}
+          <strong>Pour:</strong> {resource.target_audience}
+        </div>
+        <div className="text-white/80 mt-2">
+          <strong>Prix:</strong> {resource.is_paid ? resource.price || 'Payant' : 'Gratuit'}
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4 border-t border-white/10 pt-4">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={resource.author_avatar || undefined} alt={resource.author_name} />
-              <AvatarFallback>{getInitials(resource.author_name)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <span className="text-sm font-medium">{resource.author_name}</span>
-              <p className="text-xs text-white/60">{formatDate(resource.created_at)}</p>
-            </div>
-          </div>
-          <div className="flex items-center">
-            <ThumbsUp className="h-4 w-4 mr-1 text-white/60" />
-            <span className="text-sm text-white/60">{resource.votes || 0}</span>
-          </div>
+        <div className="flex items-center space-x-3">
+          <Avatar className="h-10 w-10">
+            {resource.author_avatar ? (
+              <AvatarImage 
+                src={resource.author_avatar} 
+                alt={resource.author_name || 'Auteur'} 
+              />
+            ) : (
+              <AvatarFallback>
+                {resource.author_name ? getInitials(resource.author_name) : 'U'}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <span className="font-medium">
+            {resource.author_name || 'Utilisateur'}
+          </span>
         </div>
         <Button className="w-full" asChild>
-          <a href={resource.access_link} target="_blank" rel="noopener noreferrer">
+          <a 
+            href={resource.access_link} 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
             <ExternalLink className="h-4 w-4 mr-2" />
             Accéder à la ressource
           </a>

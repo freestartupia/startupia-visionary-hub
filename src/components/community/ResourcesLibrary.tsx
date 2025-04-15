@@ -5,7 +5,6 @@ import { ResourceFormat, ResourceListing } from '@/types/community';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { mockResourceListings } from '@/data/mockCommunityData';
 import ResourceCard from './resource/ResourceCard';
 import ResourceFilters from './resource/ResourceFilters';
 import EmptyResourcesState from './resource/EmptyResourcesState';
@@ -34,19 +33,18 @@ const ResourcesLibrary: React.FC<ResourcesLibraryProps> = ({ requireAuth = false
     const loadResources = async () => {
       try {
         setIsLoading(true);
-        // Try to fetch from API first
+        // Try to fetch from API
         const resourceData = await fetchResources();
         
         if (resourceData.length > 0) {
           setResources(resourceData);
         } else {
-          console.log("No resources found in the database, using mock data");
-          setResources(mockResourceListings);
+          console.log("No resources found in the database");
+          setResources([]);
         }
       } catch (error) {
         console.error("Error loading resources:", error);
-        // Fallback to mock data
-        setResources(mockResourceListings);
+        setResources([]);
       } finally {
         setTimeout(() => {
           setIsLoading(false);

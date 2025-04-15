@@ -44,29 +44,31 @@ export const useNotifications = () => {
     
     console.log('Configuration du canal de notification pour:', user.id);
     
-    // Subscribe to changes on the notifications table
+    // Subscribe to changes on the notifications table for this user
     const channel = supabase
       .channel('notifications-changes')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'notifications',
           filter: `recipient_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('Nouvelle notification reçue:', payload);
+          console.log('Changement de notification détecté:', payload);
           // Update notifications
           loadNotifications();
           
-          // Show toast notification
-          const newNotification = payload.new as Notification;
-          toast({
-            title: 'Nouvelle notification',
-            description: `${newNotification.sender_name || 'Quelqu\'un'} ${newNotification.content || 'a interagi avec votre contenu'}`,
-            position: 'top-right'
-          });
+          // Show toast notification for new notifications
+          if (payload.eventType === 'INSERT') {
+            const newNotification = payload.new as Notification;
+            toast({
+              title: 'Nouvelle notification',
+              description: `${newNotification.sender_name || 'Quelqu\'un'} ${newNotification.content || 'a interagi avec votre contenu'}`,
+              position: 'top-right'
+            });
+          }
         }
       )
       .subscribe((status) => {
@@ -101,6 +103,7 @@ export const useNotifications = () => {
         prev.map(notification => ({ ...notification, is_read: true }))
       );
       setUnreadCount(0);
+      console.log('Toutes les notifications ont été marquées comme lues');
     }
     return success;
   }, []);

@@ -103,20 +103,35 @@ export const markAllNotificationsAsRead = async (): Promise<boolean> => {
       return false;
     }
     
-    const { error } = await supabase
+    // Notifier l'utilisateur que le processus a commencé
+    toast.loading('Marquage des notifications comme lues...', { id: 'mark-all-read' });
+    
+    const { error, data } = await supabase
       .from('notifications')
       .update({ is_read: true })
       .eq('recipient_id', user.id)
-      .eq('is_read', false);
+      .eq('is_read', false)
+      .select('id');
       
     if (error) {
       console.error('Error marking all notifications as read:', error);
+      toast.error('Erreur lors du marquage des notifications', { id: 'mark-all-read' });
       return false;
+    }
+    
+    // Vérifier que la mise à jour s'est correctement effectuée
+    const updatedCount = data?.length || 0;
+    
+    if (updatedCount > 0) {
+      toast.success(`${updatedCount} notification${updatedCount > 1 ? 's' : ''} marquée${updatedCount > 1 ? 's' : ''} comme lue${updatedCount > 1 ? 's' : ''}`, { id: 'mark-all-read' });
+    } else {
+      toast.success('Aucune nouvelle notification à marquer', { id: 'mark-all-read' });
     }
     
     return true;
   } catch (error) {
     console.error('Error in markAllNotificationsAsRead:', error);
+    toast.error('Erreur lors du marquage des notifications', { id: 'mark-all-read' });
     return false;
   }
 };

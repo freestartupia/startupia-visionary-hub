@@ -43,6 +43,16 @@ const NotificationsDropdown = () => {
     }
   };
 
+  const handleMarkAllAsRead = async () => {
+    console.log('Marquage de toutes les notifications comme lues');
+    const success = await markAllAsRead();
+    if (success) {
+      console.log('Toutes les notifications ont été marquées comme lues avec succès');
+    } else {
+      console.error('Erreur lors du marquage des notifications comme lues');
+    }
+  };
+
   const handleNotificationClick = async (notification: Notification) => {
     console.log('Notification cliquée:', notification);
     
@@ -89,11 +99,11 @@ const NotificationsDropdown = () => {
       >
         <div className="flex justify-between items-center p-4 border-b border-white/10">
           <h3 className="font-semibold">Notifications</h3>
-          {unreadCount > 0 && (
+          {notifications.length > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={markAllAsRead}
+              onClick={handleMarkAllAsRead}
               className="text-xs"
             >
               <Check className="h-3 w-3 mr-1" />

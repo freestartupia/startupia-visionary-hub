@@ -1,198 +1,139 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { LikeResponse } from "@/types/community";
 import { toast } from "sonner";
+import type { LikeResponse } from "@/types/community";
 
-// Function to check if a user is authenticated
-export const checkAuthentication = async (): Promise<string | null> => {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+// Function to check if the user is authenticated
+export const checkAuthentication = async (): Promise<string | false> => {
+  const { data: { user } } = await supabase.auth.getUser();
   
-  if (userError || !userData.user) {
-    return null;
+  if (!user) {
+    return false;
   }
   
-  return userData.user.id;
+  return user.id;
 };
 
-// Specific function for checking if a user has liked a post
-export const getLikeStatus = async (
-  contentId: string, 
-  userId: string
-): Promise<boolean> => {
-  const { data, error } = await supabase
-    .from('forum_post_likes')
-    .select('id')
-    .eq('post_id', contentId)
-    .eq('user_id', userId)
-    .single();
-    
-  return !!data && !error;
-};
-
-// Specific function for toggling post likes
+// Generic function to handle post likes
 export const likePost = async (postId: string): Promise<LikeResponse> => {
   const userId = await checkAuthentication();
   
   if (!userId) {
-    throw new Error('User not authenticated');
+    throw new Error("Vous devez être connecté pour effectuer cette action");
   }
   
-  // Check if the user has already liked the post
-  const { data, error } = await supabase
-    .from('forum_post_likes')
-    .select('id')
-    .eq('post_id', postId)
-    .eq('user_id', userId)
-    .single();
-  
-  let isLiked = false;
-  
-  // Get current like count
-  const { data: postData, error: postError } = await supabase
-    .from('forum_posts')
-    .select('likes')
-    .eq('id', postId)
-    .single();
-    
-  if (postError) {
-    throw postError;
-  }
-  
-  const currentLikes = postData?.likes || 0;
-  
-  if (data && !error) {
-    // If the user has already liked the post, remove the like
-    const { error: deleteError } = await supabase
+  try {
+    // Check if the user has already liked this post
+    const { data: existingLike } = await supabase
       .from('forum_post_likes')
-      .delete()
-      .eq('id', data.id);
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+    
+    let liked = false;
+    let newCount = 0;
+    
+    if (existingLike) {
+      // Unlike the post
+      await supabase
+        .from('forum_post_likes')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', userId);
       
-    if (deleteError) {
-      throw deleteError;
+      // Decrement the likes count
+      const { data: updatedPost } = await supabase.rpc('decrement_post_likes', { post_id: postId });
+      newCount = updatedPost?.likes || 0;
+      
+      liked = false;
+    } else {
+      // Like the post
+      await supabase
+        .from('forum_post_likes')
+        .insert({
+          post_id: postId,
+          user_id: userId
+        });
+      
+      // Increment the likes count
+      const { data: updatedPost } = await supabase.rpc('increment_post_likes', { post_id: postId });
+      newCount = updatedPost?.likes || 0;
+      
+      liked = true;
     }
     
-    // Decrement the like count
-    const { error: updateError } = await supabase
-      .from('forum_posts')
-      .update({ likes: Math.max(0, currentLikes - 1) })
-      .eq('id', postId);
-      
-    if (updateError) {
-      throw updateError;
-    }
-    
-    isLiked = false;
-  } else {
-    // If the user hasn't liked the post, add a like
-    const { error: insertError } = await supabase
-      .from('forum_post_likes')
-      .insert({ post_id: postId, user_id: userId });
-      
-    if (insertError) {
-      throw insertError;
-    }
-    
-    // Increment the like count
-    const { error: updateError } = await supabase
-      .from('forum_posts')
-      .update({ likes: currentLikes + 1 })
-      .eq('id', postId);
-      
-    if (updateError) {
-      throw updateError;
-    }
-    
-    isLiked = true;
+    return {
+      success: true,
+      message: liked ? "Post liké avec succès" : "Like retiré avec succès",
+      liked,
+      newCount
+    };
+  } catch (error) {
+    console.error("Error in likePost:", error);
+    toast.error("Une erreur est survenue lors du like");
+    throw error;
   }
-  
-  return {
-    success: true,
-    message: isLiked ? "Post aimé" : "J'aime retiré",
-    liked: isLiked,
-    newCount: isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1)
-  };
 };
 
-// Specific function for toggling reply likes
+// Generic function to handle reply likes
 export const likeReply = async (replyId: string): Promise<LikeResponse> => {
   const userId = await checkAuthentication();
   
   if (!userId) {
-    throw new Error('User not authenticated');
+    throw new Error("Vous devez être connecté pour effectuer cette action");
   }
   
-  // Check if the user has already liked the reply
-  const { data, error } = await supabase
-    .from('forum_reply_likes')
-    .select('id')
-    .eq('reply_id', replyId)
-    .eq('user_id', userId)
-    .single();
-  
-  let isLiked = false;
-  
-  // Get current like count
-  const { data: replyData, error: replyError } = await supabase
-    .from('forum_replies')
-    .select('likes')
-    .eq('id', replyId)
-    .single();
-    
-  if (replyError) {
-    throw replyError;
-  }
-  
-  const currentLikes = replyData?.likes || 0;
-  
-  if (data && !error) {
-    // If the user has already liked the reply, remove the like
-    const { error: deleteError } = await supabase
+  try {
+    // Check if the user has already liked this reply
+    const { data: existingLike } = await supabase
       .from('forum_reply_likes')
-      .delete()
-      .eq('id', data.id);
+      .select('id')
+      .eq('reply_id', replyId)
+      .eq('user_id', userId)
+      .single();
+    
+    let liked = false;
+    let newCount = 0;
+    
+    if (existingLike) {
+      // Unlike the reply
+      await supabase
+        .from('forum_reply_likes')
+        .delete()
+        .eq('reply_id', replyId)
+        .eq('user_id', userId);
       
-    if (deleteError) {
-      throw deleteError;
+      // Decrement the likes count
+      const { data: updatedReply } = await supabase.rpc('decrement_reply_likes', { reply_id: replyId });
+      newCount = updatedReply?.likes || 0;
+      
+      liked = false;
+    } else {
+      // Like the reply
+      await supabase
+        .from('forum_reply_likes')
+        .insert({
+          reply_id: replyId,
+          user_id: userId
+        });
+      
+      // Increment the likes count
+      const { data: updatedReply } = await supabase.rpc('increment_reply_likes', { reply_id: replyId });
+      newCount = updatedReply?.likes || 0;
+      
+      liked = true;
     }
     
-    // Decrement the like count
-    const { error: updateError } = await supabase
-      .from('forum_replies')
-      .update({ likes: Math.max(0, currentLikes - 1) })
-      .eq('id', replyId);
-      
-    if (updateError) {
-      throw updateError;
-    }
-    
-    isLiked = false;
-  } else {
-    // If the user hasn't liked the reply, add a like
-    const { error: insertError } = await supabase
-      .from('forum_reply_likes')
-      .insert({ reply_id: replyId, user_id: userId });
-      
-    if (insertError) {
-      throw insertError;
-    }
-    
-    // Increment the like count
-    const { error: updateError } = await supabase
-      .from('forum_replies')
-      .update({ likes: currentLikes + 1 })
-      .eq('id', replyId);
-      
-    if (updateError) {
-      throw updateError;
-    }
-    
-    isLiked = true;
+    return {
+      success: true,
+      message: liked ? "Réponse likée avec succès" : "Like retiré avec succès",
+      liked,
+      newCount
+    };
+  } catch (error) {
+    console.error("Error in likeReply:", error);
+    toast.error("Une erreur est survenue lors du like");
+    throw error;
   }
-  
-  return {
-    success: true,
-    message: isLiked ? "Réponse aimée" : "J'aime retiré",
-    liked: isLiked,
-    newCount: isLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1)
-  };
 };

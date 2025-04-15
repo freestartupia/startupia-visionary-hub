@@ -9,12 +9,14 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ForumReply } from '@/types/community';
+import { mapReplyFromDB } from '@/utils/forumMappers';
 
 interface ReplyFormProps {
   postId: string;
   user: User | null;
   replyingTo: string | null;
-  onReplyAdded: () => void;
+  onReplyAdded: (newReply?: ForumReply) => void;
   onCancelReply: () => void;
 }
 
@@ -91,6 +93,28 @@ const ReplyForm: React.FC<ReplyFormProps> = ({
       
       console.log('Ajout de réponse forum avec nom:', fullName, 'et avatar:', avatarUrl);
       
+      // Créer l'objet de réponse localement pour mettre à jour l'UI instantanément
+      const optimisticReply: ForumReply = {
+        id: crypto.randomUUID(), // ID temporaire qui sera remplacé par celui de la base de données
+        content,
+        authorName: fullName !== '' ? fullName : 'Utilisateur',
+        authorAvatar: avatarUrl,
+        authorId: user.id,
+        parentId: postId,
+        replyParentId: replyingTo,
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        isLiked: false,
+        nestedReplies: []
+      };
+      
+      // Mettre à jour l'interface utilisateur immédiatement avec la réponse optimiste
+      onReplyAdded(optimisticReply);
+      
+      // Nettoyer le formulaire immédiatement pour une meilleure expérience utilisateur
+      setContent('');
+      
+      // Puis envoyer la réponse au serveur
       await addReplyToPost(
         postId,
         content,
@@ -99,9 +123,7 @@ const ReplyForm: React.FC<ReplyFormProps> = ({
         replyingTo
       );
       
-      setContent('');
       toast.success('Réponse ajoutée avec succès');
-      onReplyAdded();
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la réponse:', error);
       toast.error('Erreur lors de l\'ajout de la réponse');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useAuth } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from '@/types/startup';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { ArrowLeft, Link as LinkIcon, ExternalLink, Globe, FileText, Building, Info, Star } from 'lucide-react';
+import { ArrowLeft, Link as LinkIcon, ExternalLink, Globe, FileText, Building, Info, Star, ArrowUp } from 'lucide-react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import SEO from '@/components/SEO';
 import CommentsSection from '@/components/startup/CommentsSection';
+import { upvoteStartup, removeStartupUpvote, hasUpvotedStartup } from '@/services/startupUpvoteService';
 
 const StartupDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +20,9 @@ const StartupDetails = () => {
   const [startup, setStartup] = useState<Startup | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
+  const [isUpvoted, setIsUpvoted] = useState(false);
+  const [isUpvoting, setIsUpvoting] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchStartupDetails = async () => {
@@ -88,6 +92,16 @@ const StartupDetails = () => {
             viewCount: data.view_count || 0,
             isFeatured: data.is_featured,
           });
+
+          // Check if user has upvoted this startup
+          if (user && data) {
+            try {
+              const hasUpvoted = await hasUpvotedStartup(id);
+              setIsUpvoted(hasUpvoted);
+            } catch (error) {
+              console.error('Error checking upvote status:', error);
+            }
+          }
         } else {
           setIsError(true);
           toast.error('Startup introuvable');
@@ -102,7 +116,7 @@ const StartupDetails = () => {
     };
 
     fetchStartupDetails();
-  }, [id]);
+  }, [id, user]);
 
   const renderStars = (score: number) => {
     return Array(5)
@@ -122,6 +136,53 @@ const StartupDetails = () => {
     if (!dateString) return 'Date inconnue';
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+  };
+
+  const handleUpvote = async () => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour voter");
+      navigate('/auth');
+      return;
+    }
+    
+    if (isUpvoting) return;
+    
+    setIsUpvoting(true);
+    
+    try {
+      if (isUpvoted) {
+        const success = await removeStartupUpvote(id);
+        if (success) {
+          setIsUpvoted(false);
+          // Update the local count immediately
+          if (startup) {
+            setStartup({
+              ...startup,
+              upvotes: Math.max(0, (startup.upvotes || 0) - 1)
+            });
+          }
+          toast.success("Vote retiré");
+        }
+      } else {
+        const success = await upvoteStartup(id);
+        if (success) {
+          setIsUpvoted(true);
+          // Update the local count immediately
+          if (startup) {
+            setStartup({
+              ...startup,
+              upvotes: (startup.upvotes || 0) + 1
+            });
+          }
+          toast.success("Vote ajouté");
+        }
+      }
+    } catch (error) {
+      console.error("Error handling upvote:", error);
+      toast.error("Une erreur est survenue");
+    } finally {
+      setIsUpvoting(false);
+    }
   };
 
   if (isLoading) {

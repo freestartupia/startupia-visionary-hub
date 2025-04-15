@@ -792,6 +792,35 @@ export type Database = {
           },
         ]
       }
+      startup_upvotes: {
+        Row: {
+          created_at: string
+          id: string
+          startup_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          startup_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          startup_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "startup_upvotes_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       startups: {
         Row: {
           ai_impact_score: number
@@ -814,6 +843,7 @@ export type Database = {
           short_description: string
           tags: string[] | null
           updated_at: string | null
+          upvotes: number | null
           view_count: number | null
           website_url: string | null
         }
@@ -838,6 +868,7 @@ export type Database = {
           short_description: string
           tags?: string[] | null
           updated_at?: string | null
+          upvotes?: number | null
           view_count?: number | null
           website_url?: string | null
         }
@@ -862,6 +893,7 @@ export type Database = {
           short_description?: string
           tags?: string[] | null
           updated_at?: string | null
+          upvotes?: number | null
           view_count?: number | null
           website_url?: string | null
         }
@@ -872,6 +904,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrement_startup_upvotes: {
+        Args: { startup_id: string }
+        Returns: undefined
+      }
+      increment_startup_upvotes: {
+        Args: { startup_id: string }
+        Returns: undefined
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean

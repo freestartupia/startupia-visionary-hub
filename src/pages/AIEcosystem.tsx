@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
@@ -81,8 +80,8 @@ const AIEcosystem = () => {
               </SelectTrigger>
               <SelectContent className="bg-black border-startupia-turquoise/30">
                 <SelectGroup>
-                  <SelectItem value="trending">🔥 Tendance</SelectItem>
                   <SelectItem value="votes">👍 Plus votés</SelectItem>
+                  <SelectItem value="trending">🔥 Tendance</SelectItem>
                   <SelectItem value="newest">⏱️ Récent</SelectItem>
                   <SelectItem value="alphabetical">🔤 Alphabétique</SelectItem>
                 </SelectGroup>
@@ -151,15 +150,15 @@ const AIEcosystem = () => {
           </TabsList>
           
           <TabsContent value="all" className="mt-6">
-            <DirectoryView searchQuery={searchQuery} showFilters={false} />
+            <DirectoryView searchQuery={searchQuery} showFilters={false} sortOrder={sortOrder} />
           </TabsContent>
           
           <TabsContent value="featured" className="mt-6">
-            <DirectoryView searchQuery="" showFilters={false} />
+            <DirectoryView searchQuery="" showFilters={false} sortOrder={sortOrder} />
           </TabsContent>
           
           <TabsContent value="recent" className="mt-6">
-            <DirectoryView searchQuery="" showFilters={false} />
+            <DirectoryView searchQuery="" showFilters={false} sortOrder="newest" />
           </TabsContent>
         </Tabs>
       </main>

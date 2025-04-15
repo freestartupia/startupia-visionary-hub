@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, ArrowUpDown, RefreshCw, Filter } from 'lucide-react';
+import { PlusCircle, ArrowUpDown, RefreshCw, MessageSquare, ArrowBigUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,7 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
-import StartupCard from '@/components/StartupCard';
+import { Badge } from '@/components/ui/badge';
 import SubmitStartupForm from '@/components/SubmitStartupForm';
 import { Startup } from '@/types/startup';
 import { fetchStartupsPaginated } from '@/services/startupService';
@@ -25,6 +25,7 @@ import {
   PaginationPrevious,
   PaginationLink
 } from "@/components/ui/pagination";
+import { Link } from 'react-router-dom';
 
 const STARTUPS_PER_PAGE = 10;
 
@@ -110,29 +111,33 @@ const StartupPage = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-16 relative z-10">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
-            Startups IA Françaises
-          </h1>
-          <p className="text-xl text-white/80 max-w-3xl mx-auto">
-            Découvrez et votez pour les startups qui façonnent l'avenir de l'IA en France
-          </p>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Top Startups IA Françaises</h1>
+          
+          <Button
+            onClick={() => setIsDialogOpen(true)}
+            className="bg-startupia-turquoise hover:bg-startupia-turquoise/90"
+            size="sm"
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Soumettre une startup
+          </Button>
         </div>
         
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div className="flex items-center justify-between mb-4">
           <Tabs 
             defaultValue="all" 
-            className="w-full md:w-auto"
+            className="w-auto"
             onValueChange={(value) => setCurrentTab(value)}
           >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="all">Tous</TabsTrigger>
-              <TabsTrigger value="week">Cette semaine</TabsTrigger>
-              <TabsTrigger value="month">Ce mois</TabsTrigger>
+            <TabsList className="grid grid-cols-3 w-auto">
+              <TabsTrigger value="all" className="px-4">Tous</TabsTrigger>
+              <TabsTrigger value="week" className="px-4">Cette semaine</TabsTrigger>
+              <TabsTrigger value="month" className="px-4">Ce mois</TabsTrigger>
             </TabsList>
           </Tabs>
           
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
@@ -143,7 +148,6 @@ const StartupPage = () => {
               }}
             >
               <ArrowUpDown className="h-4 w-4" />
-              <span className="hidden sm:inline">Trier par</span>
               <span className="font-medium">
                 {sortBy === 'upvotes' ? 'Votes' : 'Récents'}
               </span>
@@ -159,15 +163,6 @@ const StartupPage = () => {
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Rafraîchir</span>
             </Button>
-            
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 ml-auto md:ml-0"
-              size="sm"
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Soumettre une startup
-            </Button>
           </div>
         </div>
         
@@ -178,13 +173,58 @@ const StartupPage = () => {
           </div>
         ) : displayedStartups.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {displayedStartups.map((startup) => (
-                <StartupCard 
-                  key={startup.id} 
-                  startup={startup}
-                  onVoteChange={handleVoteChange}
-                />
+            <div className="space-y-6">
+              {displayedStartups.map((startup, index) => (
+                <div key={startup.id} className="flex items-start gap-6 border-b border-white/10 pb-6 last:border-0">
+                  <div className="flex flex-col items-center">
+                    <div className="text-xl font-bold text-white/60">{index + 1}.</div>
+                    <div className="h-14 w-14 rounded-xl bg-white/5 overflow-hidden flex items-center justify-center mt-2">
+                      {startup.logoUrl ? (
+                        <img src={startup.logoUrl} alt={`${startup.name} logo`} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl font-bold text-startupia-turquoise">{startup.name[0]}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                      <div>
+                        <Link to={`/startup/${startup.id}`} className="text-xl font-bold hover:text-startupia-turquoise transition-colors">
+                          {startup.name}
+                        </Link>
+                        <p className="text-base text-white/70">{startup.shortDescription}</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 bg-white/10 rounded-full px-3 py-1">
+                          <MessageSquare size={14} />
+                          <span className="text-sm">{startup.commentCount || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1 bg-white/10 rounded-full px-3 py-1">
+                          <ArrowBigUp size={14} />
+                          <span className="text-sm">{startup.upvotes}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <Badge variant="outline" className="text-xs border-startupia-turquoise/40 bg-startupia-turquoise/5">
+                        {startup.category}
+                      </Badge>
+                      {startup.aiTechnology && (
+                        <Badge variant="outline" className="text-xs border-white/20">
+                          {startup.aiTechnology}
+                        </Badge>
+                      )}
+                      {startup.businessModel && (
+                        <Badge variant="outline" className="text-xs border-white/20">
+                          {startup.businessModel}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
             

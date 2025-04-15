@@ -10,7 +10,6 @@ import { ArrowUp } from "lucide-react";
 import { upvoteStartup, removeStartupUpvote, hasUpvotedStartup } from "@/services/startupUpvoteService";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 interface StartupCardProps {
   startup: Startup;
@@ -22,10 +21,9 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
   const [upvoteCount, setUpvoteCount] = useState(startup.upvotes || 0);
   const [isUpvoting, setIsUpvoting] = useState(false);
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
-    // Mettre à jour le compteur si la valeur change
+    // Mettre à jour le compteur si la valeur change depuis les props
     setUpvoteCount(startup.upvotes || 0);
     
     const checkUpvoteStatus = async () => {
@@ -50,39 +48,51 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
       console.log('Tentative de vote pour startup:', startup.id, startup.name);
       
       if (upvoted) {
+        // Optimistic UI: Decrease count immediately
+        setUpvoteCount(Math.max(0, upvoteCount - 1));
+        setUpvoted(false);
+        
         const success = await removeStartupUpvote(startup.id);
-        if (success) {
-          setUpvoted(false);
-          // Update the local upvote count immediately for better UX
-          const newCount = Math.max(0, upvoteCount - 1);
-          setUpvoteCount(newCount);
-          console.log(`Upvote local retiré: ${startup.name}, nouveau compteur: ${newCount}`);
+        if (!success) {
+          // Revert if failed
+          setUpvoteCount(upvoteCount);
+          setUpvoted(true);
+          toast.error("Erreur lors du retrait de l'upvote");
+        } else {
+          console.log(`Upvote retiré: ${startup.name}, nouveau compteur: ${upvoteCount - 1}`);
           
+          // Seulement refetch après confirmation du serveur
           if (refetchStartups) {
-            setTimeout(() => {
-              refetchStartups();
-            }, 500);
+            refetchStartups();
           }
         }
       } else {
+        // Optimistic UI: Increase count immediately
+        setUpvoteCount(upvoteCount + 1);
+        setUpvoted(true);
+        
         const success = await upvoteStartup(startup.id);
-        if (success) {
-          setUpvoted(true);
-          // Update the local upvote count immediately for better UX
-          const newCount = upvoteCount + 1;
-          setUpvoteCount(newCount);
-          console.log(`Upvote local ajouté: ${startup.name}, nouveau compteur: ${newCount}`);
+        if (!success) {
+          // Revert if failed
+          setUpvoteCount(upvoteCount);
+          setUpvoted(false);
+          toast.error("Erreur lors de l'upvote");
+        } else {
+          console.log(`Upvote ajouté: ${startup.name}, nouveau compteur: ${upvoteCount + 1}`);
           
+          // Seulement refetch après confirmation du serveur  
           if (refetchStartups) {
-            setTimeout(() => {
-              refetchStartups();
-            }, 500);
+            refetchStartups();
           }
         }
       }
     } catch (error) {
       console.error("Error handling upvote:", error);
       toast.error("Erreur lors de l'upvote");
+      
+      // Revert to original state in case of error
+      setUpvoted(!upvoted);
+      setUpvoteCount(startup.upvotes || 0);
     } finally {
       setIsUpvoting(false);
     }

@@ -85,6 +85,13 @@ const TopStartups = () => {
   
   useEffect(() => {
     fetchTopStartups();
+    
+    // Ajouter un écouteur pour les changements d'upvotes via un intervalle
+    const intervalId = setInterval(() => {
+      fetchTopStartups();
+    }, 5000); // Rafraîchir toutes les 5 secondes
+    
+    return () => clearInterval(intervalId);
   }, []);
   
   if (loading) {

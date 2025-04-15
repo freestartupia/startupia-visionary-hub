@@ -52,9 +52,6 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
       // Fallback sur les données mockées si Supabase échoue
       console.log('Fallback sur les données mockées pour l\'upvote');
       
-      // Vérifier si l'ID est au format UUID (contient des tirets)
-      const isUUID = startupId.includes('-') && startupId.length > 20;
-      
       // Trouver la startup dans les données mockées
       let startupIndex = mockStartups.findIndex(s => s.id === startupId);
       

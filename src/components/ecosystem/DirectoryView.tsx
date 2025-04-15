@@ -122,7 +122,7 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder }: DirectoryViewPro
           startup.name.toLowerCase().includes(lowerCaseQuery) || 
           startup.shortDescription.toLowerCase().includes(lowerCaseQuery) ||
           startup.tags.some(tag => tag.toLowerCase().includes(lowerCaseQuery)) ||
-          startup.sector.toLowerCase().includes(lowerCaseQuery)
+          (startup.sector && startup.sector.toLowerCase().includes(lowerCaseQuery))
         );
       }
       
@@ -156,6 +156,13 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder }: DirectoryViewPro
 
   useEffect(() => {
     fetchStartups();
+    
+    // Actualiser périodiquement pour récupérer les changements d'upvotes
+    const intervalId = setInterval(() => {
+      fetchStartups();
+    }, 5000); // Rafraîchir toutes les 5 secondes
+    
+    return () => clearInterval(intervalId);
   }, [searchQuery, sortOrder]);
 
   if (loading) {

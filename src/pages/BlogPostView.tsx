@@ -68,6 +68,34 @@ const BlogPostView = () => {
   const postUrl = `${window.location.origin}/blog/${post.slug}`;
   const postImage = post.coverImage || `${window.location.origin}/og-image.png`;
 
+  // Function to parse and format content
+  const formatContent = (content: string) => {
+    return content.split('\n').map((paragraph, index) => {
+      // Check if the paragraph is an H2 (starts with ##)
+      if (paragraph.startsWith('## ')) {
+        return (
+          <h2 key={index} className="text-2xl font-bold mt-8 mb-4 text-white">
+            {paragraph.replace('## ', '')}
+          </h2>
+        );
+      }
+      // Check if the paragraph is an H3 (starts with ###)
+      else if (paragraph.startsWith('### ')) {
+        return (
+          <h3 key={index} className="text-xl font-bold mt-6 mb-3 text-white">
+            {paragraph.replace('### ', '')}
+          </h3>
+        );
+      }
+      // Regular paragraph
+      else if (paragraph.trim()) {
+        return <p key={index} className="mb-4">{paragraph}</p>;
+      }
+      // Empty line
+      return <br key={index} />;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       <SEO 
@@ -159,9 +187,7 @@ const BlogPostView = () => {
           </div>
           
           <div className="prose prose-lg prose-invert max-w-none">
-            {post.content.split('\n').map((paragraph, index) => (
-              paragraph.trim() ? <p key={index}>{paragraph}</p> : <br key={index} />
-            ))}
+            {formatContent(post.content)}
           </div>
         </article>
       </main>

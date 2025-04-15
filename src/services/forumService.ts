@@ -1,6 +1,8 @@
 
 // This file re-exports all forum-related services for backward compatibility
-export * from './forumPostService';
-export * from './forumReplyService';
-export * from './forumLikeService';
+export * from './forum/postFetchService';
+export * from './forum/replyService';
+export * from './forum/postLikeService';
+export * from './forum/replyLikeService';
 export * from './forumUpvoteService';
+

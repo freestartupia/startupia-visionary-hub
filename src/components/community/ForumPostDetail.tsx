@@ -48,6 +48,7 @@ const ForumPostDetail = () => {
     // Configuration de l'abonnement en temps réel pour les réponses
     if (!postId) return;
     
+    // Canal pour les nouvelles réponses au post principal
     const repliesChannel = supabase
       .channel(`post-replies-${postId}`)
       .on(
@@ -60,7 +61,7 @@ const ForumPostDetail = () => {
         },
         (payload) => {
           console.log('Nouvelle réponse détectée:', payload);
-          // Rafraîchir le post et ses réponses
+          // Rafraîchir le post et ses réponses immédiatement
           fetchPost();
         }
       )
@@ -81,8 +82,66 @@ const ForumPostDetail = () => {
         console.log('Statut de l\'abonnement aux réponses:', status);
       });
       
+    // Canal pour les likes des réponses
+    const replyLikesChannel = supabase
+      .channel(`reply-likes-${postId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE ou DELETE
+          schema: 'public',
+          table: 'forum_reply_likes'
+        },
+        (payload) => {
+          console.log('Changement dans likes de réponses détecté:', payload);
+          // Vérifier si le like concerne une réponse de ce post
+          if (post && post.replies) {
+            // On vérifie si la réponse likée appartient à ce post
+            const replyId = payload.new?.reply_id || payload.old?.reply_id;
+            const replyExists = post.replies.some(reply => 
+              reply.id === replyId || 
+              (reply.nestedReplies && reply.nestedReplies.some(nested => nested.id === replyId))
+            );
+            
+            if (replyExists) {
+              fetchPost();
+            }
+          }
+        }
+      )
+      .subscribe();
+    
+    // Canal pour les modifications des réponses imbriquées
+    const nestedRepliesChannel = supabase
+      .channel(`nested-replies-${postId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'forum_replies',
+          filter: `reply_parent_id=is.not.null`
+        },
+        (payload) => {
+          console.log('Nouvelle réponse imbriquée détectée:', payload);
+          
+          // Vérifier si la réponse imbriquée appartient à ce post
+          if (post && post.replies) {
+            const replyParentId = payload.new.reply_parent_id;
+            const belongsToPost = post.replies.some(reply => reply.id === replyParentId);
+            
+            if (belongsToPost) {
+              fetchPost();
+            }
+          }
+        }
+      )
+      .subscribe();
+      
     return () => {
       supabase.removeChannel(repliesChannel);
+      supabase.removeChannel(replyLikesChannel);
+      supabase.removeChannel(nestedRepliesChannel);
     };
   }, [postId]);
   

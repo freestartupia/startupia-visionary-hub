@@ -30,7 +30,7 @@ const BlogPostEditor: React.FC<BlogPostEditorProps> = ({ post, onSave, onCancel 
   const [slug, setSlug] = useState(post?.slug || '');
   const [excerpt, setExcerpt] = useState(post?.excerpt || '');
   const [content, setContent] = useState(post?.content || '');
-  const [category, setCategory] = useState<BlogCategory>(post?.category as BlogCategory || 'Actualités');
+  const [category, setCategory] = useState<BlogCategory>(post?.category || 'Actualités');
   const [tags, setTags] = useState(post?.tags?.join(', ') || '');
   const [featured, setFeatured] = useState(post?.featured || false);
   const [status, setStatus] = useState<'draft' | 'published' | 'pending'>(post?.status || 'draft');
@@ -189,6 +189,7 @@ const BlogPostEditor: React.FC<BlogPostEditorProps> = ({ post, onSave, onCancel 
       };
       
       onSave(formattedPost);
+      navigate('/blog');
     } catch (error) {
       console.error('Error saving post:', error);
       toast.error('Erreur lors de la sauvegarde de l\'article');

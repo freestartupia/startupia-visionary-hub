@@ -44,7 +44,11 @@ const StartupDetails = ({
             onClick={onVote}
             disabled={isVoteLoading}
             variant={hasVoted ? "default" : "outline"}
-            className={`w-full mb-2 ${hasVoted ? 'bg-startupia-turquoise text-white' : 'border-startupia-turquoise text-white hover:bg-startupia-turquoise/10'}`}
+            className={`w-full mb-2 ${
+              hasVoted 
+                ? 'bg-startupia-turquoise text-black' 
+                : 'border-startupia-turquoise text-white hover:bg-startupia-turquoise/10'
+            }`}
           >
             <ArrowBigUp className="h-5 w-5 mr-2" />
             {hasVoted ? 'Voté' : 'Voter'} ({startup.upvotes})

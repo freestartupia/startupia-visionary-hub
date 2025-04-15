@@ -34,7 +34,7 @@ const TrustSignals = () => {
         
         <div className="flex flex-wrap justify-center items-center gap-8 mt-10 text-center">
           <div className="w-full sm:w-auto">
-            <div className="text-3xl font-bold text-startupia-turquoise">500+</div>
+            <div className="text-3xl font-bold text-startupia-turquoise">+50</div>
             <p className="text-white/70">Startups IA</p>
           </div>
           
@@ -49,7 +49,7 @@ const TrustSignals = () => {
           </div>
           
           <div className="w-full sm:w-auto">
-            <div className="text-3xl font-bold text-startupia-turquoise">350+</div>
+            <div className="text-3xl font-bold text-startupia-turquoise">+50</div>
             <p className="text-white/70">Talents connectés</p>
           </div>
         </div>

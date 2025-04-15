@@ -109,7 +109,7 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
     if (userId !== 'anonymous') {
       const { error: recordError } = await supabase
         .from('startup_upvotes')
-        .upsert({ 
+        .insert({ 
           startup_id: startupId, 
           user_id: userId 
         });

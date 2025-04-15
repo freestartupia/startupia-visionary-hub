@@ -160,11 +160,20 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
     }
     
     // Increment the upvote count in the startups table
-    const { error: incrementError } = await supabase.rpc('increment_startup_upvotes', { startup_id: startupId });
+    const { error: updateError } = await supabase
+      .from('startups')
+      .update({ upvotes: supabase.rpc('increment_startup_upvotes', { startup_id: startupId }) })
+      .eq('id', startupId);
     
-    if (incrementError) {
-      console.error('Error incrementing upvotes:', incrementError);
-      return false;
+    if (updateError) {
+      console.error('Error incrementing upvotes directly:', updateError);
+      // Fallback to RPC function if direct update fails
+      const { error: rpcError } = await supabase.rpc('increment_startup_upvotes', { startup_id: startupId });
+      
+      if (rpcError) {
+        console.error('Error incrementing upvotes via RPC:', rpcError);
+        return false;
+      }
     }
     
     return true;
@@ -197,11 +206,20 @@ export const downvoteStartup = async (startupId: string): Promise<boolean> => {
     }
     
     // Decrement the upvote count in the startups table
-    const { error: decrementError } = await supabase.rpc('decrement_startup_upvotes', { startup_id: startupId });
+    const { error: updateError } = await supabase
+      .from('startups')
+      .update({ upvotes: supabase.rpc('decrement_startup_upvotes', { startup_id: startupId }) })
+      .eq('id', startupId);
     
-    if (decrementError) {
-      console.error('Error decrementing upvotes:', decrementError);
-      return false;
+    if (updateError) {
+      console.error('Error decrementing upvotes directly:', updateError);
+      // Fallback to RPC function if direct update fails
+      const { error: rpcError } = await supabase.rpc('decrement_startup_upvotes', { startup_id: startupId });
+      
+      if (rpcError) {
+        console.error('Error decrementing upvotes via RPC:', rpcError);
+        return false;
+      }
     }
     
     return true;
@@ -258,4 +276,3 @@ export const isStartupUpvotedByUser = async (startupId: string): Promise<boolean
     return false;
   }
 };
-

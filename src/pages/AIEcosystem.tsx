@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getStartups } from "@/services/startupService";
 import DirectoryView from "@/components/ecosystem/DirectoryView";
@@ -17,7 +17,7 @@ const AIEcosystem = () => {
   const [modalOpen, setModalOpen] = useState(false);
 
   const {
-    data: startups = [],
+    data: startupsData = [],
     isLoading,
     refetch,
   } = useQuery({
@@ -26,11 +26,9 @@ const AIEcosystem = () => {
   });
 
   // Sort startups by upvotes (descending)
-  const sortedStartups = [...startups].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+  const sortedStartups = [...startupsData].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
 
   const handleUpvote = (startupId: string, newCount: number) => {
-    // This is optional as the backend will handle the upvote count
-    // But we can update the local state for immediate feedback
     console.log(`Startup ${startupId} upvotes updated to ${newCount}`);
     // Refetch to get the latest data
     refetch();
@@ -112,8 +110,8 @@ const AIEcosystem = () => {
         {activeTab === "directory" && (
           <DirectoryView startups={sortedStartups} isLoading={isLoading} onUpvote={handleUpvote} />
         )}
-        {activeTab === "map" && <MapView startupList={startups} />}
-        {activeTab === "radar" && <RadarView startupList={startups} />}
+        {activeTab === "map" && <MapView startupList={sortedStartups} />}
+        {activeTab === "radar" && <RadarView startupList={sortedStartups} />}
       </main>
 
       <SubmitStartupModal open={modalOpen} onClose={() => setModalOpen(false)} />

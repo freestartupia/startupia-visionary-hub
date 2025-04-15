@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getStartupById } from "@/services/startupService";
@@ -7,7 +6,6 @@ import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink, ThumbsUp } from "lucide-react";
 import StartupLogo from "@/components/startup/StartupLogo";
 import TagList from "@/components/startup/TagList";

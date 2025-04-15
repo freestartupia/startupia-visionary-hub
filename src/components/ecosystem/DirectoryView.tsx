@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Startup } from '@/types/startup';
+import { Startup, AITool, Sector, BusinessModel, MaturityLevel } from '@/types/startup';
 import StartupCard from '@/components/StartupCard';
 import { mockStartups } from '@/data/mockStartups';
 
@@ -73,6 +73,26 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder = 'trending' }: Dir
             parsedFounders = [];
           }
           
+          // Handle aiTools properly
+          let aiTools: AITool[] = [];
+          try {
+            if (item.ai_tools) {
+              if (typeof item.ai_tools === 'string') {
+                aiTools = JSON.parse(item.ai_tools) as AITool[];
+              } else if (Array.isArray(item.ai_tools)) {
+                // Make sure each item is a valid AITool
+                aiTools = item.ai_tools.filter(tool => 
+                  typeof tool === 'string' && 
+                  ["ChatGPT", "Claude", "LLama", "Stable Diffusion", "Midjourney", 
+                   "API interne", "Hugging Face", "Vertex AI", "AWS Bedrock", "Autre"].includes(tool)
+                ) as AITool[];
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing aiTools:', e);
+            aiTools = [];
+          }
+          
           return {
             id: item.id,
             name: item.name,
@@ -81,10 +101,10 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder = 'trending' }: Dir
             longTermVision: item.long_term_vision || '',
             founders: parsedFounders,
             aiUseCases: item.ai_use_cases || '',
-            aiTools: item.ai_tools || [],
-            sector: item.sector,
-            businessModel: item.business_model,
-            maturityLevel: item.maturity_level,
+            aiTools: aiTools,
+            sector: item.sector as Sector,
+            businessModel: item.business_model as BusinessModel,
+            maturityLevel: item.maturity_level as MaturityLevel,
             aiImpactScore: item.ai_impact_score,
             tags: item.tags || [],
             websiteUrl: item.website_url || '',

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Heart, Users, Edit, Trash2 } from 'lucide-react';
+import { Heart, Users, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { CollaborativeProject, ProjectStatus } from '@/types/community';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -20,6 +21,7 @@ interface ProjectCardProps {
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, onProjectDeleted }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { user } = useAuth();
   
@@ -58,38 +60,31 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, o
   // Check if the current user is the project creator
   const isProjectCreator = user && project.initiator_id === user.id;
 
-  // Handler for editing a project
-  const handleEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toast.info("Fonctionnalité de modification en développement");
-    // Redirect to edit page or open edit modal
-  };
-
   // Handler for deleting a project
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
+  const handleDelete = async () => {
     if (isDeleting) return;
     
-    if (confirm("Êtes-vous sûr de vouloir supprimer ce projet ?")) {
-      setIsDeleting(true);
-      
-      try {
-        const { error } = await supabase
-          .from('collaborative_projects')
-          .delete()
-          .eq('id', project.id);
-          
-        if (error) throw error;
+    setIsDeleting(true);
+    
+    try {
+      const { error } = await supabase
+        .from('collaborative_projects')
+        .delete()
+        .eq('id', project.id);
         
-        toast.success("Projet supprimé avec succès");
-        if (onProjectDeleted) onProjectDeleted();
-      } catch (err) {
-        console.error('Erreur lors de la suppression du projet:', err);
-        toast.error("Une erreur est survenue lors de la suppression du projet");
-      } finally {
-        setIsDeleting(false);
-      }
+      if (error) throw error;
+      
+      toast.success("Projet supprimé avec succès");
+      if (onProjectDeleted) onProjectDeleted();
+      
+      // Close the dialog if it's open
+      setIsDialogOpen(false);
+    } catch (err) {
+      console.error('Erreur lors de la suppression du projet:', err);
+      toast.error("Une erreur est survenue lors de la suppression du projet");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteAlertOpen(false);
     }
   };
 
@@ -162,22 +157,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, o
             </Button>
           </div>
           
-          {/* Project owner actions */}
+          {/* Project owner delete action */}
           {isProjectCreator && (
             <div className="flex gap-2 w-full border-t border-white/10 pt-3">
               <Button 
-                variant="outline" 
-                className="flex-1 h-10 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300"
-                onClick={handleEdit}
-                size="sm"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Modifier
-              </Button>
-              <Button 
                 variant="outline"
                 className="flex-1 h-10 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-300"
-                onClick={handleDelete}
+                onClick={() => setIsDeleteAlertOpen(true)}
                 size="sm"
                 disabled={isDeleting}
               >
@@ -188,6 +174,28 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, o
           )}
         </CardFooter>
       </Card>
+
+      {/* Alert Dialog for Delete Confirmation */}
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer ce projet ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Le projet sera définitivement supprimé.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Suppression..." : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-3xl">
@@ -229,21 +237,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, o
               </div>
             </div>
             
-            {/* Show edit/delete options in the dialog too if user is the creator */}
+            {/* Show delete option in the dialog too if user is the creator */}
             {isProjectCreator && (
               <div className="flex gap-2 pt-4 border-t">
                 <Button 
-                  variant="outline" 
-                  className="flex-1 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300"
-                  onClick={handleEdit}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Modifier
-                </Button>
-                <Button 
                   variant="outline"
                   className="flex-1 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-300"
-                  onClick={handleDelete}
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    setTimeout(() => setIsDeleteAlertOpen(true), 100);
+                  }}
                   disabled={isDeleting}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />

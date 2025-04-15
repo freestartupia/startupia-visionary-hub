@@ -17,46 +17,64 @@ const Blog = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   
-  // Fetch blog posts from Supabase
+  // Fetch blog posts from Supabase with better error handling
   const { data: posts, isLoading, error } = useQuery({
     queryKey: ['blog-posts'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
+      try {
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error("Error fetching blog posts:", error);
+          throw error;
+        }
+        
+        if (!data || data.length === 0) {
+          return [];
+        }
+        
+        // Convert from snake_case to camelCase for the BlogPost interface
+        return data.map((post: any): BlogPost => ({
+          id: post.id,
+          title: post.title,
+          slug: post.slug,
+          excerpt: post.excerpt,
+          content: post.content,
+          category: post.category as BlogCategory,
+          coverImage: post.cover_image,
+          authorId: post.author_id,
+          authorName: post.author_name,
+          authorAvatar: post.author_avatar,
+          createdAt: post.created_at,
+          updatedAt: post.updated_at,
+          tags: post.tags || [],
+          featured: post.featured,
+          readingTime: post.reading_time,
+        }));
+      } catch (err) {
+        console.error("Error in blog posts query:", err);
+        throw err;
       }
-      
-      // Convert from snake_case to camelCase for the BlogPost interface
-      return data.map((post: any): BlogPost => ({
-        id: post.id,
-        title: post.title,
-        slug: post.slug,
-        excerpt: post.excerpt,
-        content: post.content,
-        category: post.category as BlogCategory,
-        coverImage: post.cover_image,
-        authorId: post.author_id,
-        authorName: post.author_name,
-        authorAvatar: post.author_avatar,
-        createdAt: post.created_at,
-        updatedAt: post.updated_at,
-        tags: post.tags || [],
-        featured: post.featured,
-        readingTime: post.reading_time,
-      }));
+    },
+    meta: {
+      onError: (error: any) => {
+        console.error("Error loading blog posts:", error);
+        toast.error("Erreur lors du chargement des articles");
+      }
     }
   });
   
   // Extract unique categories from posts
   useEffect(() => {
-    if (posts) {
+    if (posts && posts.length > 0) {
       const uniqueCategories = [...new Set(posts.map(post => post.category))];
       setCategories(uniqueCategories as BlogCategory[]);
       setFilteredPosts(posts);
+    } else {
+      setFilteredPosts([]);
     }
   }, [posts]);
   
@@ -94,11 +112,6 @@ const Blog = () => {
   
   // Get featured posts
   const featuredPosts = posts?.filter(post => post.featured) || [];
-
-  if (error) {
-    toast.error("Erreur lors du chargement des articles");
-    console.error("Error loading blog posts:", error);
-  }
 
   return (
     <div className="min-h-screen bg-black text-white">

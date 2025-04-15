@@ -1,8 +1,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, Zap, Vote, Heart, Rocket, ExternalLink } from 'lucide-react';
+import { ArrowUp, Zap, Circle, Heart, Rocket, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 const StartupPromoBlog = () => {
   return (
@@ -17,7 +19,7 @@ const StartupPromoBlog = () => {
           <div className="lg:w-5/12">
             <div className="relative">
               {/* Main Visual - Stylized Vote Card */}
-              <div className="glass-card p-8 border border-startupia-turquoise/50 shadow-lg relative z-10 transform hover:scale-105 transition-transform duration-300">
+              <div className="glass-card p-8 border border-startupia-turquoise/30 shadow-lg relative z-10 transform hover:scale-105 transition-transform duration-300">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-16 h-16 bg-black rounded-xl border border-startupia-turquoise/30 flex items-center justify-center">
                     <span className="text-startupia-turquoise font-bold text-2xl">S</span>
@@ -64,10 +66,6 @@ const StartupPromoBlog = () => {
           
           {/* Right Content - Promotional Text */}
           <div className="lg:w-7/12 space-y-6">
-            <div className="inline-block mb-6 px-4 py-2 rounded-full bg-startupia-turquoise/20 border border-startupia-turquoise/30 text-sm">
-              <span className="font-medium text-startupia-turquoise">Nouvelle fonctionnalité</span>
-            </div>
-            
             <h2 className="text-4xl md:text-5xl font-bold leading-tight">
               Faites exploser votre startup, gratuitement
             </h2>
@@ -89,40 +87,44 @@ const StartupPromoBlog = () => {
                 </div>
               </div>
               
-              <div className="border-l-2 border-startupia-turquoise/30 pl-6 ml-4 space-y-3">
-                <p className="text-white/80">
+              <div className="border-l-2 border-startupia-turquoise/30 pl-6 ml-4 space-y-3 my-6">
+                <p className="text-white/80 font-medium">
                   Votre page dédiée met en avant :
                 </p>
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                   <li className="flex items-center gap-2">
-                    <span className="text-startupia-turquoise">✅</span> Votre pitch
+                    <Circle size={10} fill="#FCFE3E" className="text-startupia-turquoise" />
+                    <span>Votre pitch</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-startupia-turquoise">✅</span> Votre logo
+                    <Circle size={10} fill="#FCFE3E" className="text-startupia-turquoise" />
+                    <span>Votre logo</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-startupia-turquoise">✅</span> Votre lien
+                    <Circle size={10} fill="#FCFE3E" className="text-startupia-turquoise" />
+                    <span>Votre lien</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="text-startupia-turquoise">✅</span> Et surtout… un bouton de vote qui peut tout changer
+                    <Circle size={10} fill="#FCFE3E" className="text-startupia-turquoise" />
+                    <span>Et surtout… un bouton de vote qui peut tout changer</span>
                   </li>
                 </ul>
               </div>
               
-              <p className="text-lg text-white/90 pt-2">
+              <p className="text-lg text-white/90">
                 Les startups les plus soutenues dominent le classement et attirent en un clin d'œil l'attention des curieux, des partenaires, des médias et des futurs utilisateurs.
               </p>
             </div>
             
-            <div className="glass-card border border-startupia-turquoise/30 p-4 flex items-center gap-4">
+            <div className="glass-card border border-startupia-turquoise/20 p-5 flex items-center gap-4 bg-black/40">
               <Rocket size={24} className="text-startupia-turquoise" />
               <p className="text-lg font-medium">
-                <span className="text-startupia-turquoise">🔥</span> Un bon projet + des votes = une startup qui explose.
+                Un bon projet + des votes = une startup qui explose.
               </p>
             </div>
             
-            <div className="pt-6">
-              <Button size="lg" className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black font-semibold text-lg py-6 px-8 button-glow" asChild>
+            <div className="pt-8">
+              <Button size="lg" className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black font-semibold text-lg py-6 px-8" asChild>
                 <Link to="/startup">
                   <Rocket size={20} className="mr-2" />
                   Lancez-vous. Postez. Grimpez. Brillez.

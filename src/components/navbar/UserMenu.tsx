@@ -14,7 +14,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Settings, LogOut } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 
-const UserMenu = () => {
+// Change the export to named export
+export const UserMenu = () => {
   const { user, signOut } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
@@ -99,3 +100,4 @@ const UserMenu = () => {
 };
 
 export default UserMenu;
+

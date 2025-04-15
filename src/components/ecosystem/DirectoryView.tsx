@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Startup, Sector } from "@/types/startup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,7 +15,7 @@ interface DirectoryViewProps {
   sortOrder?: string;
 }
 
-const DirectoryView = ({ searchQuery, showFilters, sortOrder = "trending" }: DirectoryViewProps) => {
+const DirectoryView = ({ searchQuery, showFilters, sortOrder = "votes" }: DirectoryViewProps) => {
   const [startups, setStartups] = useState<Startup[]>([]);
   const [filteredStartups, setFilteredStartups] = useState<Startup[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("all");
@@ -38,10 +37,13 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder = "trending" }: Dir
           })
         );
         
-        setStartups(startupsWithUpvoteStatus);
-        setFilteredStartups(startupsWithUpvoteStatus);
+        // Always sort by upvotes by default (Product Hunt style)
+        const sortedStartups = startupsWithUpvoteStatus.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
         
-        const uniqueSectors = Array.from(new Set(startupsWithUpvoteStatus.map(startup => startup.sector)));
+        setStartups(sortedStartups);
+        setFilteredStartups(sortedStartups);
+        
+        const uniqueSectors = Array.from(new Set(sortedStartups.map(startup => startup.sector)));
         setSectors(uniqueSectors);
       } catch (error) {
         console.error('Error:', error);
@@ -105,12 +107,8 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder = "trending" }: Dir
       case 'impact':
         sorted.sort((a, b) => b.aiImpactScore - a.aiImpactScore);
         break;
-      default: // trending - a mix of recency and upvotes
-        sorted.sort((a, b) => {
-          const scoreA = (a.upvotes || 0) * 2 + (a.dateAdded ? 1 : 0);
-          const scoreB = (b.upvotes || 0) * 2 + (b.dateAdded ? 1 : 0);
-          return scoreB - scoreA;
-        });
+      default: // trending - default to votes for Product Hunt style
+        sorted.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
     }
     
     setFilteredStartups(sorted);
@@ -123,7 +121,7 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder = "trending" }: Dir
         startup.id === startupId 
           ? { ...startup, upvotes: newCount, isUpvoted: !startup.isUpvoted } 
           : startup
-      )
+      ).sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0)) // Re-sort after upvoting
     );
   };
 
@@ -189,12 +187,42 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder = "trending" }: Dir
         
         <TabsContent value="all" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredStartups.map((startup) => (
-              <StartupCard 
-                key={startup.id} 
-                startup={startup} 
-                onUpvote={handleUpvote}
-              />
+            {filteredStartups.map((startup, index) => (
+              <div key={startup.id} className="relative">
+                {index === 0 && (
+                  <div className="absolute -top-4 -left-4 z-10">
+                    <div className="bg-startupia-gold text-black border-none px-3 py-1 rounded-md flex items-center gap-1 font-bold">
+                      <span>N°{index + 1}</span>
+                    </div>
+                  </div>
+                )}
+                {index === 1 && (
+                  <div className="absolute -top-4 -left-4 z-10">
+                    <div className="bg-gray-300 text-black border-none px-3 py-1 rounded-md flex items-center gap-1 font-bold">
+                      <span>N°{index + 1}</span>
+                    </div>
+                  </div>
+                )}
+                {index === 2 && (
+                  <div className="absolute -top-4 -left-4 z-10">
+                    <div className="bg-amber-600 text-white border-none px-3 py-1 rounded-md flex items-center gap-1 font-bold">
+                      <span>N°{index + 1}</span>
+                    </div>
+                  </div>
+                )}
+                {index > 2 && index < 5 && (
+                  <div className="absolute -top-4 -left-4 z-10">
+                    <div className="bg-black/60 text-white border-none px-3 py-1 rounded-md flex items-center gap-1 font-bold">
+                      <span>N°{index + 1}</span>
+                    </div>
+                  </div>
+                )}
+                <StartupCard 
+                  key={startup.id} 
+                  startup={startup} 
+                  onUpvote={handleUpvote}
+                />
+              </div>
             ))}
           </div>
         </TabsContent>
@@ -202,12 +230,42 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder = "trending" }: Dir
         {sectors.map(sector => (
           <TabsContent key={sector} value={sector} className="mt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredStartups.map((startup) => (
-                <StartupCard 
-                  key={startup.id} 
-                  startup={startup} 
-                  onUpvote={handleUpvote}
-                />
+              {filteredStartups.map((startup, index) => (
+                <div key={startup.id} className="relative">
+                  {index === 0 && (
+                    <div className="absolute -top-4 -left-4 z-10">
+                      <div className="bg-startupia-gold text-black border-none px-3 py-1 rounded-md flex items-center gap-1 font-bold">
+                        <span>N°{index + 1}</span>
+                      </div>
+                    </div>
+                  )}
+                  {index === 1 && (
+                    <div className="absolute -top-4 -left-4 z-10">
+                      <div className="bg-gray-300 text-black border-none px-3 py-1 rounded-md flex items-center gap-1 font-bold">
+                        <span>N°{index + 1}</span>
+                      </div>
+                    </div>
+                  )}
+                  {index === 2 && (
+                    <div className="absolute -top-4 -left-4 z-10">
+                      <div className="bg-amber-600 text-white border-none px-3 py-1 rounded-md flex items-center gap-1 font-bold">
+                        <span>N°{index + 1}</span>
+                      </div>
+                    </div>
+                  )}
+                  {index > 2 && index < 5 && (
+                    <div className="absolute -top-4 -left-4 z-10">
+                      <div className="bg-black/60 text-white border-none px-3 py-1 rounded-md flex items-center gap-1 font-bold">
+                        <span>N°{index + 1}</span>
+                      </div>
+                    </div>
+                  )}
+                  <StartupCard 
+                    key={startup.id} 
+                    startup={startup} 
+                    onUpvote={handleUpvote}
+                  />
+                </div>
               ))}
             </div>
           </TabsContent>

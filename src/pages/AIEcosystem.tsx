@@ -28,7 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const AIEcosystem = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [sortOrder, setSortOrder] = useState('trending');
+  const [sortOrder, setSortOrder] = useState('votes'); // Changed default to 'votes' for Product Hunt style
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState('directory');
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -76,13 +76,13 @@ const AIEcosystem = () => {
           <div className="flex gap-2">
             <Select defaultValue={sortOrder} onValueChange={value => setSortOrder(value)}>
               <SelectTrigger className="bg-black/20 border-startupia-turquoise/30 w-36">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Tendance" />
+                <ThumbsUp className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Plus votés" />
               </SelectTrigger>
               <SelectContent className="bg-black border-startupia-turquoise/30">
                 <SelectGroup>
-                  <SelectItem value="trending">🔥 Tendance</SelectItem>
                   <SelectItem value="votes">👍 Plus votés</SelectItem>
+                  <SelectItem value="trending">🔥 Tendance</SelectItem>
                   <SelectItem value="newest">⏱️ Récent</SelectItem>
                   <SelectItem value="alphabetical">🔤 Alphabétique</SelectItem>
                   <SelectItem value="impact">⚡ Impact IA</SelectItem>
@@ -138,7 +138,7 @@ const AIEcosystem = () => {
         <Tabs defaultValue="all" className="mb-6 max-w-4xl mx-auto">
           <TabsList className="bg-black border border-startupia-turquoise/20 w-auto inline-flex space-x-1">
             <TabsTrigger value="all" className="data-[state=active]:bg-startupia-turquoise/20 data-[state=active]:text-white">
-              <TrendingUp className="mr-2 h-4 w-4" />
+              <ThumbsUp className="mr-2 h-4 w-4" />
               Tous
             </TabsTrigger>
             <TabsTrigger value="featured" className="data-[state=active]:bg-startupia-turquoise/20 data-[state=active]:text-white">
@@ -156,7 +156,7 @@ const AIEcosystem = () => {
           </TabsContent>
           
           <TabsContent value="featured" className="mt-6">
-            <DirectoryView searchQuery="" showFilters={false} sortOrder="impact" />
+            <DirectoryView searchQuery="" showFilters={false} sortOrder="votes" />
           </TabsContent>
           
           <TabsContent value="recent" className="mt-6">

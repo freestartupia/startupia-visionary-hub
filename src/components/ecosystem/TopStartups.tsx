@@ -44,31 +44,26 @@ const TopStartups = ({ searchQuery, showFilters, sortOrder, limit = 4 }: TopStar
           );
         }
         
-        // Sort based on selected order
-        switch (sortOrder) {
-          case 'impact':
-            filtered.sort((a, b) => b.aiImpactScore - a.aiImpactScore);
-            break;
-          case 'alphabetical':
-            filtered.sort((a, b) => a.name.localeCompare(b.name));
-            break;
-          case 'votes':
-            filtered.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
-            break;
-          case 'newest':
-            filtered.sort((a, b) => {
-              const dateA = a.dateAdded ? new Date(a.dateAdded).getTime() : 0;
-              const dateB = b.dateAdded ? new Date(b.dateAdded).getTime() : 0;
-              return dateB - dateA;
-            });
-            break;
-          default: 
-            // 'trending' - mix of recent and upvotes
-            filtered.sort((a, b) => {
-              const scoreA = (a.upvotes || 0) * 2 + (a.dateAdded ? 1 : 0);
-              const scoreB = (b.upvotes || 0) * 2 + (b.dateAdded ? 1 : 0);
-              return scoreB - scoreA;
-            });
+        // Always sort by upvotes first (Product Hunt style)
+        filtered.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+        
+        // If specific sorting is requested, apply it after the upvote sort
+        if (sortOrder !== 'votes') {
+          switch (sortOrder) {
+            case 'impact':
+              filtered.sort((a, b) => b.aiImpactScore - a.aiImpactScore);
+              break;
+            case 'alphabetical':
+              filtered.sort((a, b) => a.name.localeCompare(b.name));
+              break;
+            case 'newest':
+              filtered.sort((a, b) => {
+                const dateA = a.dateAdded ? new Date(a.dateAdded).getTime() : 0;
+                const dateB = b.dateAdded ? new Date(b.dateAdded).getTime() : 0;
+                return dateB - dateA;
+              });
+              break;
+          }
         }
         
         // Take only the top N
@@ -90,7 +85,7 @@ const TopStartups = ({ searchQuery, showFilters, sortOrder, limit = 4 }: TopStar
         startup.id === startupId 
           ? { ...startup, upvotes: newCount, isUpvoted: !startup.isUpvoted } 
           : startup
-      )
+      ).sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0)) // Re-sort after upvoting
     );
   };
   
@@ -120,7 +115,7 @@ const TopStartups = ({ searchQuery, showFilters, sortOrder, limit = 4 }: TopStar
             <div className="absolute -top-4 -left-4 z-10">
               <Badge variant="outline" className="bg-startupia-gold text-black border-none px-3 py-1 flex items-center gap-1">
                 <Trophy size={14} />
-                <span>Top IA</span>
+                <span>N°1</span>
               </Badge>
             </div>
           )}
@@ -128,15 +123,15 @@ const TopStartups = ({ searchQuery, showFilters, sortOrder, limit = 4 }: TopStar
             <div className="absolute -top-4 -left-4 z-10">
               <Badge variant="outline" className="bg-gray-300 text-gray-800 border-none px-3 py-1 flex items-center gap-1">
                 <TrendingUp size={14} />
-                <span>Tendance</span>
+                <span>N°2</span>
               </Badge>
             </div>
           )}
-          {startup.aiImpactScore === 5 && (
-            <div className="absolute -top-4 -right-4 z-10">
-              <Badge variant="outline" className="bg-startupia-turquoise/80 border-none px-3 py-1 flex items-center gap-1">
-                <Zap size={14} />
-                <span>Impact 5/5</span>
+          {index === 2 && (
+            <div className="absolute -top-4 -left-4 z-10">
+              <Badge variant="outline" className="bg-amber-600 text-white border-none px-3 py-1 flex items-center gap-1">
+                <Trophy size={14} />
+                <span>N°3</span>
               </Badge>
             </div>
           )}

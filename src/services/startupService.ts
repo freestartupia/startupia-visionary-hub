@@ -34,7 +34,7 @@ export const getStartups = async (): Promise<Startup[]> => {
       dateAdded: item.date_added,
       viewCount: item.view_count || 0,
       isFeatured: item.is_featured || false,
-      upvotes: 0, // Mock data for now since this doesn't exist in DB yet
+      upvotes: item.upvotes || 0, // Get actual upvotes from DB
     })) as Startup[];
   } catch (error) {
     console.error('Error in getStartups:', error);
@@ -77,7 +77,7 @@ export const getStartupById = async (id: string): Promise<Startup | null> => {
       dateAdded: data.date_added,
       viewCount: data.view_count || 0,
       isFeatured: data.is_featured || false,
-      upvotes: 0, // Mock data for now
+      upvotes: data.upvotes || 0, // Get actual upvotes from DB
     } as Startup;
   } catch (error) {
     console.error('Error in getStartupById:', error);
@@ -85,10 +85,16 @@ export const getStartupById = async (id: string): Promise<Startup | null> => {
   }
 };
 
+// Update these functions to handle upvotes
 export const upvoteStartup = async (startupId: string): Promise<boolean> => {
   try {
     // Since we don't have a real database yet, we'll just simulate a successful upvote
     console.log(`Upvoting startup with ID: ${startupId}`);
+    
+    // In a real implementation, we would update the database
+    // const { error } = await supabase.rpc('increment_startup_upvotes', { startup_id: startupId });
+    // return !error;
+    
     return true;
   } catch (error) {
     console.error('Error in upvoteStartup:', error);
@@ -100,6 +106,11 @@ export const downvoteStartup = async (startupId: string): Promise<boolean> => {
   try {
     // Since we don't have a real database yet, we'll just simulate a successful downvote
     console.log(`Downvoting startup with ID: ${startupId}`);
+    
+    // In a real implementation, we would update the database
+    // const { error } = await supabase.rpc('decrement_startup_upvotes', { startup_id: startupId });
+    // return !error;
+    
     return true;
   } catch (error) {
     console.error('Error in downvoteStartup:', error);

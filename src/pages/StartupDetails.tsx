@@ -80,6 +80,12 @@ const StartupDetails = () => {
           toast.error("Erreur lors du vote");
         }
       }
+      
+      // Re-fetch the startup data to ensure we have the latest data
+      setTimeout(() => {
+        fetchStartup();
+      }, 500);
+      
     } catch (error) {
       console.error("Error toggling upvote:", error);
       toast.error("Erreur lors du vote");

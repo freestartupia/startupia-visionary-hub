@@ -24,6 +24,7 @@ const AIEcosystem = () => {
   } = useQuery({
     queryKey: ["startups"],
     queryFn: getStartups,
+    staleTime: 60000, // 1 minute before refetching
   });
 
   // Sort startups by upvotes (descending)

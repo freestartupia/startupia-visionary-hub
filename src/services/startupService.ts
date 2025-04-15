@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Startup } from "@/types/startup";
 
@@ -64,6 +65,7 @@ export const getStartups = async (): Promise<Startup[]> => {
 
 export const getStartupById = async (id: string): Promise<Startup | null> => {
   try {
+    // First get the startup data
     const { data, error } = await supabase
       .from('startups')
       .select('*')
@@ -80,7 +82,7 @@ export const getStartupById = async (id: string): Promise<Startup | null> => {
     
     let isUpvoted = false;
     if (user) {
-      const { data: upvoteData, error: upvoteError } = await supabase
+      const { data: upvoteData } = await supabase
         .from('startup_upvotes')
         .select('*')
         .eq('startup_id', id)
@@ -158,7 +160,12 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
     }
     
     // Increment the upvote count in the startups table
-    await supabase.rpc('increment_startup_upvotes', { startup_id: startupId });
+    const { error: rpcError } = await supabase.rpc('increment_startup_upvotes', { startup_id: startupId });
+    
+    if (rpcError) {
+      console.error('Error incrementing upvotes:', rpcError);
+      return false;
+    }
     
     return true;
   } catch (error) {
@@ -190,7 +197,12 @@ export const downvoteStartup = async (startupId: string): Promise<boolean> => {
     }
     
     // Decrement the upvote count in the startups table
-    await supabase.rpc('decrement_startup_upvotes', { startup_id: startupId });
+    const { error: rpcError } = await supabase.rpc('decrement_startup_upvotes', { startup_id: startupId });
+    
+    if (rpcError) {
+      console.error('Error decrementing upvotes:', rpcError);
+      return false;
+    }
     
     return true;
   } catch (error) {

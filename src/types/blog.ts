@@ -25,4 +25,6 @@ export interface BlogPost {
   featured?: boolean;
   readingTime: string;
   status?: 'draft' | 'published' | 'pending';
+  seoTitle?: string;
+  seoDescription?: string;
 }

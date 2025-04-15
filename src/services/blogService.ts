@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { BlogPost, BlogCategory } from "@/types/blog";
 import { toast } from "@/hooks/use-toast";
@@ -21,7 +20,9 @@ const mapSupabasePostToAppPost = (post: any): BlogPost => {
     tags: post.tags || [],
     featured: post.featured || false,
     readingTime: post.reading_time,
-    status: post.status || 'published'  // Défaut à 'published'
+    status: post.status || 'published',  // Défaut à 'published'
+    seoTitle: post.seo_title || post.title,
+    seoDescription: post.seo_description || post.excerpt
   };
 };
 
@@ -98,7 +99,9 @@ export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost 
       tags: post.tags || [],
       featured: post.featured || false,
       reading_time: post.readingTime || estimateReadingTime(post.content || ''),
-      status: 'published'  // Toujours publié par défaut
+      status: 'published',  // Toujours publié par défaut
+      seo_title: post.seoTitle || post.title,
+      seo_description: post.seoDescription || post.excerpt
     };
 
     console.log('Tentative de création d\'article avec les données:', postData);
@@ -161,7 +164,9 @@ export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promi
       featured: post.featured,
       reading_time: post.readingTime,
       status: post.status || 'published',
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      seo_title: post.seoTitle || post.title,
+      seo_description: post.seoDescription || post.excerpt
     };
 
     const { data, error } = await supabase

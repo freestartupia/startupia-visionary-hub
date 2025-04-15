@@ -62,11 +62,19 @@ const BlogPostView = () => {
     );
   }
 
+  // Création des données SEO à partir des données de l'article
+  const postTitle = `${post.title} | StartupIA Blog`;
+  const postDescription = post.excerpt;
+  const postUrl = `${window.location.origin}/blog/${post.slug}`;
+  const postImage = post.coverImage || `${window.location.origin}/og-image.png`;
+
   return (
     <div className="min-h-screen bg-black text-white">
       <SEO 
-        title={`${post.title} | StartupIA Blog`}
-        description={post.excerpt}
+        title={postTitle}
+        description={postDescription}
+        canonical={postUrl}
+        noindex={post.status === 'draft'}
       />
       
       {/* Background elements */}

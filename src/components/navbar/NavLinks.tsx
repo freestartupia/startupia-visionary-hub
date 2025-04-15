@@ -14,6 +14,10 @@ interface NavLinksProps {
 }
 
 const navLinks: NavLink[] = [
+  {
+    path: '/startup',
+    label: "Startups"
+  },
   { 
     path: '/cofounder', 
     label: "Trouver un cofondateur" 
@@ -25,10 +29,6 @@ const navLinks: NavLink[] = [
   {
     path: '/blog',
     label: "Blog & Actualités"
-  },
-  {
-    path: '/startup',
-    label: "Startups"
   },
   {
     path: '/tools',

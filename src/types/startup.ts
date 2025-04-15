@@ -23,3 +23,16 @@ export interface StartupComment {
   createdAt: string;
   likes: number;
 }
+
+// Additional types needed for SubmitStartupModal
+export type AITool = "ChatGPT" | "Claude" | "LLama" | "Stable Diffusion" | 
+  "Midjourney" | "API interne" | "Hugging Face" | "Vertex AI" | "AWS Bedrock" | "Autre";
+
+export type Sector = "Santé" | "RH" | "Retail" | "Finance" | "Education" | 
+  "Marketing" | "Légal" | "Transport" | "Immobilier" | "Agriculture" | "Energie" | "Autre";
+
+export type BusinessModel = "SaaS" | "Service" | "Marketplace" | "API" | "Freemium" |
+  "B2B" | "B2C" | "B2B2C" | "Hardware" | "Autre";
+
+export type MaturityLevel = "Idée" | "MVP" | "Seed" | "Série A" | "Série B" | 
+  "Série C+" | "Profitable";

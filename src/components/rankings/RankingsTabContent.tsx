@@ -45,7 +45,7 @@ const RankingsTabContent = ({
   
   return (
     <div className="space-y-10">
-      <TopStartupsSection topStartups={topStartups} />
+      <TopStartupsSection startups={topStartups} />
       <NewStartupsSection newStartups={newStartups} />
       <TopToolsSection tools={topAIToolsWithAffiliates} />
       <TopContributorsSection contributors={topContributors} />

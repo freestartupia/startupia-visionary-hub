@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { SEO } from '@/components/SEO';
+import SEO from '@/components/SEO';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import { Sparkles } from 'lucide-react';

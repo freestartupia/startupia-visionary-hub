@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { createStartup } from '@/services/startupService';
+import { Startup } from '@/types/startup';
 
 // Schéma de validation
 const startupFormSchema = z.object({
@@ -66,8 +68,14 @@ const SubmitStartupForm: React.FC<SubmitStartupFormProps> = ({ onSuccess }) => {
   const onSubmit = async (values: StartupFormValues) => {
     setIsSubmitting(true);
     try {
+      // Ensure we're passing all required fields to createStartup
       await createStartup({
-        ...values,
+        name: values.name,
+        shortDescription: values.shortDescription,
+        websiteUrl: values.websiteUrl,
+        category: values.category,
+        aiTechnology: values.aiTechnology,
+        launchDate: values.launchDate,
         logoFile: logoFile || undefined,
       });
 

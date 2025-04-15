@@ -118,23 +118,27 @@ const SubmitStartupModal = ({ open, onOpenChange, onSubmitSuccess }: SubmitStart
         linkedinUrl: values.founderLinkedin
       }];
 
-      // Prepare startup data
+      // Prepare startup data with correct field names for Supabase
       const startupData = {
         name: values.name,
         short_description: values.shortDescription,
         logo_url: values.logoUrl || null,
+        category: values.sector, // Map sector to category
+        website_url: values.websiteUrl,
+        ai_technology: values.aiTools.join(", "), // Convert tools array to string
+        launch_date: null, // This field seems optional in the database
+        created_at: new Date().toISOString(),
+        created_by: user.id,
+        upvotes: 0,
+        // Additional fields specific to the modal's extended functionality
         long_term_vision: values.longTermVision || null,
         founders: JSON.stringify(founders),
         ai_use_cases: values.aiUseCases,
-        ai_tools: values.aiTools,
         sector: values.sector,
         business_model: values.businessModel,
         maturity_level: values.maturityLevel,
         ai_impact_score: values.aiImpactScore,
-        website_url: values.websiteUrl,
         tags: tags,
-        date_added: new Date().toISOString(),
-        upvotes: 0,  // Use upvotes instead of upvotes_count
         is_featured: false,
         view_count: 0,
       };

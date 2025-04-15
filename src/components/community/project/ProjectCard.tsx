@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Heart, Users } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,8 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -42,6 +44,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact })
     }
   };
 
+  const truncateDescription = (text: string) => {
+    if (text.length <= 120) return text;
+    return text.slice(0, 120) + '...';
+  };
+
   return (
     <Card className="glass-card hover-scale transition-transform duration-300">
       <CardHeader>
@@ -54,7 +61,18 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact })
         <h3 className="text-xl font-semibold">{project.title}</h3>
       </CardHeader>
       <CardContent>
-        <p className="text-white/80 mb-4">{project.description}</p>
+        <div className="text-white/80 mb-4">
+          {isExpanded ? project.description : truncateDescription(project.description)}
+          {project.description.length > 120 && (
+            <Button 
+              variant="link" 
+              className="p-0 h-auto text-startupia-turquoise hover:text-startupia-turquoise/80"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? 'Voir moins' : 'En savoir plus'}
+            </Button>
+          )}
+        </div>
         <div className="mb-4">
           <p className="text-sm font-semibold mb-1">Compétences recherchées :</p>
           <div className="flex flex-wrap gap-1">

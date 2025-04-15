@@ -21,6 +21,7 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
     mockStartups[startupIndex].upvotes = (mockStartups[startupIndex].upvotes || 0) + 1;
     
     // Succès
+    console.log(`Startup upvotée: ${startupId}, nouveau compteur: ${mockStartups[startupIndex].upvotes}`);
     toast.success("Startup upvotée avec succès!");
     return true;
   } catch (error) {
@@ -47,6 +48,7 @@ export const removeStartupUpvote = async (startupId: string): Promise<boolean> =
     mockStartups[startupIndex].upvotes = Math.max(0, (mockStartups[startupIndex].upvotes || 0) - 1);
     
     // Succès
+    console.log(`Upvote retiré: ${startupId}, nouveau compteur: ${mockStartups[startupIndex].upvotes}`);
     toast.success("Upvote retiré avec succès!");
     return true;
   } catch (error) {

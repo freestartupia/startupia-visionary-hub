@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   Dialog, 
@@ -133,7 +134,7 @@ const SubmitStartupModal = ({ open, onOpenChange, onSubmitSuccess }: SubmitStart
         website_url: values.websiteUrl,
         tags: tags,
         date_added: new Date().toISOString(),
-        upvotes_count: 0,
+        upvotes: 0,  // Use upvotes instead of upvotes_count
         is_featured: false,
         view_count: 0,
       };

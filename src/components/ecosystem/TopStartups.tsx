@@ -13,10 +13,13 @@ const TopStartups = () => {
     setLoading(true);
     
     try {
+      console.log('Fetching top startups...');
       // Utiliser les données mockées triées par upvotes
       const topMockStartups = [...mockStartups]
         .sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0))
         .slice(0, 4);
+      
+      console.log('Top startups:', topMockStartups.map(s => `${s.name}: ${s.upvotes} upvotes`));
       setStartups(topMockStartups);
     } catch (error) {
       console.error('Exception fetching top startups:', error);

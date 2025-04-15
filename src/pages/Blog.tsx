@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import BlogPostCard from '@/components/blog/BlogPostCard';
@@ -12,11 +12,16 @@ import {
 } from '@/data/mockBlogPosts';
 import { BlogCategory, BlogPost } from '@/types/blog';
 import SEO from '@/components/SEO';
+import { Button } from '@/components/ui/button';
+import { PenSquare } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Blog = () => {
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(mockBlogPosts);
   const [selectedCategory, setSelectedCategory] = useState<BlogCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const { user } = useAuth();
   
   const categories = getAllBlogCategories();
   const featuredPosts = getFeaturedPosts();
@@ -50,6 +55,11 @@ const Blog = () => {
     setFilteredPosts(filtered);
   };
 
+  useEffect(() => {
+    // Réinitialiser le filtrage lorsque mockBlogPosts change
+    filterPosts(searchQuery, selectedCategory);
+  }, [mockBlogPosts]);
+
   return (
     <div className="min-h-screen bg-black text-white">
       <SEO 
@@ -77,7 +87,14 @@ const Blog = () => {
             <BlogSearch onSearch={handleSearch} />
           </div>
           
-          {/* Le bouton "Soumettre un article" a été supprimé */}
+          {user && (
+            <Link to="/blog/new">
+              <Button variant="default" className="bg-startupia-turquoise hover:bg-startupia-turquoise/80">
+                <PenSquare className="mr-2 h-4 w-4" />
+                Écrire un article
+              </Button>
+            </Link>
+          )}
         </div>
         
         {/* Featured posts carousel */}
@@ -105,7 +122,15 @@ const Blog = () => {
             ))
           ) : (
             <div className="col-span-3 text-center py-10">
-              <p className="text-white/60">Aucun article trouvé avec ces critères.</p>
+              <p className="text-white/60 mb-6">Aucun article n'est disponible pour le moment.</p>
+              {user && (
+                <Link to="/blog/new">
+                  <Button variant="default" className="bg-startupia-turquoise hover:bg-startupia-turquoise/80">
+                    <PenSquare className="mr-2 h-4 w-4" />
+                    Écrire le premier article
+                  </Button>
+                </Link>
+              )}
             </div>
           )}
         </div>

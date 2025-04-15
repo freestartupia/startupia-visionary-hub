@@ -10,6 +10,7 @@ import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
 import Testimonials from '@/components/Testimonials';
 import TrustSignals from '@/components/TrustSignals';
+import StartupPromoBlog from '@/components/StartupPromoBlog';
 import CommunitySummary from '@/components/CommunitySummary';
 import SEO from '@/components/SEO';
 
@@ -61,6 +62,7 @@ const Index = () => {
       <main className="pt-24">
         <HeroSection />
         <TrustSignals />
+        <StartupPromoBlog />
         <StartupIndex />
         <StartupMatcher />
         <CommunitySummary />

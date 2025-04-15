@@ -1,3 +1,4 @@
+
 import React from 'react';
 const TrustSignals = () => {
   return <section className="py-12 relative z-10 border-y border-white/10 backdrop-blur-sm bg-black/20">
@@ -40,8 +41,8 @@ const TrustSignals = () => {
           </div>
           
           <div className="w-full sm:w-auto">
-            <div className="text-3xl font-bold text-yellow-400 bg-transparent">100%</div>
-            <p className="text-gray-300">gratuit pour tous</p>
+            <div className="text-3xl font-bold text-yellow-400">100%</div>
+            <p className="text-white/70">gratuit pour tous</p>
           </div>
           
           <div className="w-full sm:w-auto">
@@ -53,3 +54,4 @@ const TrustSignals = () => {
     </section>;
 };
 export default TrustSignals;
+

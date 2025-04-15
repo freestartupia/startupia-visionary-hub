@@ -1,8 +1,6 @@
 import React from 'react';
-
 const TrustSignals = () => {
-  return (
-    <section className="py-12 relative z-10 border-y border-white/10 backdrop-blur-sm bg-black/20">
+  return <section className="py-12 relative z-10 border-y border-white/10 backdrop-blur-sm bg-black/20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-8">
           <p className="text-lg text-white/70">Ils font confiance à Startupia</p>
@@ -42,8 +40,8 @@ const TrustSignals = () => {
           </div>
           
           <div className="w-full sm:w-auto">
-            <div className="text-3xl font-bold text-yellow-400">100%</div>
-            <p className="text-yellow-400">gratuit pour tous</p>
+            <div className="text-3xl font-bold text-yellow-400 bg-transparent">100%</div>
+            <p className="text-gray-300">gratuit pour tous</p>
           </div>
           
           <div className="w-full sm:w-auto">
@@ -52,8 +50,6 @@ const TrustSignals = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default TrustSignals;

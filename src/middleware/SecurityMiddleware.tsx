@@ -1,5 +1,6 @@
 
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -11,6 +12,8 @@ interface SecurityMiddlewareProps {
  * Middleware de sécurité pour vérifier les jetons et prévenir les attaques CSRF
  */
 const SecurityMiddleware: React.FC<SecurityMiddlewareProps> = ({ children }) => {
+  const navigate = useNavigate();
+  
   useEffect(() => {
     // Vérification de la validité du jeton d'authentification
     const checkTokenValidity = async () => {
@@ -29,8 +32,7 @@ const SecurityMiddleware: React.FC<SecurityMiddlewareProps> = ({ children }) => 
           if (error) {
             console.error('Erreur lors du rafraîchissement de la session:', error);
             toast.error("Votre session a expiré. Veuillez vous reconnecter.");
-            // Instead of using navigate, let's use window.location
-            window.location.href = '/auth';
+            navigate('/auth');
           }
         }
       }
@@ -43,7 +45,7 @@ const SecurityMiddleware: React.FC<SecurityMiddlewareProps> = ({ children }) => 
     const intervalId = setInterval(checkTokenValidity, 300000); // Toutes les 5 minutes
     
     return () => clearInterval(intervalId);
-  }, []);
+  }, [navigate]);
 
   // Protection contre le clickjacking
   useEffect(() => {

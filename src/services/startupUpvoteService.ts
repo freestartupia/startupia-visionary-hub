@@ -9,9 +9,21 @@ import { toast } from 'sonner';
  */
 export const upvoteStartup = async (startupId: string): Promise<boolean> => {
   try {
+    // Get the current user session
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    
+    if (!user) {
+      console.error('No user is logged in');
+      return false;
+    }
+    
     const { error } = await supabase
       .from('startup_upvotes')
-      .insert({ startup_id: startupId });
+      .insert({ 
+        startup_id: startupId,
+        user_id: user.id
+      });
 
     if (error) {
       console.error('Error upvoting startup:', error);
@@ -32,10 +44,20 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
  */
 export const removeStartupUpvote = async (startupId: string): Promise<boolean> => {
   try {
+    // Get the current user session
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    
+    if (!user) {
+      console.error('No user is logged in');
+      return false;
+    }
+    
     const { error } = await supabase
       .from('startup_upvotes')
       .delete()
-      .eq('startup_id', startupId);
+      .eq('startup_id', startupId)
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('Error removing startup upvote:', error);
@@ -56,10 +78,20 @@ export const removeStartupUpvote = async (startupId: string): Promise<boolean> =
  */
 export const hasUpvotedStartup = async (startupId: string): Promise<boolean> => {
   try {
+    // Get the current user session
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    
+    if (!user) {
+      console.error('No user is logged in');
+      return false;
+    }
+    
     const { data, error } = await supabase
       .from('startup_upvotes')
       .select('id')
       .eq('startup_id', startupId)
+      .eq('user_id', user.id)
       .maybeSingle();
 
     if (error) {
@@ -80,9 +112,19 @@ export const hasUpvotedStartup = async (startupId: string): Promise<boolean> => 
  */
 export const getUserUpvotedStartups = async (): Promise<string[]> => {
   try {
+    // Get the current user session
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    
+    if (!user) {
+      console.error('No user is logged in');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from('startup_upvotes')
-      .select('startup_id');
+      .select('startup_id')
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('Error getting user upvoted startups:', error);

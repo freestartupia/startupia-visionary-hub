@@ -55,25 +55,44 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder = 'trending' }: Dir
         // Fallback to mock data
         setStartups(processMockData());
       } else if (data && data.length > 0) {
-        const processedStartups = data.map(item => ({
-          id: item.id,
-          name: item.name,
-          logoUrl: item.logo_url || '',
-          shortDescription: item.short_description,
-          longTermVision: item.long_term_vision || '',
-          founders: item.founders || [],
-          aiUseCases: item.ai_use_cases || '',
-          aiTools: item.ai_tools || [],
-          sector: item.sector,
-          businessModel: item.business_model,
-          maturityLevel: item.maturity_level,
-          aiImpactScore: item.ai_impact_score,
-          tags: item.tags || [],
-          websiteUrl: item.website_url || '',
-          pitchDeckUrl: item.pitch_deck_url,
-          crunchbaseUrl: item.crunchbase_url,
-          upvotes: item.upvotes || 0
-        }));
+        const processedStartups: Startup[] = data.map(item => {
+          // Process founders to ensure it's the correct type
+          let parsedFounders = [];
+          try {
+            if (item.founders) {
+              if (typeof item.founders === 'string') {
+                parsedFounders = JSON.parse(item.founders);
+              } else if (Array.isArray(item.founders)) {
+                parsedFounders = item.founders;
+              } else if (typeof item.founders === 'object') {
+                parsedFounders = [item.founders];
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing founders:', e);
+            parsedFounders = [];
+          }
+          
+          return {
+            id: item.id,
+            name: item.name,
+            logoUrl: item.logo_url || '',
+            shortDescription: item.short_description,
+            longTermVision: item.long_term_vision || '',
+            founders: parsedFounders,
+            aiUseCases: item.ai_use_cases || '',
+            aiTools: item.ai_tools || [],
+            sector: item.sector,
+            businessModel: item.business_model,
+            maturityLevel: item.maturity_level,
+            aiImpactScore: item.ai_impact_score,
+            tags: item.tags || [],
+            websiteUrl: item.website_url || '',
+            pitchDeckUrl: item.pitch_deck_url,
+            crunchbaseUrl: item.crunchbase_url,
+            upvotes: item.upvotes || 0
+          };
+        });
         
         setStartups(processedStartups);
       } else {
@@ -88,7 +107,7 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder = 'trending' }: Dir
     }
   };
   
-  const processMockData = () => {
+  const processMockData = (): Startup[] => {
     let filtered = [...mockStartups];
     
     // Apply search filter if any

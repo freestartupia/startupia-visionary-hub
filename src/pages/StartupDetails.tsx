@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate, useAuth } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Startup, Sector, BusinessModel, MaturityLevel, AITool } from '@/types/startup';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import Footer from '@/components/Footer';
 import SEO from '@/components/SEO';
 import CommentsSection from '@/components/startup/CommentsSection';
 import { upvoteStartup, removeStartupUpvote, hasUpvotedStartup } from '@/services/startupUpvoteService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const StartupDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -93,7 +94,6 @@ const StartupDetails = () => {
             isFeatured: data.is_featured,
           });
 
-          // Check if user has upvoted this startup
           if (user && data) {
             try {
               const hasUpvoted = await hasUpvotedStartup(id);
@@ -154,7 +154,6 @@ const StartupDetails = () => {
         const success = await removeStartupUpvote(id);
         if (success) {
           setIsUpvoted(false);
-          // Update the local count immediately
           if (startup) {
             setStartup({
               ...startup,
@@ -167,7 +166,6 @@ const StartupDetails = () => {
         const success = await upvoteStartup(id);
         if (success) {
           setIsUpvoted(true);
-          // Update the local count immediately
           if (startup) {
             setStartup({
               ...startup,

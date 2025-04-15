@@ -73,6 +73,7 @@ export type Startup = {
   viewCount?: number;
   isFeatured?: boolean;
   fundingRounds?: FundingRound[];
+  upvotes?: number; // Added upvotes property
 };
 
 export type FundingRound = {

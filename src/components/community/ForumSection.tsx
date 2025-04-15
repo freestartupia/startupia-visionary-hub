@@ -1,16 +1,15 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ForumPost } from '@/types/community';
 import { getForumPosts, invalidatePostsCache } from '@/services/forum/postFetchService';
-import { togglePostLike } from '@/services/forumService';
-import { togglePostUpvote } from '@/services/forumUpvoteService';
-import CreateForumPost from './CreateForumPost';
 import ForumPostList from './forum/ForumPostList';
-import ForumSearch from './forum/ForumSearch';
 import LoadingSkeleton from './LoadingSkeleton';
+import { useForumActions } from '@/hooks/useForumActions';
+import ForumHeader from './forum/ForumHeader';
+import SearchResults from './forum/SearchResults';
 
 interface ForumSectionProps {
   requireAuth?: boolean;
@@ -24,6 +23,7 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
   const [isFirstLoad, setIsFirstLoad] = useState<boolean>(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { handleLikePost, handleUpvotePost } = useForumActions(requireAuth);
 
   // Optimisation: utiliser useCallback pour empêcher les recreations inutiles
   const fetchPosts = useCallback(async (isMounted = true) => {
@@ -63,7 +63,7 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     };
   }, [fetchPosts, isFirstLoad]);
 
-  // Utiliser useMemo pour filtrer les posts seulement quand nécessaire
+  // Effet pour filtrer les posts lors de la recherche
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredPosts(posts);
@@ -92,108 +92,6 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     setFilteredPosts(filtered);
   }, [searchQuery, posts]);
 
-  // Manipulation optimisée des événements avec useCallback
-  const handleLikePost = useCallback(async (e: React.MouseEvent, postId: string) => {
-    e.stopPropagation();
-    
-    if (requireAuth && !user) {
-      toast.error("Vous devez être connecté pour liker un post");
-      navigate('/auth');
-      return;
-    }
-    
-    try {
-      const result = await togglePostLike(postId);
-      
-      // Optimiser les mises à jour d'état en utilisant un updater fonctionnel
-      setPosts(prevPosts => 
-        prevPosts.map(post => 
-          post.id === postId ? {
-            ...post,
-            likes: result.newCount,
-            isLiked: result.liked
-          } : post
-        )
-      );
-      
-      // Filtrer conditionnellement pour éviter les calculs inutiles
-      if (searchQuery) {
-        setFilteredPosts(prevFiltered => 
-          prevFiltered.map(post => 
-            post.id === postId ? {
-              ...post,
-              likes: result.newCount,
-              isLiked: result.liked
-            } : post
-          )
-        );
-      }
-      
-      // Invalider le cache
-      invalidatePostsCache();
-      
-    } catch (error) {
-      console.error('Erreur lors du like:', error);
-    }
-  }, [requireAuth, user, navigate, searchQuery]);
-  
-  const handleUpvotePost = useCallback(async (e: React.MouseEvent, postId: string) => {
-    e.stopPropagation();
-    
-    if (requireAuth && !user) {
-      toast.error("Vous devez être connecté pour upvoter un post");
-      navigate('/auth');
-      return;
-    }
-    
-    try {
-      const result = await togglePostUpvote(postId);
-      
-      // Fonction pour trier les posts 
-      const sortPosts = useCallback((postsToSort: ForumPost[]) => {
-        return [...postsToSort].sort((a, b) => {
-          const upvoteDiff = (b.upvotesCount || 0) - (a.upvotesCount || 0);
-          if (upvoteDiff === 0) {
-            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-          }
-          return upvoteDiff;
-        });
-      }, []);
-      
-      // Mettre à jour et trier les posts
-      setPosts(prevPosts => {
-        const updated = prevPosts.map(post => 
-          post.id === postId ? {
-            ...post,
-            upvotesCount: result.newCount,
-            isUpvoted: result.upvoted
-          } : post
-        );
-        return sortPosts(updated);
-      });
-      
-      // Mettre à jour les posts filtrés si nécessaire
-      if (searchQuery) {
-        setFilteredPosts(prevFiltered => {
-          const updated = prevFiltered.map(post => 
-            post.id === postId ? {
-              ...post,
-              upvotesCount: result.newCount,
-              isUpvoted: result.upvoted
-            } : post
-          );
-          return sortPosts(updated);
-        });
-      }
-      
-      // Invalider le cache
-      invalidatePostsCache();
-      
-    } catch (error) {
-      console.error('Erreur lors de l\'upvote:', error);
-    }
-  }, [requireAuth, user, navigate, searchQuery]);
-
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
   }, []);
@@ -203,30 +101,25 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     fetchPosts();
   }, [fetchPosts]);
 
-  // Memoization du resultat de la recherche pour éviter des re-rendus
-  const searchResultText = useMemo(() => {
-    if (!searchQuery) return null;
-    
-    return filteredPosts.length === 0
-      ? "Aucun résultat trouvé"
-      : `${filteredPosts.length} résultat${filteredPosts.length > 1 ? 's' : ''} trouvé${filteredPosts.length > 1 ? 's' : ''}`;
-  }, [searchQuery, filteredPosts.length]);
+  const handleLikePostWrapper = useCallback((e: React.MouseEvent, postId: string) => {
+    handleLikePost(e, postId, user, posts, setPosts, setFilteredPosts, searchQuery);
+  }, [handleLikePost, user, posts, searchQuery]);
+
+  const handleUpvotePostWrapper = useCallback((e: React.MouseEvent, postId: string) => {
+    handleUpvotePost(e, postId, user, posts, setPosts, setFilteredPosts, searchQuery);
+  }, [handleUpvotePost, user, posts, searchQuery]);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <h2 className="text-2xl font-bold">Forum IA</h2>
-        <div className="flex flex-col md:flex-row gap-4">
-          <ForumSearch onSearch={handleSearch} />
-          <CreateForumPost onPostCreated={handlePostCreated} />
-        </div>
-      </div>
+      <ForumHeader 
+        onSearch={handleSearch} 
+        onPostCreated={handlePostCreated} 
+      />
 
-      {searchQuery && (
-        <div className="text-sm text-gray-400">
-          {searchResultText}
-        </div>
-      )}
+      <SearchResults 
+        searchQuery={searchQuery} 
+        resultsCount={filteredPosts.length} 
+      />
 
       {isLoading ? (
         <LoadingSkeleton count={3} type="post" />
@@ -234,8 +127,8 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
         <ForumPostList
           posts={filteredPosts}
           isLoading={false}
-          onLikePost={handleLikePost}
-          onUpvotePost={handleUpvotePost}
+          onLikePost={handleLikePostWrapper}
+          onUpvotePost={handleUpvotePostWrapper}
           onPostCreated={handlePostCreated}
           requireAuth={requireAuth}
         />

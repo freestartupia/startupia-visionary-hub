@@ -21,7 +21,7 @@ const mapSupabasePostToAppPost = (post: any): BlogPost => {
     tags: post.tags || [],
     featured: post.featured || false,
     readingTime: post.reading_time,
-    status: post.status || 'draft'
+    status: post.status || 'published'  // Défaut à 'published'
   };
 };
 
@@ -71,7 +71,7 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
 
 export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
-    // Vérification simple de l'utilisateur, sans dépendre de la table user_roles
+    // Vérification simple que l'utilisateur est connecté, sans dépendre de user_roles
     const { data: userData } = await supabase.auth.getUser();
     
     if (!userData.user) {
@@ -86,7 +86,7 @@ export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost 
     // Création des données de l'article, simplifiée
     const postData = {
       title: post.title,
-      slug: post.slug || post.title?.toLowerCase().replace(/\s+/g, '-'),
+      slug: post.slug || generateSlug(post.title || ''),
       excerpt: post.excerpt,
       content: post.content,
       category: post.category,
@@ -96,12 +96,13 @@ export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost 
       author_avatar: userData.user.user_metadata?.avatar_url,
       created_at: new Date().toISOString(),
       tags: post.tags || [],
-      featured: false,
-      reading_time: post.readingTime || '1 min',
-      status: post.status || 'published' // Changé de 'draft' à 'published' par défaut
+      featured: post.featured || false,
+      reading_time: post.readingTime || estimateReadingTime(post.content || ''),
+      status: 'published'  // Toujours publié par défaut
     };
 
-    // Insertion simplifiée
+    console.log('Tentative de création d\'article avec les données:', postData);
+
     const { data, error } = await supabase
       .from('blog_posts')
       .insert(postData)
@@ -159,7 +160,7 @@ export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promi
       tags: post.tags,
       featured: post.featured,
       reading_time: post.readingTime,
-      status: post.status,
+      status: post.status || 'published',
       updated_at: new Date().toISOString()
     };
 

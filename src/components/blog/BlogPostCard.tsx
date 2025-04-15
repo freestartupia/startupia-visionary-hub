@@ -1,11 +1,8 @@
 
-import React from "react";
-import { Link } from "react-router-dom";
-import { CalendarIcon, Clock, Tag } from "lucide-react";
-import { BlogPost } from "@/types/blog";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import React from 'react';
+import { BlogPost } from '@/types/blog';
+import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
 
 interface BlogPostCardProps {
   post: BlogPost;
@@ -13,99 +10,61 @@ interface BlogPostCardProps {
 }
 
 const BlogPostCard = ({ post, featured = false }: BlogPostCardProps) => {
-  const formattedDate = format(new Date(post.createdAt), "dd MMM yyyy");
-  
-  if (featured) {
-    return (
-      <Card className="overflow-hidden border-none shadow-lg hover:shadow-xl transition-shadow bg-black/30 text-white">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-          <div className="relative h-[240px] md:h-full overflow-hidden">
+  const cardClass = featured
+    ? 'flex flex-col md:flex-row gap-6 bg-black/30 border border-startupia-turquoise/20 hover:border-startupia-turquoise/40 p-6 rounded-lg transition-all hover:bg-black/50'
+    : 'flex flex-col h-full bg-black/30 border border-white/10 hover:border-white/30 p-6 rounded-lg transition-all hover:bg-black/50';
+
+  return (
+    <Link to={`/blog/post/${post.slug}`} className={cardClass}>
+      {post.coverImage && (
+        <div className={featured ? 'w-full md:w-1/3 mb-6 md:mb-0' : 'w-full mb-6'}>
+          <div className="rounded-lg overflow-hidden h-[200px]">
             <img 
-              src={post.coverImage || "https://images.unsplash.com/photo-1620712943543-bcc4688e7485"} 
-              alt={post.title}
+              src={post.coverImage} 
+              alt={post.title} 
               className="w-full h-full object-cover"
             />
           </div>
-          <CardContent className="p-6 flex flex-col h-full justify-between">
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <Badge variant="outline" className="text-startupia-turquoise border-startupia-turquoise">
-                  {post.category}
-                </Badge>
-                <span className="text-xs text-white/60 flex items-center gap-1">
-                  <CalendarIcon size={14} /> {formattedDate}
-                </span>
-              </div>
-              <h2 className="text-2xl font-bold mb-3">{post.title}</h2>
-              <p className="text-white/80 mb-4 line-clamp-3">{post.excerpt}</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                {post.authorAvatar && (
-                  <img 
-                    src={post.authorAvatar} 
-                    alt={post.authorName}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                )}
-                <span className="text-sm text-white/70">{post.authorName}</span>
-              </div>
-              <span className="text-xs text-white/60 flex items-center gap-1">
-                <Clock size={14} /> {post.readingTime}
-              </span>
-            </div>
-            <div className="mt-4">
-              <Link 
-                to={`/blog/${post.slug}`} 
-                className="block text-startupia-turquoise hover:underline"
-              >
-                Lire la suite →
-              </Link>
-            </div>
-          </CardContent>
         </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Link to={`/blog/${post.slug}`}>
-      <Card className="overflow-hidden h-full border border-startupia-turquoise/20 bg-black/30 hover-scale glass-card">
-        <div className="h-48 overflow-hidden">
-          <img 
-            src={post.coverImage || "https://images.unsplash.com/photo-1620712943543-bcc4688e7485"}
-            alt={post.title}
-            className="w-full h-full object-cover transition-transform hover:scale-105"
-          />
+      )}
+      
+      <div className={featured ? 'flex-1' : ''}>
+        <div className="flex items-center mb-3">
+          <span className="bg-startupia-turquoise/20 text-startupia-turquoise text-xs px-2 py-1 rounded mr-2">
+            {post.category}
+          </span>
+          <span className="text-white/50 text-xs">
+            {format(new Date(post.createdAt), 'dd MMM yyyy')}
+          </span>
         </div>
-        <CardContent className="p-4">
-          <div className="flex justify-between items-center mb-3">
-            <Badge variant="outline" className="text-startupia-turquoise border-startupia-turquoise">
-              {post.category}
-            </Badge>
-            <span className="text-xs text-white/60 flex items-center gap-1">
-              <Clock size={12} /> {post.readingTime}
-            </span>
+        
+        <h3 className={featured ? "text-2xl font-bold mb-3" : "text-xl font-bold mb-3"}>
+          {post.title}
+        </h3>
+        
+        <p className="text-white/70 mb-4 line-clamp-2">{post.excerpt}</p>
+        
+        <div className="mt-auto pt-4 flex items-center justify-between">
+          <div className="flex items-center">
+            {post.authorAvatar ? (
+              <img 
+                src={post.authorAvatar} 
+                alt={post.authorName} 
+                className="w-8 h-8 rounded-full mr-2"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-startupia-turquoise/30 flex items-center justify-center mr-2">
+                {post.authorName?.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <span className="text-sm">{post.authorName}</span>
           </div>
-          <h3 className="font-bold text-lg mb-2 line-clamp-2">{post.title}</h3>
-          <p className="text-white/80 text-sm mb-3 line-clamp-2">{post.excerpt}</p>
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center space-x-2">
-              {post.authorAvatar && (
-                <img 
-                  src={post.authorAvatar} 
-                  alt={post.authorName}
-                  className="w-6 h-6 rounded-full object-cover"
-                />
-              )}
-              <span className="text-xs text-white/70">{post.authorName}</span>
-            </div>
-            <span className="text-xs text-white/60">
-              {formattedDate}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+          
+          <span className="text-white/50 text-xs">
+            {post.readingTime}
+          </span>
+        </div>
+      </div>
     </Link>
   );
 };

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { BlogPost } from '@/types/blog';
+import { BlogPost, BlogCategory } from '@/types/blog';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import SEO from '@/components/SEO';
@@ -67,7 +67,7 @@ const BlogAdmin = () => {
           slug: post.slug,
           excerpt: post.excerpt,
           content: post.content,
-          category: post.category,
+          category: post.category as BlogCategory,
           coverImage: post.cover_image,
           authorId: post.author_id,
           authorName: post.author_name,

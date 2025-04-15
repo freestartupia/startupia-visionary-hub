@@ -72,6 +72,7 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
       }
     } catch (error) {
       console.error("Error handling upvote:", error);
+      toast.error("Erreur lors de l'upvote");
     } finally {
       setIsUpvoting(false);
     }

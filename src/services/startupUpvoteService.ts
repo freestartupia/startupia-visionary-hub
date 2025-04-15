@@ -11,8 +11,21 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
   try {
     console.log('Tentative d\'upvote pour la startup:', startupId);
     
+    // Vérifier si l'ID est au format UUID (contient des tirets)
+    // Si c'est le cas, nous sommes probablement sur la page de détails
+    // Sinon, c'est un ID simple comme 'mistral-ai'
+    const isUUID = startupId.includes('-') && startupId.length > 20;
+    
     // Trouver la startup dans les données mockées
-    const startupIndex = mockStartups.findIndex(s => s.id === startupId);
+    let startupIndex = -1;
+    
+    if (isUUID) {
+      // Si c'est un UUID, chercher dans le champ id mais aussi vérifier si un ID simple correspond
+      startupIndex = mockStartups.findIndex(s => s.id === startupId);
+    } else {
+      // Si c'est un ID simple, chercher directement
+      startupIndex = mockStartups.findIndex(s => s.id === startupId);
+    }
     
     if (startupIndex === -1) {
       console.error('Startup non trouvée:', startupId);
@@ -42,8 +55,19 @@ export const removeStartupUpvote = async (startupId: string): Promise<boolean> =
   try {
     console.log('Tentative de retrait d\'upvote pour la startup:', startupId);
     
+    // Vérifier si l'ID est au format UUID (contient des tirets)
+    const isUUID = startupId.includes('-') && startupId.length > 20;
+    
     // Trouver la startup dans les données mockées
-    const startupIndex = mockStartups.findIndex(s => s.id === startupId);
+    let startupIndex = -1;
+    
+    if (isUUID) {
+      // Si c'est un UUID, chercher dans le champ id mais aussi vérifier si un ID simple correspond
+      startupIndex = mockStartups.findIndex(s => s.id === startupId);
+    } else {
+      // Si c'est un ID simple, chercher directement
+      startupIndex = mockStartups.findIndex(s => s.id === startupId);
+    }
     
     if (startupIndex === -1) {
       console.error('Startup non trouvée:', startupId);

@@ -1,197 +1,97 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Startup, AITool, Sector, BusinessModel, MaturityLevel } from '@/types/startup';
+import { Startup } from '@/types/startup';
 import StartupCard from '@/components/StartupCard';
 import { mockStartups } from '@/data/mockStartups';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface DirectoryViewProps {
   searchQuery: string;
   showFilters: boolean;
-  sortOrder?: string;
+  sortOrder: string;
 }
 
-const DirectoryView = ({ searchQuery, showFilters, sortOrder = 'trending' }: DirectoryViewProps) => {
+const DirectoryView = ({ searchQuery, showFilters, sortOrder }: DirectoryViewProps) => {
   const [startups, setStartups] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchStartups = async () => {
     setLoading(true);
-    
     try {
-      let query = supabase
-        .from('startups')
-        .select('*');
+      // Utiliser les mockStartups
+      let filteredStartups = [...mockStartups];
       
-      // Apply search filter if any
-      if (searchQuery.trim()) {
-        query = query.or(`name.ilike.%${searchQuery}%,short_description.ilike.%${searchQuery}%`);
+      // Appliquer le filtre de recherche
+      if (searchQuery) {
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        filteredStartups = filteredStartups.filter(startup => 
+          startup.name.toLowerCase().includes(lowerCaseQuery) || 
+          startup.shortDescription.toLowerCase().includes(lowerCaseQuery) ||
+          startup.tags.some(tag => tag.toLowerCase().includes(lowerCaseQuery)) ||
+          startup.sector.toLowerCase().includes(lowerCaseQuery)
+        );
       }
       
-      // Sort based on selected order
+      // Appliquer le tri
       switch (sortOrder) {
-        case 'impact':
-          query = query.order('ai_impact_score', { ascending: false });
+        case 'votes':
+          filteredStartups.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+          break;
+        case 'trending':
+          // Pour la démo, on mélange juste aléatoirement
+          filteredStartups.sort(() => Math.random() - 0.5);
+          break;
+        case 'newest':
+          // Utiliser la date de création si disponible
+          filteredStartups.sort((a, b) => {
+            const dateA = a.dateAdded ? new Date(a.dateAdded) : new Date(0);
+            const dateB = b.dateAdded ? new Date(b.dateAdded) : new Date(0);
+            return dateB.getTime() - dateA.getTime();
+          });
           break;
         case 'alphabetical':
-          query = query.order('name', { ascending: true });
-          break;
-        case 'votes':
-        case 'trending':
-          query = query.order('upvotes', { ascending: false });
-          break;
-        case 'funding':
-          query = query.in('maturity_level', ['Série A', 'Série B', 'Série C+']);
+          filteredStartups.sort((a, b) => a.name.localeCompare(b.name));
           break;
         default:
-          // 'newest' - default
-          query = query.order('created_at', { ascending: false });
+          break;
       }
       
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching startups:', error);
-        // Fallback to mock data
-        setStartups(processMockData());
-      } else if (data && data.length > 0) {
-        const processedStartups: Startup[] = data.map(item => {
-          // Process founders to ensure it's the correct type
-          let parsedFounders = [];
-          try {
-            if (item.founders) {
-              if (typeof item.founders === 'string') {
-                parsedFounders = JSON.parse(item.founders);
-              } else if (Array.isArray(item.founders)) {
-                parsedFounders = item.founders;
-              } else if (typeof item.founders === 'object') {
-                parsedFounders = [item.founders];
-              }
-            }
-          } catch (e) {
-            console.error('Error parsing founders:', e);
-            parsedFounders = [];
-          }
-          
-          // Handle aiTools properly
-          let aiTools: AITool[] = [];
-          try {
-            if (item.ai_tools) {
-              if (typeof item.ai_tools === 'string') {
-                aiTools = JSON.parse(item.ai_tools) as AITool[];
-              } else if (Array.isArray(item.ai_tools)) {
-                // Make sure each item is a valid AITool
-                aiTools = item.ai_tools.filter(tool => 
-                  typeof tool === 'string' && 
-                  ["ChatGPT", "Claude", "LLama", "Stable Diffusion", "Midjourney", 
-                   "API interne", "Hugging Face", "Vertex AI", "AWS Bedrock", "Autre"].includes(tool)
-                ) as AITool[];
-              }
-            }
-          } catch (e) {
-            console.error('Error parsing aiTools:', e);
-            aiTools = [];
-          }
-          
-          return {
-            id: item.id,
-            name: item.name,
-            logoUrl: item.logo_url || '',
-            shortDescription: item.short_description,
-            longTermVision: item.long_term_vision || '',
-            founders: parsedFounders,
-            aiUseCases: item.ai_use_cases || '',
-            aiTools: aiTools,
-            sector: item.sector as Sector,
-            businessModel: item.business_model as BusinessModel,
-            maturityLevel: item.maturity_level as MaturityLevel,
-            aiImpactScore: item.ai_impact_score,
-            tags: item.tags || [],
-            websiteUrl: item.website_url || '',
-            pitchDeckUrl: item.pitch_deck_url,
-            crunchbaseUrl: item.crunchbase_url,
-            upvotes: item.upvotes || 0
-          };
-        });
-        
-        setStartups(processedStartups);
-      } else {
-        // Fallback to mock data if no results
-        setStartups(processMockData());
-      }
+      setStartups(filteredStartups);
     } catch (error) {
-      console.error('Exception fetching startups:', error);
-      setStartups(processMockData());
+      console.error('Error fetching startups:', error);
+      setStartups([]);
     } finally {
       setLoading(false);
     }
   };
-  
-  const processMockData = (): Startup[] => {
-    let filtered = [...mockStartups];
-    
-    // Apply search filter if any
-    if (searchQuery.trim()) {
-      filtered = filtered.filter((startup) =>
-        startup.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        startup.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        startup.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    }
-    
-    // Sort based on selected order
-    switch (sortOrder) {
-      case 'impact':
-        filtered.sort((a, b) => b.aiImpactScore - a.aiImpactScore);
-        break;
-      case 'alphabetical':
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'votes':
-      case 'trending':
-        filtered.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
-        break;
-      case 'funding':
-        filtered = filtered.filter(s => s.maturityLevel === 'Série A' || s.maturityLevel === 'Série B' || s.maturityLevel === 'Série C+');
-        break;
-      default: 
-        // 'newest' - default
-        filtered = filtered.reverse();
-    }
-    
-    return filtered;
-  };
-  
+
   useEffect(() => {
     fetchStartups();
-  }, [searchQuery, showFilters, sortOrder]);
-  
+  }, [searchQuery, sortOrder]);
+
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {[...Array(8)].map((_, index) => (
-          <div key={index} className="h-64 glass-card animate-pulse"></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {[...Array(12)].map((_, index) => (
+          <Skeleton key={index} className="h-64 w-full rounded-lg" />
         ))}
       </div>
     );
   }
-  
+
   if (startups.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-white/70">Aucune startup ne correspond à votre recherche</p>
+      <div className="text-center py-16">
+        <h3 className="text-xl font-semibold mb-2">Aucune startup trouvée</h3>
+        <p className="text-white/60">Essayez de modifier vos critères de recherche</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {startups.map(startup => (
-        <StartupCard 
-          key={startup.id} 
-          startup={startup} 
-          refetchStartups={fetchStartups}
-        />
+        <StartupCard key={startup.id} startup={startup} refetchStartups={fetchStartups} />
       ))}
     </div>
   );

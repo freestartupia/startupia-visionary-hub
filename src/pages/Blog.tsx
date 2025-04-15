@@ -1,41 +1,73 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import BlogPostCard from '@/components/blog/BlogPostCard';
 import BlogSearch from '@/components/blog/BlogSearch';
 import CategoryFilter from '@/components/blog/CategoryFilter';
-import { 
-  mockBlogPosts, 
-  getAllBlogCategories, 
-  getFeaturedPosts 
-} from '@/data/mockBlogPosts';
+import { supabase } from '@/integrations/supabase/client';
 import { BlogCategory, BlogPost } from '@/types/blog';
 import SEO from '@/components/SEO';
+import { toast } from 'sonner';
 
 const Blog = () => {
-  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(mockBlogPosts);
+  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<BlogCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
   
-  const categories = getAllBlogCategories();
-  const featuredPosts = getFeaturedPosts();
+  // Fetch blog posts from Supabase
+  const { data: posts, isLoading, error } = useQuery({
+    queryKey: ['blog-posts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Convert from snake_case to camelCase for the BlogPost interface
+      return data.map((post: any): BlogPost => ({
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt,
+        content: post.content,
+        category: post.category as BlogCategory,
+        coverImage: post.cover_image,
+        authorId: post.author_id,
+        authorName: post.author_name,
+        authorAvatar: post.author_avatar,
+        createdAt: post.created_at,
+        updatedAt: post.updated_at,
+        tags: post.tags || [],
+        featured: post.featured,
+        readingTime: post.reading_time,
+      }));
+    }
+  });
   
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    filterPosts(query, selectedCategory);
-  };
+  // Extract unique categories from posts
+  useEffect(() => {
+    if (posts) {
+      const uniqueCategories = [...new Set(posts.map(post => post.category))];
+      setCategories(uniqueCategories as BlogCategory[]);
+      setFilteredPosts(posts);
+    }
+  }, [posts]);
   
-  const handleCategoryChange = (category: BlogCategory | null) => {
-    setSelectedCategory(category);
-    filterPosts(searchQuery, category);
-  };
-  
-  const filterPosts = (query: string, category: BlogCategory | null) => {
-    let filtered = [...mockBlogPosts];
+  // Handle search and filter
+  useEffect(() => {
+    if (!posts) return;
     
-    if (query) {
-      const lowerQuery = query.toLowerCase();
+    let filtered = [...posts];
+    
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
       filtered = filtered.filter(post => 
         post.title.toLowerCase().includes(lowerQuery) ||
         post.excerpt.toLowerCase().includes(lowerQuery) ||
@@ -43,12 +75,30 @@ const Blog = () => {
       );
     }
     
-    if (category) {
-      filtered = filtered.filter(post => post.category === category);
+    if (selectedCategory) {
+      filtered = filtered.filter(post => post.category === selectedCategory);
     }
     
     setFilteredPosts(filtered);
+  }, [searchQuery, selectedCategory, posts]);
+  
+  // Handle search input
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
   };
+  
+  // Handle category selection
+  const handleCategoryChange = (category: BlogCategory | null) => {
+    setSelectedCategory(category);
+  };
+  
+  // Get featured posts
+  const featuredPosts = posts?.filter(post => post.featured) || [];
+
+  if (error) {
+    toast.error("Erreur lors du chargement des articles");
+    console.error("Error loading blog posts:", error);
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -76,8 +126,6 @@ const Blog = () => {
           <div className="w-full md:w-1/3">
             <BlogSearch onSearch={handleSearch} />
           </div>
-          
-          {/* Le bouton "Soumettre un article" a été supprimé */}
         </div>
         
         {/* Featured posts carousel */}
@@ -98,17 +146,23 @@ const Blog = () => {
           onSelectCategory={handleCategoryChange}
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPosts.length > 0 ? (
-            filteredPosts.map(post => (
-              <BlogPostCard key={post.id} post={post} />
-            ))
-          ) : (
-            <div className="col-span-3 text-center py-10">
-              <p className="text-white/60">Aucun article trouvé avec ces critères.</p>
-            </div>
-          )}
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPosts.length > 0 ? (
+              filteredPosts.map(post => (
+                <BlogPostCard key={post.id} post={post} />
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-10">
+                <p className="text-white/60">Aucun article trouvé avec ces critères.</p>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       <Footer />

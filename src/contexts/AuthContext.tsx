@@ -10,6 +10,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, metadata?: { [key: string]: any }) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  isLoading: boolean; // Added isLoading property
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -101,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = {
     user,
     loading,
+    isLoading: loading, // Add isLoading alias for loading for compatibility
     signIn,
     signUp,
     signOut,

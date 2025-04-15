@@ -11,6 +11,7 @@ import SubmitStartupModal from "@/components/ecosystem/SubmitStartupModal";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/navbar/Navbar";
 import SEO from "@/components/SEO";
+import { Startup } from "@/types/startup";
 
 const AIEcosystem = () => {
   const [activeTab, setActiveTab] = useState("directory");
@@ -26,12 +27,14 @@ const AIEcosystem = () => {
   });
 
   // Sort startups by upvotes (descending)
-  const sortedStartups = [...startupsData].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+  const sortedStartups = React.useMemo(() => {
+    return [...startupsData].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+  }, [startupsData]);
 
-  const handleUpvote = (startupId: string, newCount: number) => {
+  const handleUpvote = async (startupId: string, newCount: number) => {
     console.log(`Startup ${startupId} upvotes updated to ${newCount}`);
     // Refetch to get the latest data
-    refetch();
+    await refetch();
   };
 
   return (
@@ -40,6 +43,8 @@ const AIEcosystem = () => {
         title="Écosystème des Startups IA Françaises - Startupia"
         description="Découvrez les startups françaises spécialisées en IA, leurs cas d'usage, et trouvez des opportunités dans l'écosystème de l'intelligence artificielle."
       />
+
+      <Navbar />
 
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>

@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
+import { HelmetProvider } from 'react-helmet-async';
 import './App.css';
 import AIEcosystem from './pages/AIEcosystem';
 import StartupDetails from './pages/StartupDetails';
@@ -19,19 +21,21 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<AIEcosystem />} />
-            <Route path="/ecosystem" element={<AIEcosystem />} />
-            <Route path="/startup/:id" element={<StartupDetails />} />
-            {/* Autres routes... */}
-          </Routes>
-          <Toaster position="top-right" />
-        </Router>
-      </AuthProvider>
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<AIEcosystem />} />
+              <Route path="/ecosystem" element={<AIEcosystem />} />
+              <Route path="/startup/:id" element={<StartupDetails />} />
+              {/* Autres routes... */}
+            </Routes>
+            <Toaster position="top-right" />
+          </Router>
+        </AuthProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   );
 }
 

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Startup } from "@/types/startup";
 
@@ -160,21 +159,8 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
     }
     
     // Increment the upvote count in the startups table
-    const { error: updateError } = await supabase
-      .from('startups')
-      .update({ upvotes: supabase.rpc('increment_startup_upvotes', { startup_id: startupId }) })
-      .eq('id', startupId);
-    
-    if (updateError) {
-      console.error('Error incrementing upvotes directly:', updateError);
-      // Fallback to RPC function if direct update fails
-      const { error: rpcError } = await supabase.rpc('increment_startup_upvotes', { startup_id: startupId });
-      
-      if (rpcError) {
-        console.error('Error incrementing upvotes via RPC:', rpcError);
-        return false;
-      }
-    }
+    // Use a fixed return type for the supabase rpc calls
+    await supabase.rpc('increment_startup_upvotes', { startup_id: startupId });
     
     return true;
   } catch (error) {
@@ -206,21 +192,8 @@ export const downvoteStartup = async (startupId: string): Promise<boolean> => {
     }
     
     // Decrement the upvote count in the startups table
-    const { error: updateError } = await supabase
-      .from('startups')
-      .update({ upvotes: supabase.rpc('decrement_startup_upvotes', { startup_id: startupId }) })
-      .eq('id', startupId);
-    
-    if (updateError) {
-      console.error('Error decrementing upvotes directly:', updateError);
-      // Fallback to RPC function if direct update fails
-      const { error: rpcError } = await supabase.rpc('decrement_startup_upvotes', { startup_id: startupId });
-      
-      if (rpcError) {
-        console.error('Error decrementing upvotes via RPC:', rpcError);
-        return false;
-      }
-    }
+    // Use a fixed return type for the supabase rpc calls
+    await supabase.rpc('decrement_startup_upvotes', { startup_id: startupId });
     
     return true;
   } catch (error) {

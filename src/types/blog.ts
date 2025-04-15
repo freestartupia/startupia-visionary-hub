@@ -24,6 +24,7 @@ export interface BlogPost {
   tags: string[];
   featured?: boolean;
   readingTime: string;
+  status: 'draft' | 'published' | 'pending'; // Added status property
 }
 
 export interface BlogAuthor {

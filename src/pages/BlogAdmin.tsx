@@ -77,7 +77,7 @@ const BlogAdmin = () => {
             tags: post.tags || [],
             featured: post.featured,
             readingTime: post.reading_time,
-            status: post.status
+            status: post.status || 'draft' // Ensure status is always set
           }));
           
           setPosts(formattedPosts);

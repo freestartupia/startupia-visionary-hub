@@ -86,12 +86,20 @@ const TopStartups = () => {
   useEffect(() => {
     fetchTopStartups();
     
-    // Ajouter un écouteur pour les changements d'upvotes via un intervalle
-    const intervalId = setInterval(() => {
-      fetchTopStartups();
-    }, 5000); // Rafraîchir toutes les 5 secondes
+    // Configurer l'abonnement Supabase pour les mises à jour en temps réel
+    const channel = supabase
+      .channel('public:startups')
+      .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'startups' }, 
+          (payload) => {
+            console.log('Changement détecté dans les startups:', payload);
+            fetchTopStartups();
+          })
+      .subscribe();
     
-    return () => clearInterval(intervalId);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
   
   if (loading) {

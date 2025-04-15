@@ -157,12 +157,20 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder }: DirectoryViewPro
   useEffect(() => {
     fetchStartups();
     
-    // Actualiser périodiquement pour récupérer les changements d'upvotes
-    const intervalId = setInterval(() => {
-      fetchStartups();
-    }, 5000); // Rafraîchir toutes les 5 secondes
-    
-    return () => clearInterval(intervalId);
+    // Configurer l'abonnement Supabase pour les mises à jour en temps réel
+    const channel = supabase
+      .channel('public:startups')
+      .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'startups' }, 
+          (payload) => {
+            console.log('Changement détecté dans les startups:', payload);
+            fetchStartups();
+          })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [searchQuery, sortOrder]);
 
   if (loading) {

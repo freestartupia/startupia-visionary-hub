@@ -22,10 +22,13 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
   const [isUpvoting, setIsUpvoting] = useState(false);
   const { user } = useAuth();
 
+  // Mettre à jour l'état local quand les props changent
   useEffect(() => {
-    // Mettre à jour le compteur si la valeur change depuis les props
     setUpvoteCount(startup.upvotes || 0);
-    
+  }, [startup.upvotes]);
+  
+  // Vérifier si l'utilisateur a déjà upvoté
+  useEffect(() => {
     const checkUpvoteStatus = async () => {
       if (!user) return;
       
@@ -34,13 +37,17 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
     };
     
     checkUpvoteStatus();
-  }, [startup, user]);
+  }, [startup.id, user]);
 
   const handleUpvote = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (isUpvoting) return;
+    if (!user) {
+      toast.error("Vous devez être connecté pour voter");
+      return;
+    }
     
     setIsUpvoting(true);
     
@@ -48,39 +55,25 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
       console.log('Tentative de vote pour startup:', startup.id, startup.name);
       
       if (upvoted) {
-        // Optimistic UI: Decrease count immediately
-        setUpvoteCount(Math.max(0, upvoteCount - 1));
-        setUpvoted(false);
-        
+        // Ne pas utiliser d'UI optimiste pour éviter les problèmes de synchronisation
         const success = await removeStartupUpvote(startup.id);
-        if (!success) {
-          // Revert if failed
-          setUpvoteCount(upvoteCount);
-          setUpvoted(true);
-          toast.error("Erreur lors du retrait de l'upvote");
-        } else {
-          console.log(`Upvote retiré: ${startup.name}, nouveau compteur: ${upvoteCount - 1}`);
+        if (success) {
+          setUpvoted(false);
+          // Le nombre d'upvotes sera mis à jour par le refetchStartups
+          console.log(`Upvote retiré: ${startup.name}`);
           
-          // Seulement refetch après confirmation du serveur
           if (refetchStartups) {
             refetchStartups();
           }
         }
       } else {
-        // Optimistic UI: Increase count immediately
-        setUpvoteCount(upvoteCount + 1);
-        setUpvoted(true);
-        
+        // Ne pas utiliser d'UI optimiste pour éviter les problèmes de synchronisation
         const success = await upvoteStartup(startup.id);
-        if (!success) {
-          // Revert if failed
-          setUpvoteCount(upvoteCount);
-          setUpvoted(false);
-          toast.error("Erreur lors de l'upvote");
-        } else {
-          console.log(`Upvote ajouté: ${startup.name}, nouveau compteur: ${upvoteCount + 1}`);
+        if (success) {
+          setUpvoted(true);
+          // Le nombre d'upvotes sera mis à jour par le refetchStartups
+          console.log(`Upvote ajouté: ${startup.name}`);
           
-          // Seulement refetch après confirmation du serveur  
           if (refetchStartups) {
             refetchStartups();
           }
@@ -89,10 +82,6 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
     } catch (error) {
       console.error("Error handling upvote:", error);
       toast.error("Erreur lors de l'upvote");
-      
-      // Revert to original state in case of error
-      setUpvoted(!upvoted);
-      setUpvoteCount(startup.upvotes || 0);
     } finally {
       setIsUpvoting(false);
     }

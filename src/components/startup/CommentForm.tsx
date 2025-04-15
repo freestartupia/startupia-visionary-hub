@@ -23,6 +23,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
     // Récupérer les données du profil de l'utilisateur connecté
     const fetchUserProfile = async () => {
       if (user) {
+        console.log('Récupération du profil utilisateur pour', user.id);
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -30,7 +31,10 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
           .single();
           
         if (!error && data) {
+          console.log('Profil utilisateur récupéré:', data);
           setUserProfile(data);
+        } else {
+          console.error('Erreur lors de la récupération du profil:', error);
         }
       }
     };
@@ -62,17 +66,33 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
     setIsSubmitting(true);
     try {
       // Utiliser les informations du profil pour le nom complet et l'avatar
-      const fullName = userProfile 
-        ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() 
-        : user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
+      let fullName = 'Utilisateur';
+      let avatarUrl = null;
       
-      const avatarUrl = userProfile?.avatar_url || user.user_metadata?.avatar_url;
+      if (userProfile) {
+        // Si nous avons un profil, utiliser ces données
+        const firstName = userProfile.first_name || '';
+        const lastName = userProfile.last_name || '';
+        fullName = `${firstName} ${lastName}`.trim();
+        avatarUrl = userProfile.avatar_url;
+        
+        // Si le nom complet est vide, essayer d'utiliser les métadonnées de l'utilisateur
+        if (!fullName || fullName === '') {
+          fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
+        }
+      } else {
+        // Sinon, utiliser les métadonnées de l'utilisateur
+        fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
+        avatarUrl = user.user_metadata?.avatar_url;
+      }
+      
+      console.log('Ajout de commentaire avec nom:', fullName, 'et avatar:', avatarUrl);
       
       await addComment({
         startupId,
         content,
         userId: user.id,
-        userName: fullName,
+        userName: fullName !== '' ? fullName : 'Utilisateur',
         userAvatar: avatarUrl
       });
       
@@ -84,6 +104,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
       setContent('');
       onCommentAdded();
     } catch (error) {
+      console.error('Erreur lors de l\'ajout du commentaire:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de l'ajout du commentaire.",
@@ -105,11 +126,25 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
     );
   }
 
-  const fullName = userProfile 
-    ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() 
-    : user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
+  // Déterminer le nom complet et l'avatar de l'utilisateur
+  let fullName = 'Utilisateur';
+  let avatarUrl = null;
   
-  const avatarUrl = userProfile?.avatar_url || user.user_metadata?.avatar_url;
+  if (userProfile) {
+    const firstName = userProfile.first_name || '';
+    const lastName = userProfile.last_name || '';
+    fullName = `${firstName} ${lastName}`.trim();
+    
+    if (!fullName || fullName === '') {
+      fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Utilisateur';
+    }
+    
+    avatarUrl = userProfile.avatar_url;
+  } else if (user) {
+    fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
+    avatarUrl = user.user_metadata?.avatar_url;
+  }
+  
   const initials = fullName !== 'Utilisateur' ? fullName.charAt(0) : 'U';
 
   return (

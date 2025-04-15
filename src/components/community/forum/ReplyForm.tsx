@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addReplyToPost } from '@/services/forum/replyService';
 import { User } from '@supabase/supabase-js';
@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Send, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ReplyFormProps {
   postId: string;
@@ -26,7 +27,31 @@ const ReplyForm: React.FC<ReplyFormProps> = ({
 }) => {
   const [content, setContent] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Récupérer les données du profil de l'utilisateur connecté
+    const fetchUserProfile = async () => {
+      if (user) {
+        console.log('Récupération du profil utilisateur pour le forum:', user.id);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (!error && data) {
+          console.log('Profil utilisateur récupéré pour le forum:', data);
+          setUserProfile(data);
+        } else {
+          console.error('Erreur lors de la récupération du profil pour le forum:', error);
+        }
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,11 +69,33 @@ const ReplyForm: React.FC<ReplyFormProps> = ({
     
     try {
       setIsSubmitting(true);
+      
+      // Déterminer le nom complet et l'avatar de l'utilisateur
+      let fullName = 'Utilisateur';
+      let avatarUrl = null;
+      
+      if (userProfile) {
+        const firstName = userProfile.first_name || '';
+        const lastName = userProfile.last_name || '';
+        fullName = `${firstName} ${lastName}`.trim();
+        
+        if (!fullName || fullName === '') {
+          fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
+        }
+        
+        avatarUrl = userProfile.avatar_url;
+      } else {
+        fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
+        avatarUrl = user.user_metadata?.avatar_url;
+      }
+      
+      console.log('Ajout de réponse forum avec nom:', fullName, 'et avatar:', avatarUrl);
+      
       await addReplyToPost(
         postId,
         content,
-        user.user_metadata.full_name || 'Utilisateur',
-        user.user_metadata.avatar_url,
+        fullName !== '' ? fullName : 'Utilisateur',
+        avatarUrl,
         replyingTo
       );
       

@@ -25,73 +25,29 @@ const mapSupabasePostToAppPost = (post: any): BlogPost => {
   };
 };
 
-// Fonction pour convertir les données de notre application au format Supabase
-const mapAppPostToSupabasePost = (post: Partial<BlogPost>) => {
-  return {
-    title: post.title,
-    slug: post.slug,
-    excerpt: post.excerpt,
-    content: post.content,
-    category: post.category,
-    cover_image: post.coverImage,
-    author_id: post.authorId,
-    author_name: post.authorName,
-    author_avatar: post.authorAvatar,
-    created_at: post.createdAt,
-    updated_at: post.updatedAt,
-    tags: post.tags,
-    featured: post.featured,
-    reading_time: post.readingTime,
-    status: post.status
-  };
-};
-
-export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .order('created_at', { ascending: false });
-      
-    if (error) throw error;
-    return data ? data.map(mapSupabasePostToAppPost) : [];
-  } catch (error) {
-    console.error('Erreur lors de la récupération des articles:', error);
-    return [];
-  }
-};
-
-export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('slug', slug)
-      .single();
-      
-    if (error) throw error;
-    return data ? mapSupabasePostToAppPost(data) : null;
-  } catch (error) {
-    console.error('Erreur lors de la récupération de l\'article:', error);
-    return null;
-  }
-};
-
 export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
-    const user = supabase.auth.getUser();
+    const { data: userData } = await supabase.auth.getUser();
     
-    // Simplifier la structure des données pour éviter les problèmes RLS
+    if (!userData.user) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour créer un article",
+        variant: "destructive"
+      });
+      return null;
+    }
+
     const postData = {
       title: post.title,
-      slug: post.slug,
+      slug: post.slug || post.title?.toLowerCase().replace(/\s+/g, '-'),
       excerpt: post.excerpt,
       content: post.content,
       category: post.category,
       cover_image: post.coverImage,
-      author_id: post.authorId,
-      author_name: post.authorName || 'Utilisateur',
-      author_avatar: post.authorAvatar,
+      author_id: userData.user.id,
+      author_name: userData.user.email?.split('@')[0] || 'Utilisateur',
+      author_avatar: userData.user.user_metadata?.avatar_url,
       created_at: new Date().toISOString(),
       tags: post.tags || [],
       featured: false,
@@ -101,7 +57,7 @@ export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost 
 
     const { data, error } = await supabase
       .from('blog_posts')
-      .insert([postData])
+      .insert(postData)
       .select()
       .single();
       
@@ -112,7 +68,7 @@ export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost 
         description: `Impossible de créer l'article: ${error.message}`,
         variant: "destructive",
       });
-      throw error;
+      return null;
     }
     
     toast({
@@ -123,12 +79,28 @@ export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost 
     return data ? mapSupabasePostToAppPost(data) : null;
   } catch (error) {
     console.error('Erreur lors de la création de l\'article:', error);
+    toast({
+      title: "Erreur",
+      description: "Une erreur est survenue lors de la création de l'article",
+      variant: "destructive",
+    });
     return null;
   }
 };
 
 export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData.user) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour modifier un article",
+        variant: "destructive"
+      });
+      return null;
+    }
+
     const updateData = {
       title: post.title,
       slug: post.slug,
@@ -157,7 +129,7 @@ export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promi
         description: `Impossible de mettre à jour l'article: ${error.message}`,
         variant: "destructive",
       });
-      throw error;
+      return null;
     }
     
     toast({
@@ -168,6 +140,11 @@ export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promi
     return data ? mapSupabasePostToAppPost(data) : null;
   } catch (error) {
     console.error('Erreur lors de la mise à jour de l\'article:', error);
+    toast({
+      title: "Erreur",
+      description: "Une erreur est survenue lors de la mise à jour de l'article",
+      variant: "destructive",
+    });
     return null;
   }
 };

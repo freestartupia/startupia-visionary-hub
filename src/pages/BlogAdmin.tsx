@@ -18,78 +18,60 @@ const BlogAdmin = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [currentPost, setCurrentPost] = useState<BlogPost | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Vérifier le rôle admin
+  // Vérifier l'authentification
   useEffect(() => {
-    const checkAdminRole = async () => {
-      if (!user) {
-        navigate('/');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .single();
-
-      if (error || !data) {
-        toast.error('Accès non autorisé');
-        navigate('/');
-        return;
-      }
-
-      setIsAdmin(true);
-    };
-
-    checkAdminRole();
+    if (!user) {
+      toast.error('Vous devez être connecté pour accéder à cette page');
+      navigate('/auth');
+      return;
+    }
+    
+    // Accès autorisé pour tous les utilisateurs connectés
+    loadPosts();
   }, [user, navigate]);
 
   // Charger les articles
-  useEffect(() => {
-    const fetchPosts = async () => {
-      if (!isAdmin) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('blog_posts')
-          .select('*')
-          .order('created_at', { ascending: false });
+  const loadPosts = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data) {
+        const formattedPosts: BlogPost[] = data.map(post => ({
+          id: post.id,
+          title: post.title,
+          slug: post.slug,
+          excerpt: post.excerpt,
+          content: post.content,
+          category: post.category as BlogCategory,
+          coverImage: post.cover_image,
+          authorId: post.author_id,
+          authorName: post.author_name,
+          authorAvatar: post.author_avatar,
+          createdAt: post.created_at,
+          updatedAt: post.updated_at,
+          tags: post.tags || [],
+          featured: post.featured,
+          readingTime: post.reading_time,
+          status: (post.status || 'draft') as 'draft' | 'published' | 'pending'
+        }));
         
-        if (error) throw error;
-        
-        if (data) {
-          const formattedPosts: BlogPost[] = data.map(post => ({
-            id: post.id,
-            title: post.title,
-            slug: post.slug,
-            excerpt: post.excerpt,
-            content: post.content,
-            category: post.category as BlogCategory,
-            coverImage: post.cover_image,
-            authorId: post.author_id,
-            authorName: post.author_name,
-            authorAvatar: post.author_avatar,
-            createdAt: post.created_at,
-            updatedAt: post.updated_at,
-            tags: post.tags || [],
-            featured: post.featured,
-            readingTime: post.reading_time,
-            status: post.status || 'draft' // Ensure status is always set
-          }));
-          
-          setPosts(formattedPosts);
-        }
-      } catch (err) {
-        console.error('Erreur lors du chargement des articles:', err);
-        toast.error('Impossible de charger les articles');
+        setPosts(formattedPosts);
       }
-    };
-    
-    fetchPosts();
-  }, [isAdmin]);
+    } catch (err) {
+      console.error('Erreur lors du chargement des articles:', err);
+      toast.error('Impossible de charger les articles');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCreateNew = () => {
     setCurrentPost(null);
@@ -102,8 +84,6 @@ const BlogAdmin = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!isAdmin) return;
-
     if (window.confirm('Voulez-vous vraiment supprimer cet article ?')) {
       try {
         const { error } = await supabase
@@ -130,11 +110,10 @@ const BlogAdmin = () => {
     }
     setIsEditorOpen(false);
     setCurrentPost(null);
+    
+    // Rafraîchir la liste des articles après avoir sauvegardé
+    loadPosts();
   };
-
-  if (!isAdmin) {
-    return null;
-  }
 
   if (isEditorOpen) {
     return <BlogPostEditor post={currentPost} onSave={handleSave} onCancel={() => setIsEditorOpen(false)} />;
@@ -159,7 +138,12 @@ const BlogAdmin = () => {
         <div className="bg-black/30 p-6 rounded-lg border border-startupia-turquoise/20">
           <h2 className="text-xl font-semibold mb-4">Liste des Articles</h2>
           
-          {posts.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise mx-auto"></div>
+              <p className="mt-4 text-white/60">Chargement des articles...</p>
+            </div>
+          ) : posts.length === 0 ? (
             <div className="text-center py-8 text-white/60">
               Aucun article trouvé. Créez votre premier article en cliquant sur "Nouvel Article".
             </div>

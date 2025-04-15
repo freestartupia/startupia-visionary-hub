@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import BlogPostCard from '@/components/blog/BlogPostCard';
@@ -10,14 +10,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { BlogCategory, BlogPost } from '@/types/blog';
 import SEO from '@/components/SEO';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 const Blog = () => {
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<BlogCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categories, setCategories] = useState<BlogCategory[]>([]);
-  
-  // Fetch blog posts from Supabase with better error handling
+  const navigate = useNavigate();
+
   const { data: posts, isLoading, error } = useQuery({
     queryKey: ['blog-posts'],
     queryFn: async () => {
@@ -25,18 +26,18 @@ const Blog = () => {
         const { data, error } = await supabase
           .from('blog_posts')
           .select('*')
+          .eq('status', 'published')
           .order('created_at', { ascending: false });
-        
+
         if (error) {
           console.error("Error fetching blog posts:", error);
           throw error;
         }
-        
+
         if (!data || data.length === 0) {
           return [];
         }
-        
-        // Convert from snake_case to camelCase for the BlogPost interface
+
         return data.map((post: any): BlogPost => ({
           id: post.id,
           title: post.title,
@@ -53,6 +54,7 @@ const Blog = () => {
           tags: post.tags || [],
           featured: post.featured,
           readingTime: post.reading_time,
+          status: post.status
         }));
       } catch (err) {
         console.error("Error in blog posts query:", err);
@@ -66,8 +68,7 @@ const Blog = () => {
       }
     }
   });
-  
-  // Extract unique categories from posts
+
   useEffect(() => {
     if (posts && posts.length > 0) {
       const uniqueCategories = [...new Set(posts.map(post => post.category))];
@@ -77,13 +78,12 @@ const Blog = () => {
       setFilteredPosts([]);
     }
   }, [posts]);
-  
-  // Handle search and filter
+
   useEffect(() => {
     if (!posts) return;
-    
+
     let filtered = [...posts];
-    
+
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase();
       filtered = filtered.filter(post => 
@@ -92,25 +92,22 @@ const Blog = () => {
         post.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
       );
     }
-    
+
     if (selectedCategory) {
       filtered = filtered.filter(post => post.category === selectedCategory);
     }
-    
+
     setFilteredPosts(filtered);
   }, [searchQuery, selectedCategory, posts]);
-  
-  // Handle search input
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
-  
-  // Handle category selection
+
   const handleCategoryChange = (category: BlogCategory | null) => {
     setSelectedCategory(category);
   };
-  
-  // Get featured posts
+
   const featuredPosts = posts?.filter(post => post.featured) || [];
 
   return (
@@ -120,7 +117,6 @@ const Blog = () => {
         description="Explorez les dernières tendances IA, les outils d'intelligence artificielle à connaître, et l'actualité des startups IA en France. Analyses, interviews et découvertes chaque semaine."
       />
       
-      {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       
       <Navbar />
@@ -139,9 +135,19 @@ const Blog = () => {
           <div className="w-full md:w-1/3">
             <BlogSearch onSearch={handleSearch} />
           </div>
+          
+          {posts && posts.length > 0 && (
+            <div className="mt-4 md:mt-0">
+              <Button 
+                onClick={() => navigate('/admin/blog')} 
+                className="bg-startupia-turquoise hover:bg-startupia-turquoise/80"
+              >
+                Écrire un article
+              </Button>
+            </div>
+          )}
         </div>
         
-        {/* Featured posts carousel */}
         {featuredPosts.length > 0 && (
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">À la une</h2>
@@ -172,6 +178,17 @@ const Blog = () => {
             ) : (
               <div className="col-span-3 text-center py-10">
                 <p className="text-white/60">Aucun article trouvé avec ces critères.</p>
+                {posts?.length === 0 && (
+                  <div className="mt-8">
+                    <p className="text-white/80 mb-4">Il n'y a aucun article publié actuellement.</p>
+                    <Button 
+                      onClick={() => navigate('/admin/blog')} 
+                      className="bg-startupia-turquoise hover:bg-startupia-turquoise/80"
+                    >
+                      Écrire mon premier article
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>

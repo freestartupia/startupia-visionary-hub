@@ -33,6 +33,7 @@ const BlogPostEditor: React.FC<BlogPostEditorProps> = ({ post, onSave, onCancel 
   const [category, setCategory] = useState<BlogCategory>(post?.category as BlogCategory || 'Actualités');
   const [tags, setTags] = useState(post?.tags?.join(', ') || '');
   const [featured, setFeatured] = useState(post?.featured || false);
+  const [status, setStatus] = useState<'draft' | 'published' | 'pending'>(post?.status || 'draft');
   const [coverImage, setCoverImage] = useState<string | null>(post?.coverImage || null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -114,21 +115,6 @@ const BlogPostEditor: React.FC<BlogPostEditorProps> = ({ post, onSave, onCancel 
       
       const readingTime = calculateReadingTime(content);
       
-      const postData = {
-        title,
-        slug,
-        excerpt,
-        content,
-        category,
-        tags: tagsArray,
-        featured,
-        coverImage,
-        authorId: user.id,
-        authorName,
-        authorAvatar: profileData?.avatar_url || null,
-        readingTime,
-      };
-      
       let savedPost;
       
       if (post) {
@@ -136,16 +122,17 @@ const BlogPostEditor: React.FC<BlogPostEditorProps> = ({ post, onSave, onCancel 
         const { data, error } = await supabase
           .from('blog_posts')
           .update({
-            title: postData.title,
-            slug: postData.slug,
-            excerpt: postData.excerpt,
-            content: postData.content,
-            category: postData.category,
-            tags: postData.tags,
-            featured: postData.featured,
-            cover_image: postData.coverImage,
+            title: title,
+            slug: slug,
+            excerpt: excerpt,
+            content: content,
+            category: category,
+            tags: tagsArray,
+            featured: featured,
+            cover_image: coverImage,
             updated_at: new Date().toISOString(),
-            reading_time: postData.readingTime,
+            reading_time: readingTime,
+            status: status
           })
           .eq('id', post.id)
           .select()
@@ -158,18 +145,19 @@ const BlogPostEditor: React.FC<BlogPostEditorProps> = ({ post, onSave, onCancel 
         const { data, error } = await supabase
           .from('blog_posts')
           .insert({
-            title: postData.title,
-            slug: postData.slug,
-            excerpt: postData.excerpt,
-            content: postData.content,
-            category: postData.category,
-            tags: postData.tags,
-            featured: postData.featured,
-            cover_image: postData.coverImage,
-            author_id: postData.authorId,
-            author_name: postData.authorName,
-            author_avatar: postData.authorAvatar,
-            reading_time: postData.readingTime,
+            title: title,
+            slug: slug,
+            excerpt: excerpt,
+            content: content,
+            category: category,
+            tags: tagsArray,
+            featured: featured,
+            cover_image: coverImage,
+            author_id: user.id,
+            author_name: authorName,
+            author_avatar: profileData?.avatar_url || null,
+            reading_time: readingTime,
+            status: status
           })
           .select()
           .single();
@@ -197,6 +185,7 @@ const BlogPostEditor: React.FC<BlogPostEditorProps> = ({ post, onSave, onCancel 
         tags: savedPost.tags,
         featured: savedPost.featured,
         readingTime: savedPost.reading_time,
+        status: savedPost.status
       };
       
       onSave(formattedPost);
@@ -298,13 +287,31 @@ const BlogPostEditor: React.FC<BlogPostEditorProps> = ({ post, onSave, onCancel 
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="featured"
-                  checked={featured}
-                  onCheckedChange={setFeatured}
-                />
-                <Label htmlFor="featured">Article à la une</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="featured"
+                    checked={featured}
+                    onCheckedChange={setFeatured}
+                  />
+                  <Label htmlFor="featured">Article à la une</Label>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="status">Statut</Label>
+                  <Select
+                    value={status}
+                    onValueChange={(value) => setStatus(value as 'draft' | 'published' | 'pending')}
+                  >
+                    <SelectTrigger className="bg-black/50">
+                      <SelectValue placeholder="Choisir un statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Brouillon</SelectItem>
+                      <SelectItem value="published">Publié</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               <div className="space-y-2">

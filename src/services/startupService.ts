@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { Startup, StartupVote } from '@/types/startup';
+import { Startup } from '@/types/startup';
 import { useToast } from '@/hooks/use-toast';
 
 // Récupérer toutes les startups triées par nombre de votes
@@ -40,23 +39,49 @@ export async function fetchStartupById(id: string) {
 }
 
 // Créer une nouvelle startup
-export async function createStartup(startup: Omit<Startup, 'id' | 'createdAt' | 'createdBy' | 'upvotes'>) {
+export async function createStartup(startup: Omit<Startup, 'id' | 'createdAt' | 'createdBy' | 'upvotes'> & { logoFile?: File }) {
   try {
-    // Obtenir l'ID utilisateur actuel avant l'insertion
+    // Obtain current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Utilisateur non connecté');
     
+    let logoUrl = startup.logoUrl;
+    
+    // If a logo file is provided, upload it
+    if (startup.logoFile) {
+      const fileExt = startup.logoFile.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `startup-logos/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('public')
+        .upload(filePath, startup.logoFile);
+
+      if (uploadError) {
+        console.error('Erreur lors du téléchargement du logo:', uploadError);
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('public')
+        .getPublicUrl(filePath);
+      
+      logoUrl = urlData.publicUrl;
+    }
+
+    // Prepare startup data for database insertion
     const { data, error } = await supabase
       .from('startups')
       .insert({
         name: startup.name,
         short_description: startup.shortDescription,
         website_url: startup.websiteUrl,
-        logo_url: startup.logoUrl,
+        logo_url: logoUrl,
         category: startup.category,
         ai_technology: startup.aiTechnology,
         launch_date: startup.launchDate,
-        created_by: user.id // Utiliser directement l'ID utilisateur
+        created_by: user.id
       })
       .select()
       .single();

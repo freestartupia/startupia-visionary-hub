@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,7 +16,6 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { createStartup } from '@/services/startupService';
-import { supabase } from '@/integrations/supabase/client';
 
 // Schéma de validation
 const startupFormSchema = z.object({
@@ -65,48 +63,12 @@ const SubmitStartupForm: React.FC<SubmitStartupFormProps> = ({ onSuccess }) => {
     }
   };
 
-  const uploadLogo = async (file: File): Promise<string | null> => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      const filePath = `startup-logos/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('public')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage
-        .from('public')
-        .getPublicUrl(filePath);
-
-      return data.publicUrl;
-    } catch (error) {
-      console.error('Erreur lors du téléchargement du logo:', error);
-      return null;
-    }
-  };
-
   const onSubmit = async (values: StartupFormValues) => {
     setIsSubmitting(true);
     try {
-      let logoUrl = null;
-      
-      if (logoFile) {
-        logoUrl = await uploadLogo(logoFile);
-        if (!logoUrl) {
-          toast({
-            title: "Erreur",
-            description: "Impossible de télécharger le logo. La startup sera créée sans logo.",
-            variant: "destructive",
-          });
-        }
-      }
-
       await createStartup({
         ...values,
-        logoUrl,
+        logoFile: logoFile || undefined,
       });
 
       toast({

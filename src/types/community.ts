@@ -1,4 +1,3 @@
-
 export interface Contributor {
   id: string;
   name: string;
@@ -7,22 +6,6 @@ export interface Contributor {
   role?: string;
   skills?: string[];
 }
-
-export type ForumCategory = 
-  | "Général" 
-  | "Tech & Dev IA" 
-  | "Prompt Engineering" 
-  | "No-code & IA" 
-  | "Startups IA" 
-  | "Trouver un projet / recruter" 
-  | "Formations & conseils"
-  | "general"
-  | "announcements"
-  | "questions"
-  | "ideas"
-  | "feedback"
-  | "events"
-  | "other";
 
 export interface ForumPost {
   id: string;
@@ -61,6 +44,16 @@ export interface ForumReply {
   nestedReplies?: ForumReply[];
 }
 
+export enum ForumCategory {
+  General = "general",
+  Announcements = "announcements",
+  Questions = "questions",
+  Ideas = "ideas",
+  Feedback = "feedback",
+  Events = "events",
+  Other = "other"
+}
+
 export interface LikeResponse {
   success: boolean;
   error?: string;
@@ -75,23 +68,6 @@ export interface UpvoteResponse {
   isUpvoted?: boolean;
 }
 
-export type ServiceCategory = 
-  | "Prompt Engineering"
-  | "Développement"
-  | "Design IA"
-  | "Automatisation"
-  | "Stratégie IA"
-  | "Formation"
-  | "Conseil"
-  | "Autre"
-  | "development"
-  | "design"
-  | "marketing"
-  | "strategy"
-  | "consulting"
-  | "legal"
-  | "other";
-
 export interface ServiceListing {
   id: string;
   title: string;
@@ -100,108 +76,84 @@ export interface ServiceListing {
   providerId: string;
   providerName: string;
   providerAvatar?: string;
-  contactLink?: string;
+  contactEmail: string;
   price?: string;
   location?: string;
   isRemote?: boolean;
   createdAt: string;
-  expertise?: string[];
-  linkedinUrl?: string;
-  contactEmail?: string;
   tags?: string[];
 }
 
-export type ResourceFormat = 
-  | "Vidéo"
-  | "Article"
-  | "E-book"
-  | "Webinaire"
-  | "Bootcamp"
-  | "Cours"
-  | "Podcast"
-  | "Autre"
-  | "article"
-  | "video"
-  | "podcast"
-  | "course"
-  | "ebook"
-  | "tool"
-  | "library"
-  | "other";
+export enum ServiceCategory {
+  Development = "development",
+  Design = "design",
+  Marketing = "marketing",
+  Strategy = "strategy",
+  Consulting = "consulting",
+  Legal = "legal",
+  Other = "other"
+}
 
 export interface ResourceListing {
   id: string;
   title: string;
   description: string;
   format: ResourceFormat;
-  access_link?: string;
-  url?: string;
+  url: string;
   authorId: string;
-  author_id?: string;
   authorName: string;
-  author_name?: string;
   authorAvatar?: string;
-  author_avatar?: string;
   createdAt: string;
-  created_at?: string;
   tags?: string[];
   upvotes: number;
-  votes?: number;
   views: number;
-  is_paid?: boolean;
-  price?: string;
-  target_audience?: string;
-  community_validated?: boolean;
 }
 
-export type ProjectStatus = 
-  | "Idée"
-  | "En cours"
-  | "Recherche de collaborateurs"
-  | "MVP"
-  | "Lancé"
-  | "planning"
-  | "in-progress"
-  | "completed"
-  | "on-hold"
-  | "abandoned";
+export enum ResourceFormat {
+  Article = "article",
+  Video = "video",
+  Podcast = "podcast",
+  Course = "course",
+  Ebook = "ebook",
+  Tool = "tool",
+  Library = "library",
+  Other = "other"
+}
 
 export interface CollaborativeProject {
   id: string;
   title: string;
   description: string;
-  goals?: string;
+  goals: string;
   status: ProjectStatus;
-  creatorId?: string;
-  creatorName?: string;
+  creatorId: string;
+  creatorName: string;
   creatorAvatar?: string;
-  createdAt?: string;
-  initiator_id?: string;
-  initiator_name?: string;
-  initiator_avatar?: string;
-  created_at?: string;
+  createdAt: string;
   collaborators?: Contributor[];
   skills?: string[];
   timeline?: string;
   tags?: string[];
   githubUrl?: string;
   websiteUrl?: string;
-  likes?: number;
-  applications?: number;
-  category?: string;
+}
+
+export enum ProjectStatus {
+  Planning = "planning",
+  InProgress = "in-progress",
+  Completed = "completed",
+  OnHold = "on-hold",
+  Abandoned = "abandoned"
 }
 
 export interface CommunityActivity {
   id: string;
-  type: 'post' | 'reply' | 'project' | 'service' | 'resource' | 'comment';
+  type: 'post' | 'reply' | 'project' | 'service' | 'resource';
   title: string;
   userId: string;
   userName: string;
   userAvatar?: string;
   createdAt: string;
-  content?: string;
-  itemId?: string;
-  targetId?: string;
-  targetType?: 'forum' | 'service' | 'resource' | 'project';
-  summary?: string;
+  content: string;
+  itemId: string;
 }

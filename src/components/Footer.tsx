@@ -116,9 +116,9 @@ const Footer = () => {
                     </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
+                    <Link to="/privacy" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
                       <ChevronRight size={14} className="mr-1" /> Confidentialité
-                    </a>
+                    </Link>
                   </li>
                 </ul>
               </div>

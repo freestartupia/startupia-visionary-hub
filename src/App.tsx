@@ -27,6 +27,7 @@ import UserProfile from "./pages/UserProfile";
 import CofounderProfileEdit from "./pages/CofounderProfileEdit";
 import CommunityAIChatbot from "./components/chatbot/CommunityAIChatbot";
 import LegalMentions from "./pages/LegalMentions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/profile" element={<UserProfile />} />
                 <Route path="/legal" element={<LegalMentions />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <CommunityAIChatbot />

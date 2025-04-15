@@ -67,6 +67,11 @@ const StartupPromoBlog = () => {
               Faites exploser votre startup, gratuitement
             </h2>
             
+            <p className="text-xl text-white/80 text-center">
+              Présentez votre projet en quelques secondes… et laissez la communauté faire le reste.
+              Sur Startupia, chaque vote propulse votre startup vers le sommet
+            </p>
+            
             <div className="pt-8 flex justify-center">
               <Button size="lg" className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black font-semibold text-lg py-6 px-8" asChild>
                 <Link to="/startup">

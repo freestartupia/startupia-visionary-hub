@@ -40,6 +40,7 @@ export const fetchServices = async (): Promise<ServiceListing[]> => {
   }
 };
 
+// Export both function names to maintain compatibility with existing code
 export const createService = async (serviceData: Partial<ServiceListing>): Promise<ServiceListing> => {
   try {
     const { data, error } = await supabase
@@ -59,3 +60,6 @@ export const createService = async (serviceData: Partial<ServiceListing>): Promi
     throw error;
   }
 };
+
+// Add the same function with the name addService to match imports in components
+export const addService = createService;

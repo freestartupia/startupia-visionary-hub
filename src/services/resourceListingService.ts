@@ -68,3 +68,25 @@ export const createResource = async (resourceData: Partial<ResourceListing>): Pr
     throw error;
   }
 };
+
+// Add the missing functions that are imported in components
+export const addResource = createResource;
+
+export const deleteResource = async (resourceId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('resource_listings')
+      .delete()
+      .eq('id', resourceId);
+      
+    if (error) {
+      console.error('Error deleting resource:', error);
+      throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in deleteResource:', error);
+    return false;
+  }
+};

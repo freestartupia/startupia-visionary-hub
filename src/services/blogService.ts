@@ -25,6 +25,45 @@ const mapSupabasePostToAppPost = (post: any): BlogPost => {
   };
 };
 
+export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error('Erreur lors de la récupération des articles:', error);
+      return [];
+    }
+    
+    return data ? data.map(mapSupabasePostToAppPost) : [];
+  } catch (error) {
+    console.error('Erreur lors de la récupération des articles:', error);
+    return [];
+  }
+};
+
+export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+      
+    if (error) {
+      console.error('Erreur lors de la récupération de l\'article:', error);
+      return null;
+    }
+    
+    return data ? mapSupabasePostToAppPost(data) : null;
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'article:', error);
+    return null;
+  }
+};
+
 export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
     const { data: userData } = await supabase.auth.getUser();

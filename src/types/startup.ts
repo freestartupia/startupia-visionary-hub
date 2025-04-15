@@ -22,6 +22,7 @@ export interface StartupComment {
   content: string;
   createdAt: string;
   likes: number;
+  isSpam?: boolean;
 }
 
 // Additional types needed for SubmitStartupModal

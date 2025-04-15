@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getStartupById } from "@/services/startupService";
@@ -13,7 +14,7 @@ import TagList from "@/components/startup/TagList";
 import SEO from "@/components/SEO";
 import { upvoteStartup, downvoteStartup } from "@/services/startupService";
 import { toast } from "sonner";
-import { useAuth } from "@/context/authContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const StartupDetails = () => {
   const { id } = useParams<{ id: string }>();

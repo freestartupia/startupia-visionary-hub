@@ -5,7 +5,13 @@ import {
   Linkedin, 
   Github, 
   Mail,
-  ChevronRight
+  ChevronRight,
+  User,
+  LogIn,
+  Home,
+  Star,
+  MessageSquare,
+  Settings
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -42,29 +48,29 @@ const Footer = () => {
           {/* Navigation Links */}
           <div className="w-full md:w-2/3">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Product Links */}
+              {/* Produit Links */}
               <div>
                 <h4 className="text-white font-semibold mb-4">Produit</h4>
                 <ul className="space-y-2">
                   <li>
-                    <a href="#startup-index" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
-                      <ChevronRight size={14} className="mr-1" /> Startup Index
-                    </a>
+                    <Link to="/startup" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
+                      <ChevronRight size={14} className="mr-1" /> Startups
+                    </Link>
                   </li>
                   <li>
-                    <a href="#startup-matcher" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
-                      <ChevronRight size={14} className="mr-1" /> Startup Matcher
-                    </a>
+                    <Link to="/tools" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
+                      <ChevronRight size={14} className="mr-1" /> Outils IA
+                    </Link>
                   </li>
                   <li>
-                    <a href="#startup-cofounder" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
-                      <ChevronRight size={14} className="mr-1" /> Co-Founder
-                    </a>
+                    <Link to="/cofounder" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
+                      <ChevronRight size={14} className="mr-1" /> Cofondateurs
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
-                      <ChevronRight size={14} className="mr-1" /> Newsletter
-                    </a>
+                    <Link to="/community" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
+                      <ChevronRight size={14} className="mr-1" /> Communauté
+                    </Link>
                   </li>
                 </ul>
               </div>
@@ -74,14 +80,14 @@ const Footer = () => {
                 <h4 className="text-white font-semibold mb-4">Ressources</h4>
                 <ul className="space-y-2">
                   <li>
-                    <a href="#" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
+                    <Link to="/blog" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
                       <ChevronRight size={14} className="mr-1" /> Blog IA
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
-                      <ChevronRight size={14} className="mr-1" /> Guides
-                    </a>
+                    <Link to="/newsletter" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
+                      <ChevronRight size={14} className="mr-1" /> Newsletter
+                    </Link>
                   </li>
                   <li>
                     <a href="#" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
@@ -90,7 +96,7 @@ const Footer = () => {
                   </li>
                   <li>
                     <a href="#" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
-                      <ChevronRight size={14} className="mr-1" /> Podcasts
+                      <ChevronRight size={14} className="mr-1" /> Guides
                     </a>
                   </li>
                 </ul>
@@ -101,14 +107,14 @@ const Footer = () => {
                 <h4 className="text-white font-semibold mb-4">Entreprise</h4>
                 <ul className="space-y-2">
                   <li>
-                    <a href="#" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
-                      <ChevronRight size={14} className="mr-1" /> À propos
-                    </a>
+                    <Link to="/profile" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
+                      <ChevronRight size={14} className="mr-1" /> Profil
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
-                      <ChevronRight size={14} className="mr-1" /> Contact
-                    </a>
+                    <Link to="/auth" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
+                      <ChevronRight size={14} className="mr-1" /> Connexion
+                    </Link>
                   </li>
                   <li>
                     <Link to="/legal" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">

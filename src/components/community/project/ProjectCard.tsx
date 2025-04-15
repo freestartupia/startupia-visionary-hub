@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Heart, Users, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
@@ -16,7 +15,7 @@ interface ProjectCardProps {
   project: CollaborativeProject;
   onLike: (projectId: string) => void;
   onContact: (projectId: string) => void;
-  onProjectDeleted?: () => void; // New callback for when a project is deleted
+  onProjectDeleted?: () => void;
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, onProjectDeleted }) => {
@@ -57,10 +56,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, o
     return text.slice(0, 120) + '...';
   };
 
-  // Check if the current user is the project creator
   const isProjectCreator = user && project.initiator_id === user.id;
 
-  // Handler for deleting a project
   const handleDelete = async () => {
     if (isDeleting) return;
     
@@ -77,7 +74,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, o
       toast.success("Projet supprimé avec succès");
       if (onProjectDeleted) onProjectDeleted();
       
-      // Close the dialog if it's open
       setIsDialogOpen(false);
     } catch (err) {
       console.error('Erreur lors de la suppression du projet:', err);
@@ -90,7 +86,17 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, o
 
   return (
     <>
-      <Card className="glass-card hover-scale transition-transform duration-300">
+      <Card className="glass-card hover-scale transition-transform duration-300 relative">
+        {isProjectCreator && (
+          <button 
+            className="absolute top-2 right-2 text-red-500/50 hover:text-red-500 transition-colors z-10"
+            onClick={() => setIsDeleteAlertOpen(true)}
+            disabled={isDeleting}
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
+        
         <CardHeader>
           <div className="flex justify-between items-start mb-2">
             <Badge className={getBadgeColorForStatus(project.status)}>
@@ -156,26 +162,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, o
               Contacter
             </Button>
           </div>
-          
-          {/* Project owner delete action */}
-          {isProjectCreator && (
-            <div className="flex gap-2 w-full border-t border-white/10 pt-3">
-              <Button 
-                variant="outline"
-                className="flex-1 h-10 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-300"
-                onClick={() => setIsDeleteAlertOpen(true)}
-                size="sm"
-                disabled={isDeleting}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Supprimer
-              </Button>
-            </div>
-          )}
         </CardFooter>
       </Card>
 
-      {/* Alert Dialog for Delete Confirmation */}
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -237,7 +226,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, o
               </div>
             </div>
             
-            {/* Show delete option in the dialog too if user is the creator */}
             {isProjectCreator && (
               <div className="flex gap-2 pt-4 border-t">
                 <Button 

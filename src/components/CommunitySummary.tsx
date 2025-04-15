@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Users, MessageSquare, BookOpen, FileCheck, Star, Handshake } from 'lucide-react';
+import { Users, MessageSquare, BookOpen, Star, Handshake } from 'lucide-react';
 
 const CommunitySummary = () => {
   return (
@@ -79,42 +79,10 @@ const CommunitySummary = () => {
             </Button>
           </div>
         </div>
-        
-        {/* Feature highlight */}
-        <div className="flex flex-col md:flex-row bg-gradient-to-br from-startupia-turquoise/20 to-startupia-purple/20 rounded-xl p-6 border border-white/10 glass-card">
-          <div className="md:w-2/3 mb-6 md:mb-0 md:mr-6">
-            <h3 className="text-2xl font-bold mb-4">Devenez client des startups</h3>
-            <p className="text-white/80 mb-4">
-              Startupia vous permet non seulement de découvrir les startups IA françaises, mais aussi de 
-              devenir client des services innovants qu'elles proposent. 
-            </p>
-            <ul className="space-y-2 mb-6">
-              <li className="flex items-center">
-                <Handshake size={20} className="text-startupia-turquoise mr-2" />
-                <span>Accédez directement aux produits et services des startups</span>
-              </li>
-              <li className="flex items-center">
-                <FileCheck size={20} className="text-startupia-turquoise mr-2" />
-                <span>Testez les outils IA avant tout le monde</span>
-              </li>
-              <li className="flex items-center">
-                <Users size={20} className="text-startupia-turquoise mr-2" />
-                <span>Partagez vos retours avec les entrepreneurs</span>
-              </li>
-            </ul>
-            <Button className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold" asChild>
-              <Link to="/startups">Découvrir les startups innovantes</Link>
-            </Button>
-          </div>
-          <div className="md:w-1/3 flex items-center justify-center">
-            <div className="w-full aspect-square max-w-[240px] bg-white/5 rounded-xl border border-startupia-turquoise/30 flex items-center justify-center">
-              <div className="text-6xl">🚀</div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
 };
 
 export default CommunitySummary;
+

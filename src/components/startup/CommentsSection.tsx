@@ -5,7 +5,6 @@ import CommentList from './CommentList';
 import { fetchStartupComments } from '@/services/comments/commentService';
 import { StartupComment } from '@/types/startup';
 import { MessageSquare } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { 
   Pagination, 
   PaginationContent, 
@@ -42,50 +41,6 @@ const CommentsSection = ({ startupId }: CommentsSectionProps) => {
   
   useEffect(() => {
     loadComments();
-    
-    // Configuration des abonnements en temps réel pour les commentaires
-    const commentsChannel = supabase
-      .channel('startup-comments-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'startup_comments',
-          filter: `startup_id=eq.${startupId}`
-        },
-        (payload) => {
-          console.log('Nouveau commentaire détecté:', payload);
-          // Rafraîchir les commentaires si nous sommes sur la première page
-          if (currentPage === 1) {
-            loadComments();
-          } else {
-            // Incrémenter le compteur total
-            setTotalComments(prev => prev + 1);
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'startup_comments',
-          filter: `startup_id=eq.${startupId}`
-        },
-        (payload) => {
-          console.log('Commentaire supprimé détecté:', payload);
-          // Rafraîchir les commentaires
-          loadComments();
-        }
-      )
-      .subscribe((status) => {
-        console.log('Statut de l\'abonnement aux commentaires startup:', status);
-      });
-      
-    return () => {
-      supabase.removeChannel(commentsChannel);
-    };
   }, [startupId, currentPage]);
   
   const totalPages = Math.ceil(totalComments / COMMENTS_PER_PAGE);

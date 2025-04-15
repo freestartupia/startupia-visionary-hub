@@ -102,7 +102,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
       });
       
       setContent('');
-      // onCommentAdded sera déclenché automatiquement par le canal temps réel
+      onCommentAdded();
     } catch (error) {
       console.error('Erreur lors de l\'ajout du commentaire:', error);
       toast({

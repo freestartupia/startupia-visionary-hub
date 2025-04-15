@@ -1,4 +1,3 @@
-
 import { Startup } from "@/types/startup";
 
 export const mockStartups: Startup[] = [
@@ -32,6 +31,7 @@ export const mockStartups: Startup[] = [
     websiteUrl: "https://mistral.ai",
     pitchDeckUrl: "https://example.com/mistral-pitch",
     crunchbaseUrl: "https://www.crunchbase.com/organization/mistral-ai",
+    upvotes: 42,
   },
   {
     id: "doctrine",
@@ -58,6 +58,7 @@ export const mockStartups: Startup[] = [
     tags: ["LegalTech", "NLP", "B2B", "Search"],
     websiteUrl: "https://www.doctrine.fr",
     crunchbaseUrl: "https://www.crunchbase.com/organization/doctrine",
+    upvotes: 12,
   },
   {
     id: "preligens",
@@ -84,6 +85,7 @@ export const mockStartups: Startup[] = [
     tags: ["DeepTech", "Computer Vision", "Défense", "Spatial"],
     websiteUrl: "https://preligens.com",
     crunchbaseUrl: "https://www.crunchbase.com/organization/earthcube",
+    upvotes: 28,
   },
   {
     id: "cherry",
@@ -110,6 +112,7 @@ export const mockStartups: Startup[] = [
     tags: ["FinTech", "Comptabilité", "OCR", "Automatisation"],
     websiteUrl: "https://www.cherry.tech",
     crunchbaseUrl: "https://www.crunchbase.com/organization/cherry-tech",
+    upvotes: 18,
   },
   {
     id: "meero",
@@ -132,6 +135,7 @@ export const mockStartups: Startup[] = [
     tags: ["MarTech", "Photographie", "Computer Vision", "Marketplace"],
     websiteUrl: "https://www.meero.com",
     crunchbaseUrl: "https://www.crunchbase.com/organization/meero",
+    upvotes: 8,
   },
   {
     id: "hub3e",
@@ -153,6 +157,7 @@ export const mockStartups: Startup[] = [
     aiImpactScore: 4,
     tags: ["GreenTech", "IoT", "women founder", "Industrie 4.0"],
     websiteUrl: "https://www.hub3e.com",
+    upvotes: 35,
   },
   {
     id: "it-labs",
@@ -174,6 +179,7 @@ export const mockStartups: Startup[] = [
     aiImpactScore: 3,
     tags: ["DevTools", "Testing", "Automation", "bootstrapped"],
     websiteUrl: "https://itlabs.ai",
+    upvotes: 22,
   },
   {
     id: "labelai",
@@ -199,5 +205,6 @@ export const mockStartups: Startup[] = [
     aiImpactScore: 4,
     tags: ["MLOps", "Data", "women founder", "API-first"],
     websiteUrl: "https://labelai.fr",
+    upvotes: 15,
   }
 ];

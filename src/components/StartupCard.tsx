@@ -69,6 +69,7 @@ const StartupCard = ({ startup, onUpvote }: StartupCardProps) => {
                 ? 'bg-startupia-turquoise/20 text-startupia-turquoise' 
                 : 'bg-black/20 text-white/70 hover:bg-startupia-turquoise/10 hover:text-white'
             }`}
+            aria-label={isUpvoted ? "Retirer le vote" : "Voter"}
           >
             <ThumbsUp size={16} className={isUpvoted ? 'fill-startupia-turquoise' : ''} />
             <span>{upvotes}</span>

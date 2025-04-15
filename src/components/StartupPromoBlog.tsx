@@ -18,7 +18,7 @@ const StartupPromoBlog = () => {
             <div className="relative">
               {/* Main Visual - Stylized Vote Card */}
               <div className="glass-card p-8 border border-startupia-turquoise/30 shadow-lg relative z-10 transform hover:scale-105 transition-transform duration-300">
-                <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-4 mb-6 justify-center">
                   <div className="w-16 h-16 bg-black rounded-xl border border-startupia-turquoise/30 flex items-center justify-center">
                     <span className="text-startupia-turquoise font-bold text-2xl">S</span>
                   </div>
@@ -28,11 +28,11 @@ const StartupPromoBlog = () => {
                   </div>
                 </div>
                 
-                <p className="text-white/90 mb-6">
+                <p className="text-white/90 mb-6 text-center">
                   La première plateforme qui connecte l'écosystème des startups IA françaises en un seul endroit.
                 </p>
                 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-center gap-4">
                   <div className="flex items-center gap-4">
                     <Button variant="outline" className="bg-black/30 border-startupia-turquoise/50 text-startupia-turquoise hover:bg-startupia-turquoise/20 flex items-center gap-2">
                       Visiter
@@ -62,7 +62,7 @@ const StartupPromoBlog = () => {
           </div>
           
           {/* Right Content - Promotional Text */}
-          <div className="lg:w-7/12 space-y-6">
+          <div className="lg:w-7/12 space-y-6 flex flex-col items-center">
             <h2 className="text-4xl md:text-5xl font-bold leading-tight text-center">
               Faites exploser votre startup, gratuitement
             </h2>
@@ -72,7 +72,7 @@ const StartupPromoBlog = () => {
               Sur Startupia, chaque vote propulse votre startup vers le sommet
             </p>
             
-            <div className="pt-8 flex justify-center">
+            <div className="pt-8 flex justify-center w-full">
               <Button size="lg" className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black font-semibold text-lg py-6 px-8" asChild>
                 <Link to="/startup">
                   <Rocket size={20} className="mr-2" />

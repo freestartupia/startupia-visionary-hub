@@ -101,7 +101,7 @@ const ReplyForm: React.FC<ReplyFormProps> = ({
       
       setContent('');
       toast.success('Réponse ajoutée avec succès');
-      onReplyAdded();
+      // onReplyAdded sera déclenché automatiquement par le canal temps réel
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la réponse:', error);
       toast.error('Erreur lors de l\'ajout de la réponse');

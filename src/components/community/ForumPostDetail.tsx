@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowUp } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { ForumPost } from '@/types/community';
 import { 
   getForumPost, 
@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import PostContent from './forum/PostContent';
 import ReplyForm from './forum/ReplyForm';
 import ReplyList from './forum/ReplyList';
+import { supabase } from '@/integrations/supabase/client';
 
 const ForumPostDetail = () => {
   const { postId } = useParams<{ postId: string }>();
@@ -25,40 +26,72 @@ const ForumPostDetail = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchPost = async () => {
-      if (!postId) return;
-      
-      try {
-        setIsLoading(true);
-        const fetchedPost = await getForumPost(postId);
-        setPost(fetchedPost);
-        incrementPostViews(postId);
-      } catch (error) {
-        console.error('Erreur lors du chargement du post:', error);
-        toast.error('Impossible de charger la discussion');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchPost = async () => {
+    if (!postId) return;
     
+    try {
+      setIsLoading(true);
+      const fetchedPost = await getForumPost(postId);
+      setPost(fetchedPost);
+      incrementPostViews(postId);
+    } catch (error) {
+      console.error('Erreur lors du chargement du post:', error);
+      toast.error('Impossible de charger la discussion');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchPost();
+    
+    // Configuration de l'abonnement en temps réel pour les réponses
+    if (!postId) return;
+    
+    const repliesChannel = supabase
+      .channel(`post-replies-${postId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'forum_replies',
+          filter: `parent_id=eq.${postId}`
+        },
+        (payload) => {
+          console.log('Nouvelle réponse détectée:', payload);
+          // Rafraîchir le post et ses réponses
+          fetchPost();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'forum_replies',
+          filter: `parent_id=eq.${postId}`
+        },
+        (payload) => {
+          console.log('Réponse modifiée détectée:', payload);
+          fetchPost();
+        }
+      )
+      .subscribe((status) => {
+        console.log('Statut de l\'abonnement aux réponses:', status);
+      });
+      
+    return () => {
+      supabase.removeChannel(repliesChannel);
+    };
   }, [postId]);
   
   const handleGoBack = () => {
     navigate('/community?tab=forum');
   };
   
-  const handleReplyAdded = async () => {
-    if (!postId) return;
-    
-    try {
-      const updatedPost = await getForumPost(postId);
-      setPost(updatedPost);
-      setReplyingTo(null);
-    } catch (error) {
-      console.error('Erreur lors du rafraîchissement des données:', error);
-    }
+  const handleReplyAdded = () => {
+    setReplyingTo(null);
   };
   
   const handleReplyToComment = (replyId: string) => {
@@ -80,8 +113,8 @@ const ForumPostDetail = () => {
         if (!prev) return null;
         return {
           ...prev,
-          likes: result.newCount,
-          isLiked: result.liked
+          likes: result.likes,
+          isLiked: result.isLiked
         };
       });
       
@@ -104,8 +137,8 @@ const ForumPostDetail = () => {
         if (!prev) return null;
         return {
           ...prev,
-          upvotesCount: result.newCount,
-          isUpvoted: result.upvoted
+          upvotesCount: result.upvotes,
+          isUpvoted: result.isUpvoted
         };
       });
       
@@ -115,7 +148,7 @@ const ForumPostDetail = () => {
   };
   
   const handleLikeReply = async (replyId: string) => {
-    if (!user) {
+    if (!user || !post) {
       toast.error('Vous devez être connecté pour liker');
       navigate('/auth');
       return;
@@ -124,44 +157,47 @@ const ForumPostDetail = () => {
     try {
       const result = await toggleReplyLike(replyId);
       
-      setPost(prev => {
-        if (!prev) return null;
-        
-        const updatedReplies = prev.replies.map(reply => {
-          if (reply.id === replyId) {
-            return {
-              ...reply,
-              likes: result.newCount,
-              isLiked: result.liked
-            };
-          }
+      // Mise à jour des likes dans la UI
+      if (post && post.replies) {
+        setPost(prev => {
+          if (!prev) return null;
           
-          if (reply.nestedReplies) {
-            const updatedNestedReplies = reply.nestedReplies.map(nestedReply => {
-              if (nestedReply.id === replyId) {
-                return {
-                  ...nestedReply,
-                  likes: result.newCount,
-                  isLiked: result.liked
-                };
-              }
-              return nestedReply;
-            });
+          const updatedReplies = prev.replies.map(reply => {
+            if (reply.id === replyId) {
+              return {
+                ...reply,
+                likes: result.likes,
+                isLiked: result.isLiked
+              };
+            }
             
-            return {
-              ...reply,
-              nestedReplies: updatedNestedReplies
-            };
-          }
+            if (reply.nestedReplies) {
+              const updatedNestedReplies = reply.nestedReplies.map(nestedReply => {
+                if (nestedReply.id === replyId) {
+                  return {
+                    ...nestedReply,
+                    likes: result.likes,
+                    isLiked: result.isLiked
+                  };
+                }
+                return nestedReply;
+              });
+              
+              return {
+                ...reply,
+                nestedReplies: updatedNestedReplies
+              };
+            }
+            
+            return reply;
+          });
           
-          return reply;
+          return {
+            ...prev,
+            replies: updatedReplies
+          };
         });
-        
-        return {
-          ...prev,
-          replies: updatedReplies
-        };
-      });
+      }
       
     } catch (error) {
       console.error('Erreur lors du like:', error);

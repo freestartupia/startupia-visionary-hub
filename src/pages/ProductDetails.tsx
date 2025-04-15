@@ -22,8 +22,9 @@ import {
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ProductComment } from '@/types/productLaunch';
-import { fetchProductById, addComment, upvoteProduct } from '@/services/productService';
-import { useToast } from '@/hooks/use-toast';
+import { fetchProductById, addComment, upvoteProduct, hasUpvotedProduct } from '@/services/productService';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,40 +33,40 @@ const ProductDetails = () => {
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [isUpvoting, setIsUpvoting] = useState(false);
+  const [hasUpvoted, setHasUpvoted] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const loadProduct = async () => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+      const data = await fetchProductById(id);
+      if (!data) {
+        toast.error("Produit non trouvé");
+        navigate('/products');
+        return;
+      }
+      setProduct(data);
+      
+      // Check if user has upvoted
+      if (user) {
+        const upvoted = await hasUpvotedProduct(id);
+        setHasUpvoted(upvoted);
+      }
+    } catch (error) {
+      console.error('Failed to load product:', error);
+      toast.error("Impossible de charger les détails du produit");
+    } finally {
+      setLoading(false);
+    }
+  };
   
   useEffect(() => {
-    async function loadProduct() {
-      if (!id) return;
-      
-      try {
-        setLoading(true);
-        const data = await fetchProductById(id);
-        if (!data) {
-          toast({
-            title: "Erreur",
-            description: "Produit non trouvé",
-            variant: "destructive"
-          });
-          navigate('/products');
-          return;
-        }
-        setProduct(data);
-      } catch (error) {
-        console.error('Failed to load product:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les détails du produit",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-    
     loadProduct();
-  }, [id, toast, navigate]);
+  }, [id, navigate, user]);
   
   const formatDate = (dateString: string) => {
     try {
@@ -77,69 +78,76 @@ const ProductDetails = () => {
   
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !id) return;
+    if (!newComment.trim() || !id || !user) {
+      if (!user) {
+        toast.error("Vous devez être connecté pour commenter");
+        navigate('/auth');
+      }
+      return;
+    }
     
     setCommentSubmitting(true);
     
     try {
-      const tempUserName = "Utilisateur temporaire";
-      const result = await addComment(id, newComment, tempUserName);
+      // Use user's display name or email as fallback
+      const userName = user.user_metadata?.name || user.email || "Utilisateur";
+      const result = await addComment(id, newComment, userName);
       
       if (result) {
-        toast({
-          title: "Commentaire ajouté",
-          description: "Votre commentaire a été publié avec succès"
-        });
+        toast.success("Votre commentaire a été publié avec succès");
         
-        const updatedProduct = await fetchProductById(id);
-        if (updatedProduct) {
-          setProduct(updatedProduct);
-        }
+        // Reload the product to get the updated comments
+        setTimeout(() => {
+          loadProduct();
+        }, 500);
         
         setNewComment('');
       } else {
-        toast({
-          title: "Erreur",
-          description: "Impossible d'ajouter le commentaire",
-          variant: "destructive"
-        });
+        toast.error("Impossible d'ajouter le commentaire");
       }
     } catch (error) {
       console.error('Error submitting comment:', error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur s'est produite lors de la publication du commentaire",
-        variant: "destructive"
-      });
+      toast.error("Une erreur s'est produite lors de la publication du commentaire");
     } finally {
       setCommentSubmitting(false);
     }
   };
   
   const handleUpvote = async () => {
-    if (!id) return;
+    if (!id || !user) {
+      if (!user) {
+        toast.error("Vous devez être connecté pour voter");
+        navigate('/auth');
+      }
+      return;
+    }
+    
+    if (isUpvoting || hasUpvoted) {
+      if (hasUpvoted) {
+        toast("Vous avez déjà upvoté ce produit");
+      }
+      return;
+    }
+    
+    setIsUpvoting(true);
     
     try {
       const success = await upvoteProduct(id);
       
       if (success) {
+        setHasUpvoted(true);
         setProduct(prev => ({
           ...prev,
           upvotes: (prev.upvotes || 0) + 1
         }));
         
-        toast({
-          title: "Merci pour votre soutien !",
-          description: "Votre vote a été comptabilisé"
-        });
+        toast.success("Merci pour votre soutien !");
       }
     } catch (error) {
       console.error('Failed to upvote:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'enregistrer votre vote",
-        variant: "destructive"
-      });
+      toast.error("Impossible d'enregistrer votre vote");
+    } finally {
+      setIsUpvoting(false);
     }
   };
   
@@ -320,7 +328,7 @@ const ProductDetails = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1">
-                      <ThumbsUp size={16} className="text-startupia-turquoise" />
+                      <ThumbsUp size={16} className={hasUpvoted ? "text-startupia-turquoise fill-startupia-turquoise" : "text-white"} />
                       <span className="font-semibold">{product.upvotes}</span>
                     </div>
                     <div className="flex items-center gap-1">
@@ -336,9 +344,22 @@ const ProductDetails = () => {
                 </div>
                 
                 <div className="space-y-3">
-                  <Button className="w-full bg-startupia-turquoise hover:bg-startupia-turquoise/90" onClick={handleUpvote}>
-                    <ThumbsUp size={16} className="mr-2" />
-                    Soutenir ce produit
+                  <Button 
+                    className={`w-full ${hasUpvoted ? 'bg-startupia-turquoise/70' : 'bg-startupia-turquoise'} hover:bg-startupia-turquoise/90`} 
+                    onClick={handleUpvote}
+                    disabled={isUpvoting || hasUpvoted}
+                  >
+                    {isUpvoting ? (
+                      <>
+                        <Loader2 size={16} className="mr-2 animate-spin" />
+                        Enregistrement...
+                      </>
+                    ) : (
+                      <>
+                        <ThumbsUp size={16} className={`mr-2 ${hasUpvoted ? 'fill-white' : ''}`} />
+                        {hasUpvoted ? 'Produit soutenu !' : 'Soutenir ce produit'}
+                      </>
+                    )}
                   </Button>
                   
                   <Button variant="outline" className="w-full" asChild>
@@ -423,7 +444,7 @@ const ProductDetails = () => {
                         <div className="flex justify-end">
                           <Button 
                             type="submit" 
-                            disabled={!newComment.trim() || commentSubmitting}
+                            disabled={!newComment.trim() || commentSubmitting || !user}
                           >
                             {commentSubmitting ? (
                               <>

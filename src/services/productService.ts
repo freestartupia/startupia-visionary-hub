@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ProductLaunch, ProductComment } from '@/types/productLaunch';
+import { ProductLaunch, ProductComment, ProductLaunchStatus } from '@/types/productLaunch';
 import { toast } from 'sonner';
 
 /**
@@ -33,40 +33,56 @@ export const fetchProducts = async (): Promise<ProductLaunch[]> => {
  */
 export const fetchProductById = async (id: string): Promise<ProductLaunch | null> => {
   try {
-    const { data, error } = await supabase
+    // First fetch the product launch
+    const { data: productData, error: productError } = await supabase
       .from('product_launches')
-      .select('*, comments(*)')
+      .select('*')
       .eq('id', id)
       .single();
     
-    if (error) {
-      console.error('Error fetching product by ID:', error);
+    if (productError) {
+      console.error('Error fetching product by ID:', productError);
       return null;
     }
     
-    if (!data) return null;
+    if (!productData) return null;
+    
+    // Then fetch the comments separately
+    const { data: commentsData, error: commentsError } = await supabase
+      .from('product_comments')
+      .select('*')
+      .eq('product_id', id)
+      .order('created_at', { ascending: false });
+    
+    if (commentsError) {
+      console.error('Error fetching product comments:', commentsError);
+    }
+    
+    const comments = commentsError ? [] : processCommentData(commentsData || []);
     
     // Process the product data
+    const status: ProductLaunchStatus = (productData.status as ProductLaunchStatus) || 'upcoming';
+    
     return {
-      id: data.id,
-      name: data.name,
-      logoUrl: data.logo_url || '',
-      tagline: data.tagline || '',
-      description: data.description || '',
-      launchDate: data.launch_date,
-      createdBy: data.created_by,
-      creatorAvatarUrl: data.creator_avatar_url,
-      websiteUrl: data.website_url || '',
-      demoUrl: data.demo_url,
-      category: data.category || [],
-      upvotes: data.upvotes || 0,
-      comments: processCommentData(data.comments || []),
-      status: data.status || 'upcoming',
-      startupId: data.startup_id,
-      mediaUrls: data.media_urls || [],
-      betaSignupUrl: data.beta_signup_url,
-      featuredOrder: data.featured_order,
-      badgeCode: data.badge_code
+      id: productData.id,
+      name: productData.name,
+      logoUrl: productData.logo_url || '',
+      tagline: productData.tagline || '',
+      description: productData.description || '',
+      launchDate: productData.launch_date,
+      createdBy: productData.created_by,
+      creatorAvatarUrl: productData.creator_avatar_url,
+      websiteUrl: productData.website_url || '',
+      demoUrl: productData.demo_url,
+      category: productData.category || [],
+      upvotes: productData.upvotes || 0,
+      comments: comments,
+      status: status,
+      startupId: productData.startup_id,
+      mediaUrls: productData.media_urls || [],
+      betaSignupUrl: productData.beta_signup_url,
+      featuredOrder: productData.featured_order,
+      badgeCode: productData.badge_code
     };
   } catch (error) {
     console.error('Exception fetching product by ID:', error);
@@ -120,7 +136,8 @@ export const createProduct = async (product: Partial<ProductLaunch>): Promise<Pr
       return null;
     }
     
-    return fetchProductById(data.id);
+    const createdProduct = await fetchProductById(data.id);
+    return createdProduct;
   } catch (error) {
     console.error('Exception creating product:', error);
     return null;
@@ -146,6 +163,9 @@ export const addComment = async (
     
     if (!user) {
       console.error('No user is logged in');
+      toast({
+        description: "Vous devez être connecté pour commenter"
+      });
       return false;
     }
     
@@ -154,18 +174,28 @@ export const addComment = async (
       .insert({
         product_id: productId,
         user_id: user.id,
-        user_name: userName,
+        user_name: userName || user.email,
         content: content
       });
     
     if (error) {
       console.error('Error adding comment:', error);
+      toast({
+        description: "Erreur lors de l'ajout du commentaire"
+      });
       return false;
     }
+    
+    toast({
+      description: "Commentaire ajouté avec succès"
+    });
     
     return true;
   } catch (error) {
     console.error('Exception adding comment:', error);
+    toast({
+      description: "Une erreur s'est produite lors de l'ajout du commentaire"
+    });
     return false;
   }
 };
@@ -184,9 +214,7 @@ export const upvoteProduct = async (productId: string): Promise<boolean> => {
     if (!user) {
       console.error('No user is logged in');
       toast({
-        title: "Erreur",
-        description: "Vous devez être connecté pour voter",
-        variant: "destructive"
+        description: "Vous devez être connecté pour voter"
       });
       return false;
     }
@@ -201,18 +229,20 @@ export const upvoteProduct = async (productId: string): Promise<boolean> => {
     
     if (checkError) {
       console.error('Error checking existing upvote:', checkError);
+      toast({
+        description: "Erreur lors de la vérification du vote"
+      });
       return false;
     }
     
     if (existingUpvote) {
       toast({
-        title: "Déjà voté",
-        description: "Vous avez déjà soutenu ce produit",
+        description: "Vous avez déjà soutenu ce produit"
       });
       return false;
     }
     
-    // Insert the upvote
+    // Insert the upvote into the product_upvotes table
     const { error } = await supabase
       .from('product_upvotes')
       .insert({
@@ -222,20 +252,36 @@ export const upvoteProduct = async (productId: string): Promise<boolean> => {
     
     if (error) {
       console.error('Error upvoting product:', error);
+      toast({
+        description: "Erreur lors du vote"
+      });
       return false;
     }
     
-    // Update the upvote count in the product
-    const { error: updateError } = await supabase.rpc('increment_product_upvotes', { product_id: productId });
+    // Call the RPC function to increment the upvote count
+    const { error: rpcError } = await supabase.rpc('increment_product_upvotes', {
+      product_id: productId
+    });
     
-    if (updateError) {
-      console.error('Error incrementing upvote count:', updateError);
-      // We still return true because the upvote was recorded
+    if (rpcError) {
+      console.error('Error incrementing upvote count:', rpcError);
+      // We don't return false here because the upvote was recorded
+      // We just couldn't increment the counter, which is a secondary operation
+      toast({
+        description: "Vote enregistré mais compteur non mis à jour"
+      });
+    } else {
+      toast({
+        description: "Merci pour votre soutien !"
+      });
     }
     
     return true;
   } catch (error) {
     console.error('Exception upvoting product:', error);
+    toast({
+      description: "Une erreur s'est produite lors du vote"
+    });
     return false;
   }
 };
@@ -290,7 +336,7 @@ const processProductData = (data: any[]): ProductLaunch[] => {
     category: item.category || [],
     upvotes: item.upvotes || 0,
     comments: [], // Comments are loaded separately when needed
-    status: item.status || 'upcoming',
+    status: (item.status as ProductLaunchStatus) || 'upcoming',
     startupId: item.startup_id,
     mediaUrls: item.media_urls || [],
     betaSignupUrl: item.beta_signup_url,

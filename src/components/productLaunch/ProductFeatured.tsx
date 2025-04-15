@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProductLaunch } from '@/types/productLaunch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import StartupiaLaunchBadge from './StartupiaLaunchBadge';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { upvoteProduct, hasUpvotedProduct } from '@/services/productService';
 
 interface ProductFeaturedProps {
   product: ProductLaunch;
@@ -17,8 +18,30 @@ interface ProductFeaturedProps {
 }
 
 const ProductFeatured: React.FC<ProductFeaturedProps> = ({ product, requireAuth = false }) => {
+  const [isUpvoting, setIsUpvoting] = useState(false);
+  const [hasUpvoted, setHasUpvoted] = useState(false);
+  const [upvoteCount, setUpvoteCount] = useState(product.upvotes);
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Update upvote count whenever the product prop changes
+    setUpvoteCount(product.upvotes);
+    
+    // Check if the user has already upvoted this product
+    const checkUpvoteStatus = async () => {
+      if (!user) return;
+      
+      try {
+        const upvoted = await hasUpvotedProduct(product.id);
+        setHasUpvoted(upvoted);
+      } catch (error) {
+        console.error('Error checking upvote status:', error);
+      }
+    };
+    
+    checkUpvoteStatus();
+  }, [product, user]);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'À venir';
@@ -31,9 +54,11 @@ const ProductFeatured: React.FC<ProductFeaturedProps> = ({ product, requireAuth 
     });
   };
 
-  const handleUpvote = (e: React.MouseEvent) => {
+  const handleUpvote = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (isUpvoting) return;
     
     if (requireAuth && !user) {
       toast.error("Vous devez être connecté pour upvoter");
@@ -41,7 +66,25 @@ const ProductFeatured: React.FC<ProductFeaturedProps> = ({ product, requireAuth 
       return;
     }
     
-    toast.success(`Vous avez upvoté ${product.name}`);
+    if (hasUpvoted) {
+      toast("Vous avez déjà upvoté ce produit");
+      return;
+    }
+    
+    setIsUpvoting(true);
+    
+    try {
+      const success = await upvoteProduct(product.id);
+      
+      if (success) {
+        setHasUpvoted(true);
+        setUpvoteCount(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error upvoting product:', error);
+    } finally {
+      setIsUpvoting(false);
+    }
   };
 
   return (
@@ -97,10 +140,11 @@ const ProductFeatured: React.FC<ProductFeaturedProps> = ({ product, requireAuth 
             <Button
               variant="outline"
               size="sm"
-              className="flex items-center justify-center"
+              className={`flex items-center justify-center ${hasUpvoted ? 'bg-startupia-turquoise/10 text-startupia-turquoise' : ''}`}
               onClick={handleUpvote}
+              disabled={isUpvoting}
             >
-              <ThumbsUp className="mr-2 h-3 w-3" /> {product.upvotes || 0} Upvotes
+              <ThumbsUp className="mr-2 h-3 w-3" /> {upvoteCount || 0} Upvotes
             </Button>
             
             <Button asChild size="sm" className="bg-startupia-turquoise hover:bg-startupia-turquoise/80">

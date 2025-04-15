@@ -625,6 +625,27 @@ export type Database = {
           },
         ]
       }
+      product_upvotes: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -906,6 +927,10 @@ export type Database = {
     Functions: {
       decrement_startup_upvotes: {
         Args: { startup_id: string }
+        Returns: undefined
+      }
+      increment_product_upvotes: {
+        Args: { product_id: string }
         Returns: undefined
       }
       increment_startup_upvotes: {

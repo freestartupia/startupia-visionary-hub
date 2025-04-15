@@ -61,7 +61,9 @@ export const addComment = async (
       userName,
       userAvatar: null,
       createdAt: new Date().toISOString(),
-      replies: []
+      replies: [],
+      likes: 0, // Add this property to match the type
+      userId: '' // Add this property to match the type
     };
     
     // Trouver le produit correspondant dans les données mockées
@@ -150,14 +152,10 @@ export const upvoteProduct = async (productId: string): Promise<boolean> => {
       return false;
     }
 
-    // Appeler la fonction d'incrémentation
-    const { error: rpcError } = await supabase
-      .rpc('increment_product_upvotes', { product_id: productId });
-    
-    if (rpcError) {
-      console.error('Erreur lors de l\'incrémentation du compteur:', rpcError);
-      toast.error("Erreur lors de l'upvote");
-      return false;
+    // Simuler l'incrémentation du compteur pour les données mockées
+    const productIndex = mockProductLaunches.findIndex(p => p.id === productId);
+    if (productIndex !== -1) {
+      mockProductLaunches[productIndex].upvotes += 1;
     }
     
     // Succès

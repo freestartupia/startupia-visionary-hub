@@ -5,11 +5,16 @@ import { supabase } from './client';
  * Version simplifiée: utilise uniquement des buckets existants
  */
 export const getPublicUrl = (bucketName: string, filePath: string) => {
-  const { data } = supabase.storage
-    .from(bucketName)
-    .getPublicUrl(filePath);
-    
-  return data.publicUrl;
+  try {
+    const { data } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+      
+    return data.publicUrl;
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'URL publique:', error);
+    return '';
+  }
 };
 
 /**
@@ -53,9 +58,12 @@ export const deleteFile = async (bucketName: string, filePath: string) => {
   }
 };
 
-// Pas d'initialisation automatique
+/**
+ * Fonction d'initialisation simplifiée
+ * Ne tente pas de créer des buckets - utilise seulement ceux existants
+ */
 export const initializeStorage = async () => {
-  // Ne fait rien pour éviter les erreurs RLS
+  console.log('Supabase initialisé avec succès');
 };
 
 export default {

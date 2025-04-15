@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const BLOG_BUCKET = 'blog_images';
 
@@ -9,21 +9,13 @@ export const uploadBlogImage = async (file: File): Promise<string | null> => {
   try {
     // Vérifier le type de fichier
     if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Erreur",
-        description: "Le fichier doit être une image",
-        variant: "destructive",
-      });
+      toast.error("Le fichier doit être une image");
       return null;
     }
     
     // Vérifier la taille du fichier (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast({
-        title: "Erreur",
-        description: "L'image ne doit pas dépasser 2MB",
-        variant: "destructive",
-      });
+      toast.error("L'image ne doit pas dépasser 2MB");
       return null;
     }
     
@@ -39,11 +31,7 @@ export const uploadBlogImage = async (file: File): Promise<string | null> => {
       
     if (uploadError) {
       console.error('Erreur lors du téléchargement de l\'image:', uploadError);
-      toast({
-        title: "Erreur",
-        description: `Impossible de télécharger l'image: ${uploadError.message}`,
-        variant: "destructive",
-      });
+      toast.error(`Impossible de télécharger l'image: ${uploadError.message}`);
       return null;
     }
     
@@ -55,11 +43,7 @@ export const uploadBlogImage = async (file: File): Promise<string | null> => {
     return data.publicUrl;
   } catch (error) {
     console.error('Erreur lors du téléchargement de l\'image:', error);
-    toast({
-      title: "Erreur",
-      description: "Une erreur est survenue lors du téléchargement de l'image",
-      variant: "destructive",
-    });
+    toast.error("Une erreur est survenue lors du téléchargement de l'image");
     return null;
   }
 };

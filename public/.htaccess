@@ -2,12 +2,12 @@
 # HEADER Content Security Policy
 <IfModule mod_headers.c>
 Header always set Strict-Transport-Security "max-age=31536000; includeSubdomains; preload"
-Header set X-Frame-Options "SAMEORIGIN"
+Header set X-Frame-Options "ALLOW-FROM https://*.lovable.dev https://*.lovableproject.com"
 Header set X-XSS-Protection "1; mode=block"
 Header set X-Content-Type-Options "nosniff"
 Header set Referrer-Policy "strict-origin"
 Header set X-Download-Options "noopen"
 Header set X-Permitted-Cross-Domain-Policies "none"
-Header set Content-Security-Policy "upgrade-insecure-requests;"
+Header set Content-Security-Policy "upgrade-insecure-requests; frame-ancestors 'self' https://*.lovable.dev https://*.lovableproject.com;"
 Header always set Permissions-Policy: interest-cohort=()
 </IfModule>

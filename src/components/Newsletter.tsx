@@ -1,31 +1,28 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-
 const Newsletter = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     // Simulation d'une souscription
     setTimeout(() => {
       toast({
         title: "Inscription réussie!",
-        description: "Vous recevrez bientôt notre newsletter sur l'écosystème IA français.",
+        description: "Vous recevrez bientôt notre newsletter sur l'écosystème IA français."
       });
       setEmail('');
       setLoading(false);
     }, 1000);
   };
-
-  return (
-    <section id="newsletter" className="py-20 relative timeline-section">
+  return <section id="newsletter" className="py-20 relative timeline-section">
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-purple/20 rounded-full blur-3xl animate-pulse-slow"></div>
@@ -57,21 +54,9 @@ const Newsletter = () => {
                   <label htmlFor="email" className="block mb-2 text-sm font-medium">
                     Votre adresse e-mail
                   </label>
-                  <Input 
-                    type="email" 
-                    id="email" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nom@exemple.com" 
-                    className="bg-white/5 border-white/20 placeholder:text-white/40 focus:border-startupia-purple/50"
-                    required
-                  />
+                  <Input type="email" id="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="nom@exemple.com" className="bg-white/5 border-white/20 placeholder:text-white/40 focus:border-startupia-purple/50" required />
                 </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-startupia-purple hover:bg-startupia-purple/90 button-glow"
-                  disabled={loading}
-                >
+                <Button type="submit" disabled={loading} className="w-full bg-startupia-purple hover:bg-startupia-purple/90 button-glow text-startupia-turquoise">
                   {loading ? 'Inscription...' : 'Rejoindre la communauté'}
                 </Button>
                 <p className="text-xs text-white/50 text-center">
@@ -82,8 +67,6 @@ const Newsletter = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Newsletter;

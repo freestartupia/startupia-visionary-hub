@@ -13,6 +13,7 @@ import TrustSignals from '@/components/TrustSignals';
 import StartupPromoBlog from '@/components/StartupPromoBlog';
 import CommunitySummary from '@/components/CommunitySummary';
 import SEO from '@/components/SEO';
+import PromoTopbar from '@/components/PromoTopbar';
 
 const Index = () => {
   useEffect(() => {
@@ -57,6 +58,9 @@ const Index = () => {
       <div className="absolute top-1/4 -left-40 w-64 sm:w-96 h-64 sm:h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
       <div className="absolute bottom-1/3 -right-40 w-64 sm:w-96 h-64 sm:h-96 bg-startupia-gold/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
 
+      {/* Promo Topbar - placed before Navbar */}
+      <PromoTopbar />
+      
       <Navbar />
       
       <main className="pt-24">

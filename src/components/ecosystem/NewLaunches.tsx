@@ -1,43 +1,110 @@
 
-import React from "react";
-import { Startup } from "@/types/startup";
-import { Sparkles } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import StartupLogo from "@/components/startup/StartupLogo";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { mockProductLaunches } from '@/data/mockProductLaunches';
+import { ProductLaunch } from '@/types/productLaunch';
+import ProductCard from '@/components/productLaunch/ProductCard';
+import StartupiaLaunchBadge from '@/components/productLaunch/StartupiaLaunchBadge';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Rocket } from 'lucide-react';
 
 interface NewLaunchesProps {
-  startupsFeatured: Startup[];
+  searchQuery: string;
+  showFilters: boolean;
+  sortOrder: string;
+  limit?: number;
 }
 
-const NewLaunches = ({ startupsFeatured }: NewLaunchesProps) => {
-  if (!startupsFeatured || startupsFeatured.length === 0) {
-    return null;
+const NewLaunches = ({ searchQuery, showFilters, sortOrder, limit = 4 }: NewLaunchesProps) => {
+  const [launches, setLaunches] = useState<ProductLaunch[]>([]);
+  
+  useEffect(() => {
+    // Filter and sort products based on params
+    let filtered = [...mockProductLaunches];
+    
+    // Apply search filter if any
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((product) =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.category.some(cat => cat.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+    
+    // Prioritize launching_today products
+    const launchingToday = filtered.filter(p => p.status === 'launching_today');
+    const upcoming = filtered.filter(p => p.status === 'upcoming');
+    const launched = filtered.filter(p => p.status === 'launched');
+    
+    // Sort based on selected order and combine
+    switch (sortOrder) {
+      case 'impact':
+        // Sort by upvotes as a proxy for impact
+        launched.sort((a, b) => b.upvotes - a.upvotes);
+        break;
+      case 'alphabetical':
+        launchingToday.sort((a, b) => a.name.localeCompare(b.name));
+        upcoming.sort((a, b) => a.name.localeCompare(b.name));
+        launched.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      default:
+        // Default sort by launch date (newest first)
+        launchingToday.sort((a, b) => new Date(b.launchDate).getTime() - new Date(a.launchDate).getTime());
+        upcoming.sort((a, b) => new Date(b.launchDate).getTime() - new Date(a.launchDate).getTime());
+        launched.sort((a, b) => new Date(b.launchDate).getTime() - new Date(a.launchDate).getTime());
+    }
+    
+    // Combine and limit results
+    const combined = [...launchingToday, ...upcoming, ...launched].slice(0, limit);
+    setLaunches(combined);
+  }, [searchQuery, showFilters, sortOrder, limit]);
+
+  if (launches.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-white/70">Aucun lancement ne correspond à votre recherche</p>
+      </div>
+    );
   }
 
+  // Format date
+  const formatLaunchDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(date);
+  };
+
+  // Check if a date is today
+  const isToday = (dateString: string) => {
+    const today = new Date();
+    const date = new Date(dateString);
+    return date.setHours(0, 0, 0, 0) === today.setHours(0, 0, 0, 0);
+  };
+
   return (
-    <section>
-      <div className="flex items-center mb-4">
-        <Sparkles size={20} className="mr-2 text-startupia-gold" />
-        <h2 className="text-2xl font-bold">Derniers lancements</h2>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {startupsFeatured.map((startup) => (
-          <Link to={`/startup/${startup.id}`} key={startup.id}>
-            <Card className="hover-scale glass-card overflow-hidden h-full border border-startupia-purple/20 bg-black/30">
-              <CardContent className="p-4">
-                <div className="flex items-center mb-2">
-                  <StartupLogo logoUrl={startup.logoUrl} name={startup.name} size="sm" />
-                  <h3 className="ml-2 font-semibold text-sm">{startup.name}</h3>
-                </div>
-                <p className="text-white/70 text-xs line-clamp-2">{startup.shortDescription}</p>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
-    </section>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {launches.map((product) => (
+        <div key={product.id} className="relative">
+          {product.status === 'launching_today' && (
+            <div className="absolute -top-4 -left-4 z-10">
+              <Badge variant="outline" className="bg-startupia-turquoise border-none px-3 py-1 flex items-center gap-1">
+                <Rocket size={14} />
+                <span>Aujourd'hui !</span>
+              </Badge>
+            </div>
+          )}
+          
+          {product.status === 'upcoming' && (
+            <div className="absolute -top-4 -left-4 z-10">
+              <Badge variant="outline" className="bg-black/60 border-startupia-turquoise/50 px-3 py-1 flex items-center gap-1">
+                <Calendar size={14} />
+                <span>{formatLaunchDate(product.launchDate)}</span>
+              </Badge>
+            </div>
+          )}
+          
+          <ProductCard product={product} requireAuth={false} />
+        </div>
+      ))}
+    </div>
   );
 };
 

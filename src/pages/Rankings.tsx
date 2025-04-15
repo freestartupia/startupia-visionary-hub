@@ -1,10 +1,11 @@
+
 import React from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import { mockStartups } from '@/data/mockStartups';
 import { mockProductLaunches } from '@/data/mockProductLaunches';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/integrations/supabase/client';
+import { incrementValue, supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 import SEO from '@/components/SEO';

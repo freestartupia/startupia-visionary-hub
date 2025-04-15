@@ -1,4 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
+
+import { supabase, incrementValue } from '@/integrations/supabase/client';
 import { ProductLaunch, ProductComment, ProductLaunchStatus } from '@/types/productLaunch';
 import { Database } from '@/integrations/supabase/types';
 

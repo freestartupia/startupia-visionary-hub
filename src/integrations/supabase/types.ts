@@ -843,6 +843,7 @@ export type Database = {
           short_description: string
           tags: string[] | null
           updated_at: string | null
+          upvotes: number | null
           view_count: number | null
           website_url: string | null
         }
@@ -867,6 +868,7 @@ export type Database = {
           short_description: string
           tags?: string[] | null
           updated_at?: string | null
+          upvotes?: number | null
           view_count?: number | null
           website_url?: string | null
         }
@@ -891,6 +893,7 @@ export type Database = {
           short_description?: string
           tags?: string[] | null
           updated_at?: string | null
+          upvotes?: number | null
           view_count?: number | null
           website_url?: string | null
         }

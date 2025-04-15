@@ -53,7 +53,7 @@ export const getStartups = async (): Promise<Startup[]> => {
       dateAdded: item.date_added,
       viewCount: item.view_count || 0,
       isFeatured: item.is_featured || false,
-      upvotes: item.upvotes || 0, // Make sure upvotes exists
+      upvotes: item.upvotes || 0,
       isUpvoted: userUpvotes[item.id] || false,
     })) as Startup[];
   } catch (error) {
@@ -112,7 +112,7 @@ export const getStartupById = async (id: string): Promise<Startup | null> => {
       dateAdded: data.date_added,
       viewCount: data.view_count || 0,
       isFeatured: data.is_featured || false,
-      upvotes: data.upvotes || 0, // Make sure upvotes exists
+      upvotes: data.upvotes || 0,
       isUpvoted: isUpvoted,
     } as Startup;
   } catch (error) {
@@ -244,3 +244,4 @@ export const isStartupUpvotedByUser = async (startupId: string): Promise<boolean
     return false;
   }
 };
+

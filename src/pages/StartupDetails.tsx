@@ -13,6 +13,7 @@ import TagList from "@/components/startup/TagList";
 import SEO from "@/components/SEO";
 import { upvoteStartup, downvoteStartup } from "@/services/startupService";
 import { toast } from "sonner";
+import { useAuth } from "@/context/authContext";
 
 const StartupDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,7 @@ const StartupDetails = () => {
   const [upvotes, setUpvotes] = useState(0);
   const [isUpvoted, setIsUpvoted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchStartup = async () => {
@@ -29,11 +31,7 @@ const StartupDetails = () => {
         if (id) {
           const data = await getStartupById(id);
           if (data) {
-            // Make sure to include upvotes when setting the startup
-            setStartup({
-              ...data,
-              upvotes: data.upvotes || 0
-            });
+            setStartup(data);
             setUpvotes(data.upvotes || 0);
             setIsUpvoted(data.isUpvoted || false);
           }
@@ -53,6 +51,14 @@ const StartupDetails = () => {
     
     if (!startup) return;
     if (isLoading) return;
+    
+    if (!user) {
+      toast.error("Vous devez être connecté pour voter", {
+        description: "Connectez-vous pour pouvoir soutenir vos startups préférées"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -61,6 +67,9 @@ const StartupDetails = () => {
         if (success) {
           setUpvotes(prev => Math.max(0, prev - 1));
           setIsUpvoted(false);
+          toast.success("Vote retiré");
+        } else {
+          toast.error("Erreur lors du retrait du vote");
         }
       } else {
         const success = await upvoteStartup(startup.id);
@@ -68,6 +77,8 @@ const StartupDetails = () => {
           setUpvotes(prev => prev + 1);
           setIsUpvoted(true);
           toast.success("Vote enregistré !");
+        } else {
+          toast.error("Erreur lors du vote");
         }
       }
     } catch (error) {
@@ -104,7 +115,6 @@ const StartupDetails = () => {
       <Navbar />
 
       <main className="container mx-auto pt-24 pb-16 px-4 relative z-10">
-        {/* Background elements */}
         <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
         <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
         <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
@@ -127,11 +137,14 @@ const StartupDetails = () => {
               <button 
                 onClick={handleUpvote}
                 className={`flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${
+                  isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                } ${
                   isUpvoted 
                     ? 'bg-startupia-turquoise/20 text-startupia-turquoise' 
                     : 'bg-black/20 text-white/70 hover:bg-startupia-turquoise/10 hover:text-white'
                 }`}
                 aria-label={isUpvoted ? "Retirer le vote" : "Voter"}
+                disabled={isLoading}
               >
                 <ThumbsUp size={16} className={isUpvoted ? 'fill-startupia-turquoise' : ''} />
                 <span>{upvotes}</span>

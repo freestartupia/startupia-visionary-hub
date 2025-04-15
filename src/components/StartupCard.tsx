@@ -8,6 +8,7 @@ import TagList from "@/components/startup/TagList";
 import { ThumbsUp } from "lucide-react";
 import { upvoteStartup, downvoteStartup } from "@/services/startupService";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface StartupCardProps {
   startup: Startup;
@@ -18,12 +19,21 @@ const StartupCard = ({ startup, onUpvote }: StartupCardProps) => {
   const [upvotes, setUpvotes] = useState(startup.upvotes || 0);
   const [isUpvoted, setIsUpvoted] = useState(startup.isUpvoted || false);
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   const handleUpvote = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (isLoading) return;
+    
+    if (!user) {
+      toast.error("Vous devez être connecté pour voter", {
+        description: "Connectez-vous pour pouvoir soutenir vos startups préférées"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -33,6 +43,9 @@ const StartupCard = ({ startup, onUpvote }: StartupCardProps) => {
           setUpvotes(prev => Math.max(0, prev - 1));
           setIsUpvoted(false);
           if (onUpvote) onUpvote(startup.id, upvotes - 1);
+          toast.success("Vote retiré");
+        } else {
+          toast.error("Erreur lors du retrait du vote");
         }
       } else {
         const success = await upvoteStartup(startup.id);
@@ -41,6 +54,8 @@ const StartupCard = ({ startup, onUpvote }: StartupCardProps) => {
           setIsUpvoted(true);
           if (onUpvote) onUpvote(startup.id, upvotes + 1);
           toast.success("Vote enregistré !");
+        } else {
+          toast.error("Erreur lors du vote");
         }
       }
     } catch (error) {
@@ -65,11 +80,14 @@ const StartupCard = ({ startup, onUpvote }: StartupCardProps) => {
           <button 
             onClick={handleUpvote}
             className={`flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${
+              isLoading ? 'opacity-50 cursor-not-allowed' : ''
+            } ${
               isUpvoted 
                 ? 'bg-startupia-turquoise/20 text-startupia-turquoise' 
                 : 'bg-black/20 text-white/70 hover:bg-startupia-turquoise/10 hover:text-white'
             }`}
             aria-label={isUpvoted ? "Retirer le vote" : "Voter"}
+            disabled={isLoading}
           >
             <ThumbsUp size={16} className={isUpvoted ? 'fill-startupia-turquoise' : ''} />
             <span>{upvotes}</span>

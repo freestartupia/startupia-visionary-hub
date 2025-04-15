@@ -34,8 +34,11 @@ const PostHeader: React.FC<PostHeaderProps> = ({ post }) => {
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-4">
         <Avatar className="h-10 w-10">
-          <AvatarImage src={post.authorAvatar} alt={post.authorName} />
-          <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+          {post.authorAvatar ? (
+            <AvatarImage src={post.authorAvatar} alt={post.authorName} />
+          ) : (
+            <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+          )}
         </Avatar>
         <div>
           <h3 className="font-medium">{post.authorName}</h3>

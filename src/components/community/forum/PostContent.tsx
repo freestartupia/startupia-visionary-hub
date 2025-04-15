@@ -50,8 +50,11 @@ const PostContent: React.FC<PostContentProps> = ({ post, onLike, onUpvote }) => 
         
         <div className="flex items-center mb-6">
           <Avatar className="h-10 w-10 mr-3">
-            <AvatarImage src={post.authorAvatar || ''} alt={post.authorName} />
-            <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+            {post.authorAvatar ? (
+              <AvatarImage src={post.authorAvatar} alt={post.authorName} />
+            ) : (
+              <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+            )}
           </Avatar>
           <div>
             <div className="font-medium">{post.authorName}</div>

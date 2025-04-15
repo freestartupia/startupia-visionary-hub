@@ -72,8 +72,11 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
       <div className="flex justify-between items-center">
         <div className="flex items-center text-sm">
           <Avatar className="h-8 w-8 mr-2">
-            <AvatarImage src={post.authorAvatar || ''} alt={post.authorName} />
-            <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+            {post.authorAvatar ? (
+              <AvatarImage src={post.authorAvatar} alt={post.authorName} />
+            ) : (
+              <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+            )}
           </Avatar>
           <span className="font-medium">{post.authorName}</span>
         </div>

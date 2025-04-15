@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ThumbsUp, MessageCircle, Eye, Pin, ArrowUp } from 'lucide-react';
 import { ForumPost } from '@/types/community';
@@ -70,7 +69,7 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
           {post.content}
         </p>
         
-        <div className="flex justify-between items-center pt-3 border-t border-white/10">
+        <div className="flex justify-between items-center pt-3 border-t border-white/10 bg-startupia-turquoise/20 p-4">
           <div className="flex items-center text-sm">
             <Avatar className="h-8 w-8 mr-2 border border-white/20">
               {post.authorAvatar ? (

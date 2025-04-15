@@ -1,4 +1,3 @@
-
 export interface Startup {
   id: string;
   name: string;
@@ -7,10 +6,12 @@ export interface Startup {
   logoUrl?: string;
   category: string;
   aiTechnology?: string;
+  businessModel?: string;
   launchDate?: string;
   createdAt: string;
   createdBy: string;
   upvotes: number;
+  commentCount?: number;
 }
 
 export interface StartupComment {

@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { addComment } from '@/services/comments/commentService';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CommentFormProps {
   startupId: string;
@@ -16,6 +17,26 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
   const { toast } = useToast();
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  
+  useEffect(() => {
+    // Récupérer les données du profil de l'utilisateur connecté
+    const fetchUserProfile = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (!error && data) {
+          setUserProfile(data);
+        }
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,15 +61,19 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
     
     setIsSubmitting(true);
     try {
-      // Utiliser le nom de l'utilisateur depuis les métadonnées ou un nom par défaut
-      const userName = user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
+      // Utiliser les informations du profil pour le nom complet et l'avatar
+      const fullName = userProfile 
+        ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() 
+        : user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
+      
+      const avatarUrl = userProfile?.avatar_url || user.user_metadata?.avatar_url;
       
       await addComment({
         startupId,
         content,
         userId: user.id,
-        userName: userName,
-        userAvatar: user.user_metadata?.avatar_url
+        userName: fullName,
+        userAvatar: avatarUrl
       });
       
       toast({
@@ -80,19 +105,26 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
     );
   }
 
+  const fullName = userProfile 
+    ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() 
+    : user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
+  
+  const avatarUrl = userProfile?.avatar_url || user.user_metadata?.avatar_url;
+  const initials = fullName !== 'Utilisateur' ? fullName.charAt(0) : 'U';
+
   return (
     <form onSubmit={handleSubmit} className="glass-card border border-white/10 p-6 rounded-lg mb-8">
       <div className="flex items-start gap-4">
         <div className="h-10 w-10 rounded-full bg-startupia-turquoise/10 flex-shrink-0 flex items-center justify-center overflow-hidden">
-          {user.user_metadata?.avatar_url ? (
+          {avatarUrl ? (
             <img 
-              src={user.user_metadata?.avatar_url} 
-              alt={user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur'} 
+              src={avatarUrl} 
+              alt={fullName} 
               className="w-full h-full object-cover" 
             />
           ) : (
             <span className="text-lg font-bold text-startupia-turquoise">
-              {((user.user_metadata?.full_name || user.user_metadata?.name || 'U')[0]).toUpperCase()}
+              {initials.toUpperCase()}
             </span>
           )}
         </div>

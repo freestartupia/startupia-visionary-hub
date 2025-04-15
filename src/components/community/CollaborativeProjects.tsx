@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { CollaborativeProject, ProjectStatus } from '@/types/community';
 import { useAuth } from '@/contexts/AuthContext';
@@ -156,7 +155,13 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
     projectsCache.timestamp = 0;
   }, []);
   
-  // Optimiser le filtrage avec useMemo
+  const handleProjectDeleted = useCallback(() => {
+    // Invalidate cache and fetch projects again
+    projectsCache.data = null;
+    projectsCache.timestamp = 0;
+    fetchProjects();
+  }, [fetchProjects]);
+  
   const filteredProjects = useMemo(() => {
     return projects
       .filter(project => selectedStatus === 'all' || project.status === selectedStatus)
@@ -170,7 +175,6 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
       });
   }, [projects, selectedStatus, searchTerm]);
   
-  // Contenu de chargement optimisé
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -197,6 +201,7 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
         onLike={handleLike}
         onContact={handleContact}
         onProposeProject={handleProposeProject}
+        onProjectDeleted={handleProjectDeleted}
       />
       
       <ProposeProjectModal 
@@ -209,5 +214,4 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
   );
 };
 
-// Utiliser React.memo pour éviter les rendus inutiles
 export default React.memo(CollaborativeProjects);

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Heart, Users } from 'lucide-react';
+import { Heart, Users, Edit, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,15 +8,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { CollaborativeProject, ProjectStatus } from '@/types/community';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProjectCardProps {
   project: CollaborativeProject;
   onLike: (projectId: string) => void;
   onContact: (projectId: string) => void;
+  onProjectDeleted?: () => void; // New callback for when a project is deleted
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact, onProjectDeleted }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { user } = useAuth();
   
   const getInitials = (name: string) => {
     return name
@@ -48,6 +53,44 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact })
   const truncateDescription = (text: string) => {
     if (text.length <= 120) return text;
     return text.slice(0, 120) + '...';
+  };
+
+  // Check if the current user is the project creator
+  const isProjectCreator = user && project.initiator_id === user.id;
+
+  // Handler for editing a project
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast.info("Fonctionnalité de modification en développement");
+    // Redirect to edit page or open edit modal
+  };
+
+  // Handler for deleting a project
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (isDeleting) return;
+    
+    if (confirm("Êtes-vous sûr de vouloir supprimer ce projet ?")) {
+      setIsDeleting(true);
+      
+      try {
+        const { error } = await supabase
+          .from('collaborative_projects')
+          .delete()
+          .eq('id', project.id);
+          
+        if (error) throw error;
+        
+        toast.success("Projet supprimé avec succès");
+        if (onProjectDeleted) onProjectDeleted();
+      } catch (err) {
+        console.error('Erreur lors de la suppression du projet:', err);
+        toast.error("Une erreur est survenue lors de la suppression du projet");
+      } finally {
+        setIsDeleting(false);
+      }
+    }
   };
 
   return (
@@ -106,18 +149,43 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact })
           <div className="flex gap-2 w-full">
             <Button 
               variant="outline" 
-              className="flex-1 h-10"  // Added explicit height
+              className="flex-1 h-10"
               onClick={() => setIsDialogOpen(true)}
             >
               En savoir plus
             </Button>
             <Button 
-              className="flex-1 h-10"  // Added explicit height
+              className="flex-1 h-10"
               onClick={() => onContact(project.id)}
             >
               Contacter
             </Button>
           </div>
+          
+          {/* Project owner actions */}
+          {isProjectCreator && (
+            <div className="flex gap-2 w-full border-t border-white/10 pt-3">
+              <Button 
+                variant="outline" 
+                className="flex-1 h-10 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300"
+                onClick={handleEdit}
+                size="sm"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Modifier
+              </Button>
+              <Button 
+                variant="outline"
+                className="flex-1 h-10 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-300"
+                onClick={handleDelete}
+                size="sm"
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Supprimer
+              </Button>
+            </div>
+          )}
         </CardFooter>
       </Card>
 
@@ -160,6 +228,29 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact })
                 <p className="text-xs text-muted-foreground">Projet créé le {formatDate(project.created_at)}</p>
               </div>
             </div>
+            
+            {/* Show edit/delete options in the dialog too if user is the creator */}
+            {isProjectCreator && (
+              <div className="flex gap-2 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300"
+                  onClick={handleEdit}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Modifier
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="flex-1 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-300"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Supprimer
+                </Button>
+              </div>
+            )}
           </div>
           
           <DialogFooter>

@@ -1,4 +1,3 @@
-
 import { Startup } from "@/types/startup";
 
 export const mockStartups: Startup[] = [
@@ -32,6 +31,7 @@ export const mockStartups: Startup[] = [
     websiteUrl: "https://mistral.ai",
     pitchDeckUrl: "https://example.com/mistral-pitch",
     crunchbaseUrl: "https://www.crunchbase.com/organization/mistral-ai",
+    upvotes: 120
   },
   {
     id: "doctrine",

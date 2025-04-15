@@ -57,6 +57,7 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
           }
         }
       } else {
+        console.log('Upvoting startup:', startup.id);
         const success = await upvoteStartup(startup.id);
         if (success) {
           setUpvoted(true);

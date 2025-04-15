@@ -13,7 +13,7 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
     const startupIndex = mockStartups.findIndex(s => s.id === startupId);
     
     if (startupIndex === -1) {
-      console.error('Startup non trouvée');
+      console.error('Startup non trouvée:', startupId);
       return false;
     }
     
@@ -39,7 +39,7 @@ export const removeStartupUpvote = async (startupId: string): Promise<boolean> =
     const startupIndex = mockStartups.findIndex(s => s.id === startupId);
     
     if (startupIndex === -1) {
-      console.error('Startup non trouvée');
+      console.error('Startup non trouvée:', startupId);
       return false;
     }
     

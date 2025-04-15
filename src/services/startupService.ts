@@ -42,9 +42,13 @@ export async function fetchStartupById(id: string) {
 // Créer une nouvelle startup
 export async function createStartup(startup: Omit<Startup, 'id' | 'createdAt' | 'createdBy' | 'upvotes'>) {
   try {
+    // Obtenir l'ID utilisateur actuel avant l'insertion
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Utilisateur non connecté');
+    
     const { data, error } = await supabase
       .from('startups')
-      .insert([{
+      .insert({
         name: startup.name,
         short_description: startup.shortDescription,
         website_url: startup.websiteUrl,
@@ -52,8 +56,8 @@ export async function createStartup(startup: Omit<Startup, 'id' | 'createdAt' | 
         category: startup.category,
         ai_technology: startup.aiTechnology,
         launch_date: startup.launchDate,
-        created_by: supabase.auth.getUser().then(res => res.data.user?.id)
-      }])
+        created_by: user.id // Utiliser directement l'ID utilisateur
+      })
       .select()
       .single();
       
@@ -69,9 +73,12 @@ export async function createStartup(startup: Omit<Startup, 'id' | 'createdAt' | 
 // Voter pour une startup
 export async function voteForStartup(startupId: string) {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Utilisateur non connecté');
+    
     const { error } = await supabase
       .from('startup_votes')
-      .insert([{ startup_id: startupId, user_id: (await supabase.auth.getUser()).data.user?.id }]);
+      .insert([{ startup_id: startupId, user_id: user.id }]);
       
     if (error) {
       if (error.code === '23505') { // Violation de contrainte d'unicité
@@ -90,7 +97,7 @@ export async function voteForStartup(startupId: string) {
 // Annuler un vote pour une startup
 export async function unvoteStartup(startupId: string) {
   try {
-    const user = (await supabase.auth.getUser()).data.user;
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Utilisateur non connecté');
     
     const { error } = await supabase
@@ -111,7 +118,7 @@ export async function unvoteStartup(startupId: string) {
 // Vérifier si l'utilisateur a voté pour une startup
 export async function hasUserVotedForStartup(startupId: string) {
   try {
-    const user = (await supabase.auth.getUser()).data.user;
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
     
     const { data, error } = await supabase

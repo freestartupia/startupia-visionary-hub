@@ -31,3 +31,9 @@ export interface StartupComment {
   createdAt: string;
   likes: number;
 }
+
+// Ajout des types pour le composant SubmitStartupModal
+export type AITool = string;
+export type Sector = string;
+export type BusinessModel = string;
+export type MaturityLevel = string;

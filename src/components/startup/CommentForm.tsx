@@ -44,8 +44,8 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
       //   startupId,
       //   content,
       //   userId: user.id,
-      //   userName: user.displayName || 'Utilisateur',
-      //   userAvatar: user.photoURL
+      //   userName: user.email || 'Utilisateur',
+      //   userAvatar: user.avatar_url
       // });
       
       toast({
@@ -81,15 +81,15 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
     <form onSubmit={handleSubmit} className="glass-card border border-white/10 p-6 rounded-lg mb-8">
       <div className="flex items-start gap-4">
         <div className="h-10 w-10 rounded-full bg-startupia-turquoise/10 flex-shrink-0 flex items-center justify-center overflow-hidden">
-          {user.photoURL ? (
+          {user.avatar_url ? (
             <img 
-              src={user.photoURL} 
-              alt={user.displayName || 'Utilisateur'} 
+              src={user.avatar_url} 
+              alt={user.email || 'Utilisateur'} 
               className="w-full h-full object-cover" 
             />
           ) : (
             <span className="text-lg font-bold text-startupia-turquoise">
-              {(user.displayName || 'U')[0]}
+              {(user.email || 'U')[0].toUpperCase()}
             </span>
           )}
         </div>

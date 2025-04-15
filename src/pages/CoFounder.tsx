@@ -74,7 +74,7 @@ const CoFounder = () => {
   }
 
   return (
-    <div className="min-h-screen bg-hero-pattern text-white">
+    <div className="min-h-screen bg-hero-pattern text-white overflow-x-hidden">
       <SEO 
         title="Trouvez un Cofondateur pour votre Startup IA – StartupIA.fr"
         description="Vous cherchez un cofondateur technique, marketing ou produit pour lancer une startup IA ? Rejoignez StartupIA.fr et trouvez le bon profil pour concrétiser votre idée d'intelligence artificielle."
@@ -85,20 +85,20 @@ const CoFounder = () => {
       <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
       <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
       
-      <main className="container mx-auto pt-20 md:pt-28 pb-16 px-4">
-        <div className="text-center mb-8 md:mb-10">
-          <h1 className="text-3xl md:text-5xl font-bold mb-3 md:mb-4">
+      <main className="w-full container mx-auto px-4 pt-20 md:pt-28 pb-16">
+        <div className="text-center mb-6 md:mb-10">
+          <h1 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4">
             Startup <span className="gradient-text">Co-Founder</span>
           </h1>
-          <p className="text-base md:text-xl text-white/80 max-w-2xl mx-auto">
+          <p className="text-sm md:text-xl text-white/80 max-w-2xl mx-auto px-2">
             Trouvez le co-fondateur idéal pour votre startup IA ou rejoignez un projet prometteur
           </p>
         </div>
 
         <div className="max-w-6xl mx-auto">
-          <div className="flex justify-center mb-8 md:mb-10 relative z-10">
+          <div className="flex justify-center mb-6 md:mb-10 relative z-10">
             <div 
-              className="inline-block w-full sm:w-auto"
+              className="w-full sm:w-auto"
               onClick={(e) => {
                 e.stopPropagation();
                 console.log("Container clicked");
@@ -107,27 +107,27 @@ const CoFounder = () => {
             >
               <button 
                 type="button"
-                className="w-full sm:w-auto inline-flex items-center justify-center bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black py-4 md:py-6 px-6 md:px-8 text-base md:text-lg rounded-md button-glow cursor-pointer z-20 relative"
+                className="w-full sm:w-auto inline-flex items-center justify-center bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black py-3 md:py-6 px-4 md:px-8 text-sm md:text-lg rounded-md button-glow cursor-pointer z-20 relative"
                 onClick={(e) => {
                   e.stopPropagation();
                   console.log("Inner button clicked");
                   handleCreateProfileClick();
                 }}
               >
-                Créer mon profil de co-fondateur <ArrowRight className="ml-2 size-4" />
+                Créer mon profil <ArrowRight className="ml-2 size-4 hidden sm:inline" />
               </button>
             </div>
           </div>
 
-          <div className="mb-12 md:mb-16">
+          <div className="mb-8 md:mb-16">
             {isLoading ? (
-              <div className="text-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise mx-auto"></div>
-                <p className="mt-4 text-white/70">Chargement des profils...</p>
+              <div className="text-center py-12 md:py-20">
+                <div className="animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-t-2 border-b-2 border-startupia-turquoise mx-auto"></div>
+                <p className="mt-4 text-white/70 text-sm md:text-base">Chargement des profils...</p>
               </div>
             ) : error ? (
-              <div className="text-center py-20 glass-card">
-                <p className="text-white/70 text-lg">Une erreur est survenue lors du chargement des profils.</p>
+              <div className="text-center py-12 md:py-20 glass-card">
+                <p className="text-white/70 text-base md:text-lg">Une erreur est survenue lors du chargement des profils.</p>
                 <Button 
                   className="mt-4 bg-startupia-turquoise hover:bg-startupia-turquoise/90"
                   onClick={() => window.location.reload()}
@@ -144,7 +144,7 @@ const CoFounder = () => {
             )}
           </div>
           
-          <div className="mt-12 md:mt-16">
+          <div className="mt-8 md:mt-16">
             <ProjectsList 
               projects={projects} 
               requireAuth={true}

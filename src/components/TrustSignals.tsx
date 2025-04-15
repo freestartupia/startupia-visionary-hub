@@ -39,13 +39,13 @@ const TrustSignals = () => {
           </div>
           
           <div className="w-full sm:w-auto">
-            <div className="text-3xl font-bold text-startupia-turquoise">2,500+</div>
+            <div className="text-3xl font-bold text-startupia-turquoise">+100</div>
             <p className="text-white/70">Entrepreneurs</p>
           </div>
           
           <div className="w-full sm:w-auto">
-            <div className="text-3xl font-bold text-startupia-turquoise">120M€</div>
-            <p className="text-white/70">Investissements facilités</p>
+            <div className="text-3xl font-bold text-startupia-turquoise">100% gratuit</div>
+            <p className="text-white/70">pour tous</p>
           </div>
           
           <div className="w-full sm:w-auto">

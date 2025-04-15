@@ -4,6 +4,8 @@ import { Startup } from '@/types/startup';
 import StartupCard from '@/components/StartupCard';
 import { mockStartups } from '@/data/mockStartups';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface DirectoryViewProps {
   searchQuery: string;
@@ -18,13 +20,73 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder }: DirectoryViewPro
   const fetchStartups = async () => {
     setLoading(true);
     try {
-      // Utiliser les mockStartups
-      let filteredStartups = [...mockStartups];
+      console.log('Tentative de récupération des startups depuis la base de données...');
+      
+      // Tenter de récupérer les startups depuis Supabase
+      const { data: dbStartups, error } = await supabase
+        .from('startups')
+        .select('*');
+      
+      if (error) {
+        console.error('Erreur Supabase:', error);
+        throw error;
+      }
+      
+      // Si nous avons des données de la base, les utiliser
+      // Sinon, utiliser les données mockées
+      let fetchedStartups = dbStartups && dbStartups.length > 0 
+        ? dbStartups as Startup[] 
+        : [...mockStartups];
+        
+      console.log(`Startups récupérées: ${fetchedStartups.length}`, fetchedStartups);
       
       // Appliquer le filtre de recherche
       if (searchQuery) {
         const lowerCaseQuery = searchQuery.toLowerCase();
-        filteredStartups = filteredStartups.filter(startup => 
+        fetchedStartups = fetchedStartups.filter(startup => 
+          startup.name.toLowerCase().includes(lowerCaseQuery) || 
+          startup.shortDescription.toLowerCase().includes(lowerCaseQuery) ||
+          startup.tags.some(tag => tag.toLowerCase().includes(lowerCaseQuery)) ||
+          (startup.sector && startup.sector.toLowerCase().includes(lowerCaseQuery))
+        );
+      }
+      
+      // Appliquer le tri
+      switch (sortOrder) {
+        case 'votes':
+          fetchedStartups.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+          break;
+        case 'trending':
+          // Pour la démo, on mélange juste aléatoirement
+          fetchedStartups.sort(() => Math.random() - 0.5);
+          break;
+        case 'newest':
+          // Utiliser la date de création si disponible
+          fetchedStartups.sort((a, b) => {
+            const dateA = a.dateAdded ? new Date(a.dateAdded) : new Date(0);
+            const dateB = b.dateAdded ? new Date(b.dateAdded) : new Date(0);
+            return dateB.getTime() - dateA.getTime();
+          });
+          break;
+        case 'alphabetical':
+          fetchedStartups.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        default:
+          break;
+      }
+      
+      setStartups(fetchedStartups);
+    } catch (error) {
+      console.error('Error fetching startups:', error);
+      toast.error("Erreur lors de la récupération des startups");
+      
+      // Utiliser les données mockées en cas d'erreur
+      let fallbackStartups = [...mockStartups];
+      
+      // Appliquer les mêmes filtres et tris aux données de secours
+      if (searchQuery) {
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        fallbackStartups = fallbackStartups.filter(startup => 
           startup.name.toLowerCase().includes(lowerCaseQuery) || 
           startup.shortDescription.toLowerCase().includes(lowerCaseQuery) ||
           startup.tags.some(tag => tag.toLowerCase().includes(lowerCaseQuery)) ||
@@ -35,31 +97,26 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder }: DirectoryViewPro
       // Appliquer le tri
       switch (sortOrder) {
         case 'votes':
-          filteredStartups.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+          fallbackStartups.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
           break;
         case 'trending':
-          // Pour la démo, on mélange juste aléatoirement
-          filteredStartups.sort(() => Math.random() - 0.5);
+          fallbackStartups.sort(() => Math.random() - 0.5);
           break;
         case 'newest':
-          // Utiliser la date de création si disponible
-          filteredStartups.sort((a, b) => {
+          fallbackStartups.sort((a, b) => {
             const dateA = a.dateAdded ? new Date(a.dateAdded) : new Date(0);
             const dateB = b.dateAdded ? new Date(b.dateAdded) : new Date(0);
             return dateB.getTime() - dateA.getTime();
           });
           break;
         case 'alphabetical':
-          filteredStartups.sort((a, b) => a.name.localeCompare(b.name));
+          fallbackStartups.sort((a, b) => a.name.localeCompare(b.name));
           break;
         default:
           break;
       }
       
-      setStartups(filteredStartups);
-    } catch (error) {
-      console.error('Error fetching startups:', error);
-      setStartups([]);
+      setStartups(fallbackStartups);
     } finally {
       setLoading(false);
     }

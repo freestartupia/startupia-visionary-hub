@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Startup } from "@/types/startup";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +20,12 @@ const StartupCard = ({ startup, onUpvote }: StartupCardProps) => {
   const [isUpvoted, setIsUpvoted] = useState(startup.isUpvoted || false);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  
+  // Mettre à jour l'état local lorsque la prop startup change
+  useEffect(() => {
+    setUpvotes(startup.upvotes || 0);
+    setIsUpvoted(startup.isUpvoted || false);
+  }, [startup]);
 
   const handleUpvote = async (e: React.MouseEvent) => {
     e.preventDefault();

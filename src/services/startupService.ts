@@ -121,7 +121,6 @@ export const getStartupById = async (id: string): Promise<Startup | null> => {
   }
 };
 
-// Update functions to handle upvotes persistently in the database
 export const upvoteStartup = async (startupId: string): Promise<boolean> => {
   try {
     // Get the current user
@@ -159,7 +158,6 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
     }
     
     // Increment the upvote count in the startups table
-    // Use a fixed return type for the supabase rpc calls
     await supabase.rpc('increment_startup_upvotes', { startup_id: startupId });
     
     return true;
@@ -192,7 +190,6 @@ export const downvoteStartup = async (startupId: string): Promise<boolean> => {
     }
     
     // Decrement the upvote count in the startups table
-    // Use a fixed return type for the supabase rpc calls
     await supabase.rpc('decrement_startup_upvotes', { startup_id: startupId });
     
     return true;

@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getStartupById } from "@/services/startupService";
+import { getStartupById, upvoteStartup, downvoteStartup } from "@/services/startupService";
 import { Startup } from "@/types/startup";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/Footer";
@@ -10,7 +11,6 @@ import { ArrowLeft, ExternalLink, ThumbsUp } from "lucide-react";
 import StartupLogo from "@/components/startup/StartupLogo";
 import TagList from "@/components/startup/TagList";
 import SEO from "@/components/SEO";
-import { upvoteStartup, downvoteStartup } from "@/services/startupService";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -23,25 +23,25 @@ const StartupDetails = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchStartup = async () => {
-      setLoading(true);
-      try {
-        if (id) {
-          const data = await getStartupById(id);
-          if (data) {
-            setStartup(data);
-            setUpvotes(data.upvotes || 0);
-            setIsUpvoted(data.isUpvoted || false);
-          }
+  const fetchStartup = async () => {
+    setLoading(true);
+    try {
+      if (id) {
+        const data = await getStartupById(id);
+        if (data) {
+          setStartup(data);
+          setUpvotes(data.upvotes || 0);
+          setIsUpvoted(data.isUpvoted || false);
         }
-      } catch (error) {
-        console.error("Error fetching startup:", error);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching startup:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchStartup();
   }, [id]);
 

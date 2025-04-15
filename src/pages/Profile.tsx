@@ -4,8 +4,8 @@ import { Helmet } from 'react-helmet-async';
 import Navbar from '@/components/navbar/Navbar';
 import FooterSection from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
-import { ProfileSettings } from '@/components/profile/ProfileSettings';
-import { ProfileCoFounderProfiles } from '@/components/profile/ProfileCoFounderProfiles';
+import ProfileSettings from '@/components/profile/ProfileSettings';
+import ProfileCoFounderProfiles from '@/components/profile/ProfileCoFounderProfiles';
 
 const Profile = () => {
   const { user } = useAuth();

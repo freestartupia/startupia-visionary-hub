@@ -1,67 +1,28 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Plus, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getMyCofounderProfiles, deleteCofounderProfile } from '@/services/cofounderService';
-import type { CofounderProfile } from '@/types/cofounders';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const ProfileCoFounderProfiles = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
-  const queryClient = useQueryClient();
-
-  // Query to fetch user's cofounder profiles
-  const { data: profiles, isLoading, error } = useQuery({
-    queryKey: ['myCofounderProfiles'],
-    queryFn: getMyCofounderProfiles,
-    enabled: !!user,
-    staleTime: 60 * 1000, // 1 minute
-  });
-
-  // Mutation to delete a profile
-  const deleteMutation = useMutation({
-    mutationFn: deleteCofounderProfile,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['myCofounderProfiles'] });
-      toast({
-        title: "Profil supprimé",
-        description: "Le profil a été supprimé avec succès.",
-      });
-      setProfileToDelete(null);
+  const mockProfiles = [
+    {
+      id: '1',
+      name: 'Développeur Full-Stack',
+      profileType: 'collaborator',
+      role: 'Développeur',
+      sector: 'SaaS'
     },
-    onError: (error) => {
-      console.error('Erreur lors de la suppression du profil:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le profil",
-        variant: "destructive",
-      });
-      setProfileToDelete(null);
+    {
+      id: '2',
+      name: 'Startup IA Médicale',
+      profileType: 'project-owner',
+      role: 'Fondateur',
+      sector: 'HealthTech'
     }
-  });
-
-  const handleDeleteConfirm = async () => {
-    if (profileToDelete) {
-      deleteMutation.mutate(profileToDelete);
-    }
-  };
+  ];
 
   return (
     <div className="glass-card p-4 md:p-6 rounded-lg">
@@ -73,19 +34,7 @@ const ProfileCoFounderProfiles = () => {
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
-        </div>
-      ) : error ? (
-        <div className="text-center py-10 border border-dashed border-white/20 rounded-lg">
-          <h3 className="text-lg font-medium mb-2">Erreur de chargement</h3>
-          <p className="text-white/70 mb-4">Impossible de charger vos profils cofondateur.</p>
-          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['myCofounderProfiles'] })} variant="outline">
-            Réessayer
-          </Button>
-        </div>
-      ) : profiles && profiles.length === 0 ? (
+      {mockProfiles.length === 0 ? (
         <div className="text-center py-10 border border-dashed border-white/20 rounded-lg">
           <h3 className="text-lg font-medium mb-2">Vous n'avez pas encore de profil cofondateur</h3>
           <p className="text-white/70 mb-4">Créez votre profil pour être mis en relation avec des partenaires potentiels.</p>
@@ -96,7 +45,7 @@ const ProfileCoFounderProfiles = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {profiles?.map((profile) => (
+          {mockProfiles.map((profile) => (
             <div key={profile.id} className="border border-white/10 rounded-lg p-4 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -129,14 +78,8 @@ const ProfileCoFounderProfiles = () => {
                 <Button 
                   variant="destructive"
                   className="flex-1 md:flex-none"
-                  onClick={() => setProfileToDelete(profile.id)}
-                  disabled={deleteMutation.isPending}
                 >
-                  {deleteMutation.isPending && profileToDelete === profile.id ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                  ) : (
-                    <Trash2 size={16} className="mr-2" />
-                  )}
+                  <Trash2 size={16} className="mr-2" />
                   Supprimer
                 </Button>
               </div>
@@ -144,27 +87,6 @@ const ProfileCoFounderProfiles = () => {
           ))}
         </div>
       )}
-
-      {/* Confirmation dialog for deleting a profile */}
-      <AlertDialog open={!!profileToDelete} onOpenChange={(open) => !open && setProfileToDelete(null)}>
-        <AlertDialogContent className="bg-zinc-900 border-white/10">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer ce profil?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irréversible. Toutes les données associées à ce profil seront définitivement supprimées.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border-white/20 text-white hover:bg-white/10">Annuler</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteConfirm}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };

@@ -29,7 +29,7 @@ const SecurityMiddleware: React.FC<SecurityMiddlewareProps> = ({ children }) => 
           if (error) {
             console.error('Erreur lors du rafraîchissement de la session:', error);
             toast.error("Votre session a expiré. Veuillez vous reconnecter.");
-            // Instead of using navigate, let's use window.location
+            // Using window.location.href for navigation
             window.location.href = '/auth';
           }
         }

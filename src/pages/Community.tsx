@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
@@ -8,7 +8,6 @@ import ForumSection from '@/components/community/ForumSection';
 import ServicesMarketplace from '@/components/community/ServicesMarketplace';
 import ResourcesLibrary from '@/components/community/ResourcesLibrary';
 import CollaborativeProjects from '@/components/community/CollaborativeProjects';
-import ForumPostDetail from '@/components/community/ForumPostDetail';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import SEO from '@/components/SEO';
@@ -19,7 +18,11 @@ import {
   SidebarHeader,
   SidebarInset
 } from '@/components/ui/sidebar';
-import ForumSidebar from '@/components/community/forum/ForumSidebar';
+import LoadingSkeleton from '@/components/community/LoadingSkeleton';
+
+// Chargement différé du détail des posts et de la sidebar
+const ForumPostDetail = lazy(() => import('@/components/community/ForumPostDetail'));
+const ForumSidebar = lazy(() => import('@/components/community/forum/ForumSidebar'));
 
 const Community = () => {
   const navigate = useNavigate();
@@ -27,13 +30,13 @@ const Community = () => {
   const { postId } = useParams<{ postId?: string }>();
   const [activeTab, setActiveTab] = useState('forum');
   
-  // Check if we're on an individual post page
+  // Vérifier si nous sommes sur une page de post individuel
   const isPostDetail = location.pathname.includes('/post/');
   
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Extract tab from URL if present
+  // Extraire l'onglet de l'URL s'il est présent
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tabFromUrl = searchParams.get('tab');
@@ -45,7 +48,7 @@ const Community = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     
-    // Update URL without page reload
+    // Mettre à jour l'URL sans rechargement de page
     navigate({
       pathname: '/community',
       search: `?tab=${value}`
@@ -59,7 +62,7 @@ const Community = () => {
         description="Rejoignez la communauté StartupIA.fr : discutez, collaborez et échangez avec des passionnés d'intelligence artificielle, fondateurs de startups IA et créateurs d'outils IA."
       />
       
-      {/* Background elements */}
+      {/* Éléments d'arrière-plan */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       
       <Navbar />
@@ -80,9 +83,13 @@ const Community = () => {
           <div className="flex w-full h-full">
             <SidebarProvider defaultOpen={true}>
               <div className="flex w-full min-h-[calc(100vh-80px)]">
-                <ForumSidebar />
+                <Suspense fallback={<div className="w-[280px] bg-black/50 border-r border-white/10"></div>}>
+                  <ForumSidebar />
+                </Suspense>
                 <div className="flex-1 w-full px-4 md:px-8 py-4">
-                  <ForumPostDetail />
+                  <Suspense fallback={<LoadingSkeleton count={1} type="post" />}>
+                    <ForumPostDetail />
+                  </Suspense>
                 </div>
               </div>
             </SidebarProvider>

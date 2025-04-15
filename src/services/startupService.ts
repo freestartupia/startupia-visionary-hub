@@ -10,6 +10,53 @@ let startupsCache = {
   ttl: 5 * 60 * 1000 // 5 minutes de TTL
 };
 
+// Interface pour les résultats paginés
+export interface PaginatedStartups {
+  data: Startup[];
+  total: number;
+}
+
+// Récupérer les startups avec pagination
+export async function fetchStartupsPaginated(
+  page: number = 1, 
+  pageSize: number = 10, 
+  orderBy: 'upvotes' | 'recent' = 'upvotes'
+): Promise<PaginatedStartups> {
+  try {
+    // Calculer l'offset basé sur la page et la taille de page
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    
+    let query = supabase
+      .from('startups')
+      .select('*', { count: 'exact' });
+      
+    // Appliquer l'ordre
+    if (orderBy === 'upvotes') {
+      query = query.order('upvotes', { ascending: false }).order('created_at', { ascending: false });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+    
+    // Appliquer la pagination
+    query = query.range(from, to);
+    
+    const { data, error, count } = await query;
+      
+    if (error) throw error;
+    
+    const startups = data.map(transformStartupFromDB);
+    
+    return {
+      data: startups,
+      total: count || 0
+    };
+  } catch (error) {
+    console.error('Erreur lors de la récupération des startups paginées:', error);
+    return { data: [], total: 0 };
+  }
+}
+
 // Récupérer toutes les startups triées par nombre de votes
 export async function fetchStartups() {
   try {

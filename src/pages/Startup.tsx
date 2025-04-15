@@ -14,9 +14,19 @@ import Footer from '@/components/Footer';
 import StartupCard from '@/components/StartupCard';
 import SubmitStartupForm from '@/components/SubmitStartupForm';
 import { Startup } from '@/types/startup';
-import { fetchStartups } from '@/services/startupService';
+import { fetchStartupsPaginated } from '@/services/startupService';
 import { useAuth } from '@/contexts/AuthContext';
 import SEO from '@/components/SEO';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationNext, 
+  PaginationPrevious,
+  PaginationLink
+} from "@/components/ui/pagination";
+
+const STARTUPS_PER_PAGE = 10;
 
 const StartupPage = () => {
   const { user } = useAuth();
@@ -25,16 +35,19 @@ const StartupPage = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState('all');
   const [sortBy, setSortBy] = useState<'upvotes' | 'recent'>('upvotes');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalStartups, setTotalStartups] = useState(0);
 
   useEffect(() => {
     loadStartups();
-  }, []);
+  }, [currentPage, sortBy]); // Re-load when page or sort changes
 
   const loadStartups = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchStartups();
-      setStartups(data);
+      const result = await fetchStartupsPaginated(currentPage, STARTUPS_PER_PAGE, sortBy);
+      setStartups(result.data);
+      setTotalStartups(result.total);
     } catch (error) {
       console.error('Erreur lors du chargement des startups:', error);
     } finally {
@@ -44,6 +57,7 @@ const StartupPage = () => {
 
   const handleSubmitSuccess = () => {
     setIsDialogOpen(false);
+    setCurrentPage(1); // Reset to first page
     loadStartups();
   };
 
@@ -53,6 +67,12 @@ const StartupPage = () => {
 
   const handleVoteChange = () => {
     loadStartups();
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const getFilteredStartups = () => {
@@ -72,25 +92,8 @@ const StartupPage = () => {
     });
   };
 
-  const getSortedStartups = () => {
-    const filtered = getFilteredStartups();
-    if (sortBy === 'upvotes') {
-      return [...filtered].sort((a, b) => {
-        // D'abord par upvotes décroissant
-        if (b.upvotes !== a.upvotes) {
-          return b.upvotes - a.upvotes;
-        }
-        // En cas d'égalité, par date de création décroissante
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      });
-    } else {
-      return [...filtered].sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    }
-  };
-
-  const displayedStartups = getSortedStartups();
+  const displayedStartups = getFilteredStartups();
+  const totalPages = Math.ceil(totalStartups / STARTUPS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -134,7 +137,10 @@ const StartupPage = () => {
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
-              onClick={() => setSortBy(sortBy === 'upvotes' ? 'recent' : 'upvotes')}
+              onClick={() => {
+                setSortBy(sortBy === 'upvotes' ? 'recent' : 'upvotes');
+                setCurrentPage(1); // Reset to first page when changing sort
+              }}
             >
               <ArrowUpDown className="h-4 w-4" />
               <span className="hidden sm:inline">Trier par</span>
@@ -171,15 +177,65 @@ const StartupPage = () => {
             <p className="text-white/60">Chargement des startups...</p>
           </div>
         ) : displayedStartups.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {displayedStartups.map((startup) => (
-              <StartupCard 
-                key={startup.id} 
-                startup={startup}
-                onVoteChange={handleVoteChange}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {displayedStartups.map((startup) => (
+                <StartupCard 
+                  key={startup.id} 
+                  startup={startup}
+                  onVoteChange={handleVoteChange}
+                />
+              ))}
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="mt-10">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: Math.min(totalPages, 5) }).map((_, index) => {
+                      // Show pages around current page
+                      let pageToShow = currentPage;
+                      if (totalPages <= 5) {
+                        pageToShow = index + 1;
+                      } else if (currentPage <= 3) {
+                        pageToShow = index + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageToShow = totalPages - 4 + index;
+                      } else {
+                        pageToShow = currentPage - 2 + index;
+                      }
+                      
+                      return (
+                        <PaginationItem key={index}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(pageToShow)}
+                            isActive={currentPage === pageToShow}
+                            className="cursor-pointer"
+                          >
+                            {pageToShow}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} 
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </>
         ) : (
           <div className="glass-card border border-white/10 rounded-lg p-10 text-center">
             <h3 className="text-xl font-bold mb-2">Aucune startup trouvée</h3>

@@ -3,6 +3,7 @@ import React from 'react';
 import BlogPostEditor from '@/components/blog/BlogPostEditor';
 import Footer from '@/components/Footer';
 import SEO from '@/components/SEO';
+import { Toaster } from "@/components/ui/toaster";
 
 const BlogPostEdit = () => {
   return (
@@ -20,6 +21,7 @@ const BlogPostEdit = () => {
       </main>
 
       <Footer />
+      <Toaster />
     </div>
   );
 };

@@ -79,13 +79,24 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
 
 export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
-    // Ensure required fields are present
+    const user = supabase.auth.getUser();
+    
+    // Simplifier la structure des données pour éviter les problèmes RLS
     const postData = {
-      ...mapAppPostToSupabasePost(post),
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt,
+      content: post.content,
+      category: post.category,
+      cover_image: post.coverImage,
+      author_id: post.authorId,
       author_name: post.authorName || 'Utilisateur',
+      author_avatar: post.authorAvatar,
       created_at: new Date().toISOString(),
-      status: post.status || 'draft',
-      reading_time: post.readingTime || '1 min'
+      tags: post.tags || [],
+      featured: false,
+      reading_time: post.readingTime || '1 min',
+      status: post.status || 'draft'
     };
 
     const { data, error } = await supabase
@@ -119,7 +130,16 @@ export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost 
 export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
     const updateData = {
-      ...mapAppPostToSupabasePost(post),
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt,
+      content: post.content,
+      category: post.category,
+      cover_image: post.coverImage,
+      tags: post.tags,
+      featured: post.featured,
+      reading_time: post.readingTime,
+      status: post.status,
       updated_at: new Date().toISOString()
     };
 

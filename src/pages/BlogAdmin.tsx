@@ -13,18 +13,20 @@ import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 
 const BlogAdmin = () => {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [currentPost, setCurrentPost] = useState<BlogPost | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Check if user is admin
   useEffect(() => {
     const checkIfAdmin = async () => {
-      if (!user) return;
+      if (!user) {
+        navigate('/');
+        return;
+      }
       
       const { data, error } = await supabase
         .from('user_roles')
@@ -35,24 +37,20 @@ const BlogAdmin = () => {
       
       if (error) {
         console.error('Error checking admin status:', error);
-        setIsAdmin(false);
+        navigate('/');
       } else {
         setIsAdmin(true);
       }
-      
-      setIsLoaded(true);
     };
     
-    if (user) {
-      checkIfAdmin();
-    } else if (!isLoading) {
-      setIsLoaded(true);
-    }
-  }, [user, isLoading]);
+    checkIfAdmin();
+  }, [user, navigate]);
 
   // Fetch blog posts
   useEffect(() => {
     const fetchPosts = async () => {
+      if (!isAdmin) return;
+
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
@@ -61,20 +59,32 @@ const BlogAdmin = () => {
       if (error) {
         console.error('Error fetching blog posts:', error);
         toast.error('Erreur lors du chargement des articles');
-      } else {
-        setPosts(data as BlogPost[]);
+      } else if (data) {
+        // Convert from snake_case to camelCase
+        const formattedPosts: BlogPost[] = data.map(post => ({
+          id: post.id,
+          title: post.title,
+          slug: post.slug,
+          excerpt: post.excerpt,
+          content: post.content,
+          category: post.category,
+          coverImage: post.cover_image,
+          authorId: post.author_id,
+          authorName: post.author_name,
+          authorAvatar: post.author_avatar,
+          createdAt: post.created_at,
+          updatedAt: post.updated_at,
+          tags: post.tags || [],
+          featured: post.featured,
+          readingTime: post.reading_time,
+        }));
+        
+        setPosts(formattedPosts);
       }
     };
     
     fetchPosts();
-  }, []);
-
-  // If not authenticated or not admin, redirect to home
-  useEffect(() => {
-    if (isLoaded && (!user || !isAdmin)) {
-      navigate('/');
-    }
-  }, [isLoaded, user, isAdmin, navigate]);
+  }, [isAdmin]);
 
   const handleCreateNew = () => {
     setCurrentPost(null);
@@ -87,6 +97,8 @@ const BlogAdmin = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!isAdmin) return;
+
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) {
       const { error } = await supabase
         .from('blog_posts')
@@ -114,12 +126,8 @@ const BlogAdmin = () => {
     setCurrentPost(null);
   };
 
-  if (isLoading || !isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
-      </div>
-    );
+  if (!isAdmin) {
+    return null; // or a loading state
   }
 
   if (isEditorOpen) {

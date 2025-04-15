@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { Calendar, Linkedin } from 'lucide-react';
+import { Calendar, Linkedin, Mail, Instagram, ExternalLink } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ServiceListing } from '@/types/community';
+import { toast } from 'sonner';
 
 interface ServiceCardProps {
   service: ServiceListing;
@@ -18,6 +19,63 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   formatDate, 
   getInitials 
 }) => {
+  const getContactIcon = () => {
+    if (!service.contactLink) return <ExternalLink className="h-4 w-4 mr-2" />;
+
+    if (service.contactLink.includes('calendly')) {
+      return <Calendar className="h-4 w-4 mr-2" />;
+    } else if (service.contactLink.includes('@') || service.contactLink.includes('mail')) {
+      return <Mail className="h-4 w-4 mr-2" />;
+    } else if (service.contactLink.includes('instagram')) {
+      return <Instagram className="h-4 w-4 mr-2" />;
+    } else {
+      return <ExternalLink className="h-4 w-4 mr-2" />;
+    }
+  };
+
+  const getContactUrl = (link: string) => {
+    // If it's an email and doesn't have mailto:, add it
+    if (link.includes('@') && !link.includes('mailto:') && !link.startsWith('http')) {
+      return `mailto:${link}`;
+    }
+    
+    // If it's an Instagram handle without URL
+    if (link.startsWith('@') && !link.includes('.')) {
+      return `https://instagram.com/${link.substring(1)}`;
+    }
+    
+    // If it's not a URL, assume it is one but missing the protocol
+    if (!link.startsWith('http') && !link.includes('@')) {
+      return `https://${link}`;
+    }
+    
+    return link;
+  };
+
+  const getContactText = () => {
+    if (!service.contactLink) return "Contacter";
+    
+    if (service.contactLink.includes('calendly')) {
+      return "Prendre RDV";
+    } else if (service.contactLink.includes('@') || service.contactLink.includes('mail')) {
+      return "Envoyer un email";
+    } else if (service.contactLink.includes('instagram')) {
+      return "Instagram";
+    } else {
+      return "Contacter";
+    }
+  };
+
+  const handleContactClick = () => {
+    if (!service.contactLink) {
+      toast.error("Aucun lien de contact disponible");
+      return;
+    }
+    
+    // Track the interaction
+    console.log("Contact clicked for service:", service.title);
+  };
+
   return (
     <Card key={service.id} className="glass-card hover-scale transition-transform duration-300 flex flex-col h-full">
       <CardHeader>
@@ -53,7 +111,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         <div className="flex gap-2 w-full">
           {service.linkedinUrl && (
             <Button variant="outline" className="flex-1" asChild>
-              <a href={service.linkedinUrl} target="_blank" rel="noopener noreferrer">
+              <a href={service.linkedinUrl} target="_blank" rel="noopener noreferrer" onClick={() => console.log("LinkedIn clicked")}>
                 <Linkedin className="h-4 w-4 mr-2" />
                 LinkedIn
               </a>
@@ -61,10 +119,21 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           )}
           {service.contactLink && (
             <Button className="flex-1" asChild>
-              <a href={service.contactLink} target="_blank" rel="noopener noreferrer">
-                <Calendar className="h-4 w-4 mr-2" />
-                Contacter
+              <a 
+                href={getContactUrl(service.contactLink)} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={handleContactClick}
+              >
+                {getContactIcon()}
+                {getContactText()}
               </a>
+            </Button>
+          )}
+          {!service.contactLink && !service.linkedinUrl && (
+            <Button className="flex-1" disabled>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Aucun contact disponible
             </Button>
           )}
         </div>

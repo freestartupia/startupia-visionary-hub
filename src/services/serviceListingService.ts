@@ -22,6 +22,17 @@ export const mapDbServiceToServiceListing = (dbService: any): ServiceListing => 
 
 // Helper function to convert our app types to database types
 export const mapServiceListingToDb = (service: ServiceListing) => {
+  // Format emails as mailto: links if they aren't already
+  let contactLink = service.contactLink;
+  if (contactLink && contactLink.includes('@') && !contactLink.startsWith('http') && !contactLink.startsWith('mailto:')) {
+    contactLink = `mailto:${contactLink}`;
+  }
+  
+  // Format Instagram handles as URLs if they start with @
+  if (contactLink && contactLink.startsWith('@') && !contactLink.includes('.')) {
+    contactLink = `https://instagram.com/${contactLink.substring(1)}`;
+  }
+  
   return {
     id: service.id,
     title: service.title,
@@ -32,7 +43,7 @@ export const mapServiceListingToDb = (service: ServiceListing) => {
     provider_id: service.providerId,
     provider_name: service.providerName,
     provider_avatar: service.providerAvatar,
-    contact_link: service.contactLink,
+    contact_link: contactLink,
     linkedin_url: service.linkedinUrl,
     created_at: service.createdAt,
   };

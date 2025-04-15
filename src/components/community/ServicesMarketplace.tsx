@@ -33,6 +33,7 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
   useEffect(() => {
     const loadServices = async () => {
       try {
+        setIsLoading(true);
         // Try to fetch from Supabase first
         const serviceData = await fetchServices();
         
@@ -40,6 +41,7 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
           setServices(serviceData);
         } else {
           // Fallback to mock data if no services found
+          console.log("No services found in the database, using mock data");
           setServices(mockServiceListings);
         }
       } catch (error) {
@@ -47,15 +49,14 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
         // Fallback to mock data on error
         setServices(mockServiceListings);
       } finally {
-        setIsLoading(false);
+        // Use a short timeout to smooth the loading experience
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
       }
     };
 
-    const timer = setTimeout(() => {
-      loadServices();
-    }, 1000);
-    
-    return () => clearTimeout(timer);
+    loadServices();
   }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,11 +99,12 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
   };
 
   const handleServiceSuccess = (newService: ServiceListing) => {
-    // In a real application, we would refresh the data from Supabase
-    // For now, we'll just add the new service to our local state
+    // Add the new service to our local state
     setServices([newService, ...services]);
+    toast.success("Votre service a été ajouté avec succès!");
   };
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -154,7 +156,7 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleServiceSuccess}
-        categories={categories}
+        categories={categories.filter(c => c !== 'all') as ServiceCategory[]}
       />
     </div>
   );

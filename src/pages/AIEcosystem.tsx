@@ -4,7 +4,7 @@ import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, TrendingUp, BadgePlus, ThumbsUp, Calendar, Clock, Rocket } from 'lucide-react';
+import { Search, Filter, TrendingUp, BadgePlus, ThumbsUp, Calendar, Clock, Rocket, SortAsc } from 'lucide-react';
 import { 
   Select,
   SelectContent,
@@ -85,6 +85,7 @@ const AIEcosystem = () => {
                   <SelectItem value="votes">👍 Plus votés</SelectItem>
                   <SelectItem value="newest">⏱️ Récent</SelectItem>
                   <SelectItem value="alphabetical">🔤 Alphabétique</SelectItem>
+                  <SelectItem value="impact">⚡ Impact IA</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -151,15 +152,15 @@ const AIEcosystem = () => {
           </TabsList>
           
           <TabsContent value="all" className="mt-6">
-            <DirectoryView searchQuery={searchQuery} showFilters={false} />
+            <DirectoryView searchQuery={searchQuery} showFilters={false} sortOrder={sortOrder} />
           </TabsContent>
           
           <TabsContent value="featured" className="mt-6">
-            <DirectoryView searchQuery="" showFilters={false} />
+            <DirectoryView searchQuery="" showFilters={false} sortOrder="impact" />
           </TabsContent>
           
           <TabsContent value="recent" className="mt-6">
-            <DirectoryView searchQuery="" showFilters={false} />
+            <DirectoryView searchQuery="" showFilters={false} sortOrder="newest" />
           </TabsContent>
         </Tabs>
       </main>

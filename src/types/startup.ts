@@ -73,6 +73,8 @@ export type Startup = {
   viewCount?: number;
   isFeatured?: boolean;
   fundingRounds?: FundingRound[];
+  upvotes?: number;
+  isUpvoted?: boolean;
 };
 
 export type FundingRound = {
@@ -93,4 +95,11 @@ export type StartupComment = {
   content: string;
   created_at: string;
   updated_at: string;
+};
+
+export type StartupUpvote = {
+  id: string;
+  startup_id: string;
+  user_id: string;
+  created_at: string;
 };

@@ -1,16 +1,56 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Startup } from "@/types/startup";
 import { Card, CardContent } from "@/components/ui/card";
 import StartupLogo from "@/components/startup/StartupLogo";
 import TagList from "@/components/startup/TagList";
+import { ThumbsUp } from "lucide-react";
+import { upvoteStartup, downvoteStartup } from "@/services/startupService";
+import { toast } from "sonner";
 
 interface StartupCardProps {
   startup: Startup;
+  onUpvote?: (startupId: string, newCount: number) => void;
 }
 
-const StartupCard = ({ startup }: StartupCardProps) => {
+const StartupCard = ({ startup, onUpvote }: StartupCardProps) => {
+  const [upvotes, setUpvotes] = useState(startup.upvotes || 0);
+  const [isUpvoted, setIsUpvoted] = useState(startup.isUpvoted || false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleUpvote = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isLoading) return;
+    setIsLoading(true);
+    
+    try {
+      if (isUpvoted) {
+        const success = await downvoteStartup(startup.id);
+        if (success) {
+          setUpvotes(prev => Math.max(0, prev - 1));
+          setIsUpvoted(false);
+          if (onUpvote) onUpvote(startup.id, upvotes - 1);
+        }
+      } else {
+        const success = await upvoteStartup(startup.id);
+        if (success) {
+          setUpvotes(prev => prev + 1);
+          setIsUpvoted(true);
+          if (onUpvote) onUpvote(startup.id, upvotes + 1);
+          toast.success("Vote enregistré !");
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling upvote:", error);
+      toast.error("Erreur lors du vote");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Link to={`/startup/${startup.id}`}>
       <Card className="hover-scale glass-card overflow-hidden h-full border border-startupia-turquoise/20 bg-black/30">
@@ -22,6 +62,17 @@ const StartupCard = ({ startup }: StartupCardProps) => {
               <p className="text-sm text-white/60">{startup.sector}</p>
             </div>
           </div>
+          <button 
+            onClick={handleUpvote}
+            className={`flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${
+              isUpvoted 
+                ? 'bg-startupia-turquoise/20 text-startupia-turquoise' 
+                : 'bg-black/20 text-white/70 hover:bg-startupia-turquoise/10 hover:text-white'
+            }`}
+          >
+            <ThumbsUp size={16} className={isUpvoted ? 'fill-startupia-turquoise' : ''} />
+            <span>{upvotes}</span>
+          </button>
         </div>
         <CardContent className="p-4">
           <p className="text-white/80 text-sm line-clamp-2 mb-3">{startup.shortDescription}</p>

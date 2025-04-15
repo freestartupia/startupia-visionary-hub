@@ -20,9 +20,12 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
     
     if (!fetchError && existingUpvotes) {
       // La startup existe dans Supabase, on incrémente son compteur
+      const currentUpvotes = existingUpvotes.upvotes || 0;
+      const newUpvoteCount = currentUpvotes + 1;
+      
       const { error: updateError } = await supabase
         .from('startups')
-        .update({ upvotes: (existingUpvotes.upvotes || 0) + 1 })
+        .update({ upvotes: newUpvoteCount })
         .eq('id', startupId);
       
       if (updateError) {
@@ -30,7 +33,19 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
         throw updateError;
       }
       
-      console.log(`Startup upvotée dans Supabase: ${startupId}`);
+      // Enregistrer l'upvote de l'utilisateur
+      const { error: upvoteRecordError } = await supabase
+        .from('startup_upvotes')
+        .insert({
+          startup_id: startupId,
+          user_id: (await supabase.auth.getUser()).data.user?.id || 'anonymous'
+        });
+        
+      if (upvoteRecordError && !upvoteRecordError.message.includes('duplicate')) {
+        console.error('Erreur lors de l\'enregistrement de l\'upvote:', upvoteRecordError);
+      }
+      
+      console.log(`Startup upvotée dans Supabase: ${startupId}, nouveau compteur: ${newUpvoteCount}`);
       toast.success("Startup upvotée avec succès!");
       return true;
     } else {
@@ -81,9 +96,12 @@ export const removeStartupUpvote = async (startupId: string): Promise<boolean> =
     
     if (!fetchError && existingUpvotes) {
       // La startup existe dans Supabase, on décrémente son compteur
+      const currentUpvotes = existingUpvotes.upvotes || 0;
+      const newUpvoteCount = Math.max(0, currentUpvotes - 1);
+      
       const { error: updateError } = await supabase
         .from('startups')
-        .update({ upvotes: Math.max(0, (existingUpvotes.upvotes || 0) - 1) })
+        .update({ upvotes: newUpvoteCount })
         .eq('id', startupId);
       
       if (updateError) {
@@ -91,7 +109,18 @@ export const removeStartupUpvote = async (startupId: string): Promise<boolean> =
         throw updateError;
       }
       
-      console.log(`Upvote retiré dans Supabase: ${startupId}`);
+      // Supprimer l'enregistrement de l'upvote
+      const userId = (await supabase.auth.getUser()).data.user?.id || 'anonymous';
+      const { error: deleteError } = await supabase
+        .from('startup_upvotes')
+        .delete()
+        .match({ startup_id: startupId, user_id: userId });
+        
+      if (deleteError) {
+        console.error('Erreur lors de la suppression de l\'upvote:', deleteError);
+      }
+      
+      console.log(`Upvote retiré dans Supabase: ${startupId}, nouveau compteur: ${newUpvoteCount}`);
       toast.success("Upvote retiré avec succès!");
       return true;
     } else {

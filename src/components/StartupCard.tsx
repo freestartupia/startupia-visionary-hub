@@ -53,20 +53,30 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
         const success = await removeStartupUpvote(startup.id);
         if (success) {
           setUpvoted(false);
-          setUpvoteCount(prev => Math.max(0, prev - 1));
+          // Update the local upvote count immediately for better UX
+          const newCount = Math.max(0, upvoteCount - 1);
+          setUpvoteCount(newCount);
+          console.log(`Upvote local retiré: ${startup.name}, nouveau compteur: ${newCount}`);
           
           if (refetchStartups) {
-            refetchStartups();
+            setTimeout(() => {
+              refetchStartups();
+            }, 500);
           }
         }
       } else {
         const success = await upvoteStartup(startup.id);
         if (success) {
           setUpvoted(true);
-          setUpvoteCount(prev => prev + 1);
+          // Update the local upvote count immediately for better UX
+          const newCount = upvoteCount + 1;
+          setUpvoteCount(newCount);
+          console.log(`Upvote local ajouté: ${startup.name}, nouveau compteur: ${newCount}`);
           
           if (refetchStartups) {
-            refetchStartups();
+            setTimeout(() => {
+              refetchStartups();
+            }, 500);
           }
         }
       }

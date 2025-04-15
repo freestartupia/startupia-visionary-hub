@@ -13,6 +13,35 @@ interface DirectoryViewProps {
   sortOrder: string;
 }
 
+// Helper function to map database row to Startup type
+const mapDbStartupToModel = (dbStartup: any): Startup => {
+  return {
+    id: dbStartup.id,
+    name: dbStartup.name,
+    logoUrl: dbStartup.logo_url || '',
+    shortDescription: dbStartup.short_description,
+    longTermVision: dbStartup.long_term_vision || '',
+    founders: typeof dbStartup.founders === 'string' ? 
+             JSON.parse(dbStartup.founders) : 
+             (dbStartup.founders || []),
+    aiUseCases: dbStartup.ai_use_cases || '',
+    aiTools: dbStartup.ai_tools || [],
+    sector: dbStartup.sector,
+    businessModel: dbStartup.business_model,
+    maturityLevel: dbStartup.maturity_level,
+    aiImpactScore: dbStartup.ai_impact_score,
+    tags: dbStartup.tags || [],
+    websiteUrl: dbStartup.website_url || '',
+    pitchDeckUrl: dbStartup.pitch_deck_url,
+    crunchbaseUrl: dbStartup.crunchbase_url,
+    notionUrl: dbStartup.notion_url,
+    dateAdded: dbStartup.date_added,
+    viewCount: dbStartup.view_count || 0,
+    isFeatured: dbStartup.is_featured || false,
+    upvotes: dbStartup.upvotes || 0
+  };
+};
+
 const DirectoryView = ({ searchQuery, showFilters, sortOrder }: DirectoryViewProps) => {
   const [startups, setStartups] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,9 +63,12 @@ const DirectoryView = ({ searchQuery, showFilters, sortOrder }: DirectoryViewPro
       
       // Si nous avons des données de la base, les utiliser
       // Sinon, utiliser les données mockées
-      let fetchedStartups = dbStartups && dbStartups.length > 0 
-        ? dbStartups as Startup[] 
-        : [...mockStartups];
+      let fetchedStartups = [];
+      if (dbStartups && dbStartups.length > 0) {
+        fetchedStartups = dbStartups.map(mapDbStartupToModel);
+      } else {
+        fetchedStartups = [...mockStartups];
+      }
         
       console.log(`Startups récupérées: ${fetchedStartups.length}`, fetchedStartups);
       

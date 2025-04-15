@@ -5,6 +5,35 @@ import { Startup } from '@/types/startup';
 import StartupCard from '@/components/StartupCard';
 import { mockStartups } from '@/data/mockStartups';
 
+// Helper function to map database row to Startup type
+const mapDbStartupToModel = (dbStartup: any): Startup => {
+  return {
+    id: dbStartup.id,
+    name: dbStartup.name,
+    logoUrl: dbStartup.logo_url || '',
+    shortDescription: dbStartup.short_description,
+    longTermVision: dbStartup.long_term_vision || '',
+    founders: typeof dbStartup.founders === 'string' ? 
+             JSON.parse(dbStartup.founders) : 
+             (dbStartup.founders || []),
+    aiUseCases: dbStartup.ai_use_cases || '',
+    aiTools: dbStartup.ai_tools || [],
+    sector: dbStartup.sector,
+    businessModel: dbStartup.business_model,
+    maturityLevel: dbStartup.maturity_level,
+    aiImpactScore: dbStartup.ai_impact_score,
+    tags: dbStartup.tags || [],
+    websiteUrl: dbStartup.website_url || '',
+    pitchDeckUrl: dbStartup.pitch_deck_url,
+    crunchbaseUrl: dbStartup.crunchbase_url,
+    notionUrl: dbStartup.notion_url,
+    dateAdded: dbStartup.date_added,
+    viewCount: dbStartup.view_count || 0,
+    isFeatured: dbStartup.is_featured || false,
+    upvotes: dbStartup.upvotes || 0
+  };
+};
+
 const TopStartups = () => {
   const [startups, setStartups] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +59,8 @@ const TopStartups = () => {
       // Si nous avons des startups dans la base, les utiliser
       if (dbStartups && dbStartups.length > 0) {
         console.log('Top startups récupérées depuis la base:', dbStartups);
-        setStartups(dbStartups as Startup[]);
+        const mappedStartups = dbStartups.map(mapDbStartupToModel);
+        setStartups(mappedStartups);
       } else {
         // Sinon utiliser les données mockées
         console.log('Aucune startup en base, utilisation des données mockées');

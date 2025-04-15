@@ -8,14 +8,16 @@ import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import SEO from '@/components/SEO';
 import { format } from 'date-fns';
-import { ArrowLeft, Calendar, Clock, Tag } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Tag, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const { data: post, isLoading, error } = useQuery({
     queryKey: ['blog-post', slug],
@@ -47,6 +49,7 @@ const BlogPost = () => {
         tags: data.tags || [],
         featured: data.featured,
         readingTime: data.reading_time,
+        status: data.status || 'published'
       } as BlogPostType;
     }
   });
@@ -97,14 +100,27 @@ const BlogPost = () => {
       <Navbar />
       
       <main className="container mx-auto pt-24 pb-16 px-4 relative z-10">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/blog')}
-          className="mb-6 text-white/80 hover:text-white"
-        >
-          <ArrowLeft size={16} className="mr-2" />
-          Retour au blog
-        </Button>
+        <div className="flex justify-between items-center mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/blog')}
+            className="text-white/80 hover:text-white"
+          >
+            <ArrowLeft size={16} className="mr-2" />
+            Retour au blog
+          </Button>
+          
+          {user && post.authorId === user.id && (
+            <Button 
+              variant="outline"
+              onClick={() => navigate(`/admin/blog`, { state: { editPost: post } })}
+              className="text-startupia-turquoise border-startupia-turquoise"
+            >
+              <Edit size={16} className="mr-2" />
+              Modifier l'article
+            </Button>
+          )}
+        </div>
         
         <div className="max-w-4xl mx-auto">
           {post.coverImage && (

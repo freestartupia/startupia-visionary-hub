@@ -11,6 +11,7 @@ import { BlogCategory, BlogPost } from '@/types/blog';
 import SEO from '@/components/SEO';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { PenLine } from 'lucide-react';
 
 const Blog = () => {
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
@@ -136,16 +137,15 @@ const Blog = () => {
             <BlogSearch onSearch={handleSearch} />
           </div>
           
-          {posts && posts.length > 0 && (
-            <div className="mt-4 md:mt-0">
-              <Button 
-                onClick={() => navigate('/admin/blog')} 
-                className="bg-startupia-turquoise hover:bg-startupia-turquoise/80"
-              >
-                Écrire un article
-              </Button>
-            </div>
-          )}
+          <div className="mt-4 md:mt-0">
+            <Button 
+              onClick={() => navigate('/admin/blog')} 
+              className="bg-startupia-turquoise hover:bg-startupia-turquoise/80"
+            >
+              <PenLine size={18} className="mr-2" />
+              Écrire un article
+            </Button>
+          </div>
         </div>
         
         {featuredPosts.length > 0 && (
@@ -185,6 +185,7 @@ const Blog = () => {
                       onClick={() => navigate('/admin/blog')} 
                       className="bg-startupia-turquoise hover:bg-startupia-turquoise/80"
                     >
+                      <PenLine size={18} className="mr-2" />
                       Écrire mon premier article
                     </Button>
                   </div>

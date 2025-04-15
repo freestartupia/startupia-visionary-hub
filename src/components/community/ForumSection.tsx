@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ForumPost } from '@/types/community';
-import { getForumPosts, invalidatePostsCache } from '@/services/forum/postFetchService';
+import { getForumPosts, invalidatePostsCache, PostSortOption } from '@/services/forum/postFetchService';
 import ForumPostList from './forum/ForumPostList';
 import LoadingSkeleton from './LoadingSkeleton';
 import { useForumActions } from '@/hooks/useForumActions';
@@ -21,6 +21,7 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isFirstLoad, setIsFirstLoad] = useState<boolean>(true);
+  const [sortBy, setSortBy] = useState<PostSortOption>('recent');
   const { user } = useAuth();
   const navigate = useNavigate();
   const { handleLikePost, handleUpvotePost } = useForumActions(requireAuth);
@@ -30,7 +31,7 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     try {
       setIsLoading(true);
       console.time('Chargement des posts');
-      const fetchedPosts = await getForumPosts();
+      const fetchedPosts = await getForumPosts(sortBy);
       console.timeEnd('Chargement des posts');
       
       if (isMounted) {
@@ -48,7 +49,7 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [sortBy]);
 
   useEffect(() => {
     let isMounted = true;
@@ -96,6 +97,11 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     setSearchQuery(query);
   }, []);
 
+  const handleSortChange = useCallback((option: PostSortOption) => {
+    setSortBy(option);
+    invalidatePostsCache(); // Invalider le cache pour forcer un rechargement avec le nouveau tri
+  }, []);
+
   const handlePostCreated = useCallback(() => {
     invalidatePostsCache();
     fetchPosts();
@@ -113,7 +119,9 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     <div className="space-y-6">
       <ForumHeader 
         onSearch={handleSearch} 
-        onPostCreated={handlePostCreated} 
+        onPostCreated={handlePostCreated}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
       />
 
       <SearchResults 

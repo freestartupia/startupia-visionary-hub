@@ -7,23 +7,26 @@ import { useNavigate } from 'react-router-dom';
 import { useForumPosts, useTogglePostLike } from '@/hooks/use-forum-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { PostSortOption } from '@/services/forum/postFetchService';
 
 interface OptimizedPostListProps {
   onPostCreated: () => void;
   requireAuth?: boolean;
   category?: string;
   limit?: number;
+  sortBy: PostSortOption;
 }
 
 const OptimizedPostList: React.FC<OptimizedPostListProps> = ({ 
   onPostCreated,
   requireAuth = false,
   category,
-  limit 
+  limit,
+  sortBy
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: posts = [], isLoading, error } = useForumPosts();
+  const { data: posts = [], isLoading, error } = useForumPosts(sortBy);
   const toggleLikeMutation = useTogglePostLike();
 
   const handleViewPost = useCallback((postId: string) => {

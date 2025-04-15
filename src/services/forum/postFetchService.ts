@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { ForumPost } from "@/types/community";
 import { mapPostFromDB } from "@/utils/forumMappers";
@@ -6,6 +5,9 @@ import { toast } from "sonner";
 import { getPostLikeStatus } from "./postLikeService";
 import { getRepliesForPost } from "../../services/forumReplyService";
 import { checkPostUpvote } from "../forumUpvoteService";
+
+// Type pour les options de tri
+export type PostSortOption = 'recent' | 'popular';
 
 // Cache pour stocker les résultats des requêtes récentes
 const postsCache = {
@@ -15,22 +17,39 @@ const postsCache = {
 };
 
 // Fonction pour récupérer tous les posts du forum avec gestion de cache
-export const getForumPosts = async (): Promise<ForumPost[]> => {
+export const getForumPosts = async (sortBy: PostSortOption = 'recent'): Promise<ForumPost[]> => {
   try {
     // Vérifier si les données en cache sont toujours valides
     const now = Date.now();
     if (postsCache.data && (now - postsCache.timestamp < postsCache.ttl)) {
       console.log("Utilisation des données en cache pour les posts du forum");
-      return postsCache.data;
+      
+      // Si on a les données en cache, on les trie selon l'option choisie
+      if (sortBy === 'recent') {
+        return [...postsCache.data].sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      } else { // 'popular'
+        return [...postsCache.data].sort((a, b) => 
+          (b.upvotesCount || 0) - (a.upvotesCount || 0)
+        );
+      }
     }
     
     // Si pas de cache valide, effectuer la requête à Supabase
     console.log("Récupération des posts depuis Supabase");
-    const { data: postsData, error: postsError } = await supabase
+    let query = supabase
       .from('forum_posts')
-      .select('*')
-      .order('upvotes_count', { ascending: false }) // Tri par upvotes d'abord
-      .order('created_at', { ascending: true });    // Puis par date (plus ancien en premier en cas d'égalité)
+      .select('*');
+      
+    // Tri selon l'option choisie
+    if (sortBy === 'recent') {
+      query = query.order('created_at', { ascending: false });
+    } else { // 'popular'
+      query = query.order('upvotes_count', { ascending: false });
+    }
+    
+    const { data: postsData, error: postsError } = await query;
       
     if (postsError) {
       console.error("Error fetching posts:", postsError);
@@ -101,7 +120,16 @@ export const getForumPosts = async (): Promise<ForumPost[]> => {
     postsCache.data = postsWithReplies;
     postsCache.timestamp = now;
     
-    return postsWithReplies;
+    // Renvoyer les posts triés selon l'option
+    if (sortBy === 'recent') {
+      return [...postsWithReplies].sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    } else { // 'popular'
+      return [...postsWithReplies].sort((a, b) => 
+        (b.upvotesCount || 0) - (a.upvotesCount || 0)
+      );
+    }
   } catch (error) {
     console.error("Error in getForumPosts:", error);
     toast.error("Impossible de charger les discussions");

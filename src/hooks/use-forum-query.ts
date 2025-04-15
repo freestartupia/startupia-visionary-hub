@@ -1,9 +1,9 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ForumPost, ForumReply } from '@/types/community';
 import { 
   getForumPosts, 
-  getForumPost 
+  getForumPost,
+  PostSortOption 
 } from '@/services/forum/postFetchService';
 import { togglePostLike } from '@/services/forum/postLikeService';
 import { createForumPost } from '@/services/forum/postCreateService';
@@ -14,14 +14,15 @@ import { toast } from 'sonner';
 export const forumKeys = {
   all: ['forum'] as const,
   posts: () => [...forumKeys.all, 'posts'] as const,
+  sortedPosts: (sortBy: PostSortOption) => [...forumKeys.posts(), sortBy] as const,
   post: (id: string) => [...forumKeys.all, 'post', id] as const,
 };
 
 // Hook pour récupérer tous les posts du forum avec mise en cache
-export const useForumPosts = () => {
+export const useForumPosts = (sortBy: PostSortOption = 'recent') => {
   return useQuery({
-    queryKey: forumKeys.posts(),
-    queryFn: getForumPosts,
+    queryKey: forumKeys.sortedPosts(sortBy),
+    queryFn: () => getForumPosts(sortBy),
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
   });

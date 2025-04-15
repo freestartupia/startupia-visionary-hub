@@ -73,7 +73,7 @@ export type Startup = {
   viewCount?: number;
   isFeatured?: boolean;
   fundingRounds?: FundingRound[];
-  upvotes?: number;
+  upvotes: number;
   isUpvoted?: boolean;
 };
 

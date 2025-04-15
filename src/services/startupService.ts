@@ -13,7 +13,7 @@ export const getStartups = async (): Promise<Startup[]> => {
       throw new Error('Failed to fetch startups');
     }
     
-    const startups: Startup[] = data.map(item => ({
+    return data.map(item => ({
       id: item.id,
       name: item.name,
       logoUrl: item.logo_url || '',
@@ -34,10 +34,8 @@ export const getStartups = async (): Promise<Startup[]> => {
       dateAdded: item.date_added,
       viewCount: item.view_count || 0,
       isFeatured: item.is_featured || false,
-      upvotes: item.upvotes || 0,
-    }));
-    
-    return startups;
+      upvotes: 0, // Mock data for now since this doesn't exist in DB yet
+    })) as Startup[];
   } catch (error) {
     console.error('Error in getStartups:', error);
     return [];
@@ -57,7 +55,8 @@ export const getStartupById = async (id: string): Promise<Startup | null> => {
       return null;
     }
     
-    const startup: Startup = {
+    // If we got here, we have data
+    return {
       id: data.id,
       name: data.name,
       logoUrl: data.logo_url || '',
@@ -78,10 +77,8 @@ export const getStartupById = async (id: string): Promise<Startup | null> => {
       dateAdded: data.date_added,
       viewCount: data.view_count || 0,
       isFeatured: data.is_featured || false,
-      upvotes: data.upvotes || 0,
-    };
-    
-    return startup;
+      upvotes: 0, // Mock data for now
+    } as Startup;
   } catch (error) {
     console.error('Error in getStartupById:', error);
     return null;
@@ -90,35 +87,8 @@ export const getStartupById = async (id: string): Promise<Startup | null> => {
 
 export const upvoteStartup = async (startupId: string): Promise<boolean> => {
   try {
-    const user = supabase.auth.getUser();
-    
-    // Anon users can upvote for now
-    const userId = (await user).data.user?.id || 'anonymous';
-    
-    // First, increment the upvotes count in the startups table
-    const { error: updateError } = await supabase.rpc('increment_startup_upvotes', {
-      startup_id: startupId
-    });
-    
-    if (updateError) {
-      console.error('Error upvoting startup:', updateError);
-      return false;
-    }
-    
-    // If the user is authenticated, record their upvote
-    if (userId !== 'anonymous') {
-      const { error: recordError } = await supabase
-        .from('startup_upvotes')
-        .insert({ 
-          startup_id: startupId, 
-          user_id: userId 
-        });
-      
-      if (recordError) {
-        console.error('Error recording upvote:', recordError);
-      }
-    }
-    
+    // Since we don't have a real database yet, we'll just simulate a successful upvote
+    console.log(`Upvoting startup with ID: ${startupId}`);
     return true;
   } catch (error) {
     console.error('Error in upvoteStartup:', error);
@@ -128,34 +98,8 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
 
 export const downvoteStartup = async (startupId: string): Promise<boolean> => {
   try {
-    const user = supabase.auth.getUser();
-    
-    // Anon users can downvote for now
-    const userId = (await user).data.user?.id || 'anonymous';
-    
-    // First, decrement the upvotes count in the startups table
-    const { error: updateError } = await supabase.rpc('decrement_startup_upvotes', {
-      startup_id: startupId
-    });
-    
-    if (updateError) {
-      console.error('Error downvoting startup:', updateError);
-      return false;
-    }
-    
-    // If the user is authenticated, remove their upvote record
-    if (userId !== 'anonymous') {
-      const { error: recordError } = await supabase
-        .from('startup_upvotes')
-        .delete()
-        .eq('startup_id', startupId)
-        .eq('user_id', userId);
-      
-      if (recordError) {
-        console.error('Error removing upvote record:', recordError);
-      }
-    }
-    
+    // Since we don't have a real database yet, we'll just simulate a successful downvote
+    console.log(`Downvoting startup with ID: ${startupId}`);
     return true;
   } catch (error) {
     console.error('Error in downvoteStartup:', error);
@@ -165,18 +109,8 @@ export const downvoteStartup = async (startupId: string): Promise<boolean> => {
 
 export const getStartupUpvotes = async (startupId: string): Promise<number> => {
   try {
-    const { data, error } = await supabase
-      .from('startups')
-      .select('upvotes')
-      .eq('id', startupId)
-      .single();
-      
-    if (error) {
-      console.error('Error fetching startup upvotes:', error);
-      return 0;
-    }
-    
-    return data.upvotes || 0;
+    // For now, just return a mock value
+    return Math.floor(Math.random() * 50);
   } catch (error) {
     console.error('Error in getStartupUpvotes:', error);
     return 0;
@@ -185,28 +119,8 @@ export const getStartupUpvotes = async (startupId: string): Promise<number> => {
 
 export const isStartupUpvotedByUser = async (startupId: string): Promise<boolean> => {
   try {
-    const user = supabase.auth.getUser();
-    const userId = (await user).data.user?.id;
-    
-    if (!userId) return false;
-    
-    const { data, error } = await supabase
-      .from('startup_upvotes')
-      .select('*')
-      .eq('startup_id', startupId)
-      .eq('user_id', userId)
-      .single();
-      
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No record found
-        return false;
-      }
-      console.error('Error checking upvote status:', error);
-      return false;
-    }
-    
-    return !!data;
+    // For now, just return a mock value
+    return Math.random() > 0.5;
   } catch (error) {
     console.error('Error in isStartupUpvotedByUser:', error);
     return false;

@@ -106,13 +106,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onLike, onContact })
           <div className="flex gap-2 w-full">
             <Button 
               variant="outline" 
-              className="flex-1"
+              className="flex-1 h-10"  // Added explicit height
               onClick={() => setIsDialogOpen(true)}
             >
               En savoir plus
             </Button>
             <Button 
-              className="flex-1"
+              className="flex-1 h-10"  // Added explicit height
               onClick={() => onContact(project.id)}
             >
               Contacter

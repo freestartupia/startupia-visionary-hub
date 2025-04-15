@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -67,18 +66,18 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Updated colors using pure black, pure white and accent yellow
 				startupia: {
-					turquoise: '#FCFE3E', // Now yellow accent (replacing turquoise)
-					'deep-turquoise': '#E6E637', // Slightly darker yellow
-					'light-turquoise': '#FDFE6E', // Slightly lighter yellow
-					gold: '#FCFE3E', // Same yellow accent (replacing gold)
-					'deep-gold': '#E6E637', // Slightly darker yellow
-					'light-gold': '#FDFE6E', // Slightly lighter yellow
-					black: '#000000', // Pure black
-					'dark-gray': '#121212', // Near black
-					gray: '#888888', // Medium gray
-					white: '#FFFFFF', // Pure white
+					turquoise: '#FCFE3E',
+					'deep-turquoise': '#E6E637',
+					'light-turquoise': '#FDFE6E',
+					gold: '#FCFE3E',
+					'deep-gold': '#E6E637',
+					'light-gold': '#FDFE6E',
+					black: '#000000',
+					'dark-gray': '#121212',
+					gray: '#888888',
+					white: '#FFFFFF',
+					'yellow-text': '#000000',
 				},
 			},
 			borderRadius: {
@@ -129,10 +128,10 @@ export default {
 				'glow': 'glow 2s ease-in-out infinite',
 			},
 			backgroundImage: {
-				'hero-pattern': 'linear-gradient(to bottom, #000000, #000000)', // Pure black background
-				'green-gradient': 'linear-gradient(135deg, #FCFE3E 0%, #FCFE3E 100%)', // Solid yellow (no gradient)
-				'gold-gradient': 'linear-gradient(135deg, #FCFE3E 0%, #FCFE3E 100%)', // Solid yellow (no gradient)
-				'grid-pattern': 'radial-gradient(circle, rgba(252, 254, 62, 0.1) 1px, transparent 1px)', // Updated to yellow
+				'hero-pattern': 'linear-gradient(to bottom, #000000, #000000)',
+				'green-gradient': 'linear-gradient(135deg, #FCFE3E 0%, #FCFE3E 100%)',
+				'gold-gradient': 'linear-gradient(135deg, #FCFE3E 0%, #FCFE3E 100%)',
+				'grid-pattern': 'radial-gradient(circle, rgba(252, 254, 62, 0.1) 1px, transparent 1px)',
 			},
 			backdropFilter: {
 				'none': 'none',

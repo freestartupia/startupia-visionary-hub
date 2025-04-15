@@ -46,6 +46,8 @@ const formSchema = z.object({
   websiteUrl: z.string().url({ message: 'URL Website invalide' }).optional().or(z.literal('')),
   projectName: z.string().optional(),
   projectStage: z.enum(['Idée', 'MVP', 'Beta', 'Lancé']).optional(),
+  contactMethod: z.string().min(3, { message: 'Veuillez indiquer comment vous souhaitez être contacté' }),
+  contactMethodType: z.enum(['email', 'linkedin', 'phone', 'other']).default('email'),
 });
 
 interface CoFounderProfileProps {
@@ -77,10 +79,13 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
       websiteUrl: '',
       projectName: '',
       projectStage: undefined,
+      contactMethod: '',
+      contactMethodType: 'email',
     },
   });
 
   const profileType = form.watch('profileType');
+  const contactMethodType = form.watch('contactMethodType');
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) {
@@ -112,6 +117,8 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
         hasAIBadge: values.aiTools.length > 3,
         projectName: values.profileType === 'project-owner' ? values.projectName : undefined,
         projectStage: values.profileType === 'project-owner' ? values.projectStage : undefined,
+        contactMethod: values.contactMethod,
+        contactMethodType: values.contactMethodType,
       });
       
       toast.success("Votre profil a été créé avec succès !", {
@@ -613,6 +620,65 @@ const CoFounderProfile = ({ onProfileCreated }: CoFounderProfileProps) => {
               </FormItem>
             )}
           />
+
+          {/* Section Contact Method */}
+          <div className="border border-white/10 p-4 rounded-md bg-white/5">
+            <h3 className="text-lg font-medium mb-3">Comment souhaitez-vous être contacté ?</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="contactMethodType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type de contact</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-black/20 border-startupia-turquoise/30">
+                          <SelectValue placeholder="Choisir un type de contact" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="linkedin">LinkedIn</SelectItem>
+                        <SelectItem value="phone">Téléphone</SelectItem>
+                        <SelectItem value="other">Autre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="contactMethod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {contactMethodType === 'email' ? 'Adresse email' : 
+                       contactMethodType === 'phone' ? 'Numéro de téléphone' : 
+                       contactMethodType === 'linkedin' ? 'Utilisateur LinkedIn (ou lien complet)' : 
+                       'Moyen de contact'}
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder={
+                          contactMethodType === 'email' ? 'votre.email@exemple.com' : 
+                          contactMethodType === 'phone' ? '+33612345678' : 
+                          contactMethodType === 'linkedin' ? 'votre-nom-linkedin' : 
+                          'Précisez votre moyen de contact'
+                        } 
+                        {...field} 
+                        className="bg-black/20 border-startupia-turquoise/30" 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
 
           {/* Social links */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

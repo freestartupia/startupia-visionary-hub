@@ -1,10 +1,8 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, Zap, Circle, Heart, Rocket, ExternalLink } from 'lucide-react';
+import { ArrowUp, Heart, Rocket } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 
 const StartupPromoBlog = () => {
   return (
@@ -37,8 +35,7 @@ const StartupPromoBlog = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <Button variant="outline" className="bg-black/30 border-startupia-turquoise/50 text-startupia-turquoise hover:bg-startupia-turquoise/20 flex items-center gap-2">
-                      <ExternalLink size={16} />
-                      <span>Visiter</span>
+                      Visiter
                     </Button>
                   </div>
                   <div className="flex items-center gap-2">
@@ -66,64 +63,11 @@ const StartupPromoBlog = () => {
           
           {/* Right Content - Promotional Text */}
           <div className="lg:w-7/12 space-y-6">
-            <h2 className="text-4xl md:text-5xl font-bold leading-tight">
+            <h2 className="text-4xl md:text-5xl font-bold leading-tight text-center">
               Faites exploser votre startup, gratuitement
             </h2>
             
-            <p className="text-xl text-white/80">
-              Présentez votre projet en quelques secondes… et laissez la communauté faire le reste.
-              Sur Startupia, chaque vote propulse votre startup vers le sommet.
-            </p>
-            
-            <div className="space-y-4 py-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-startupia-turquoise/20 flex items-center justify-center flex-shrink-0 mt-1">
-                  <Zap size={18} className="text-startupia-turquoise" />
-                </div>
-                <div>
-                  <p className="text-lg">
-                    <span className="font-semibold">Plus vous recevez de likes, plus vous gagnez en visibilité.</span> Simple, viral, mérité.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="border-l-2 border-startupia-turquoise/30 pl-6 ml-4 space-y-3 my-6">
-                <p className="text-white/80 font-medium">
-                  Votre page dédiée met en avant :
-                </p>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <Circle size={10} fill="#FCFE3E" className="text-startupia-turquoise" />
-                    <span>Votre pitch</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Circle size={10} fill="#FCFE3E" className="text-startupia-turquoise" />
-                    <span>Votre logo</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Circle size={10} fill="#FCFE3E" className="text-startupia-turquoise" />
-                    <span>Votre lien</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Circle size={10} fill="#FCFE3E" className="text-startupia-turquoise" />
-                    <span>Et surtout… un bouton de vote qui peut tout changer</span>
-                  </li>
-                </ul>
-              </div>
-              
-              <p className="text-lg text-white/90">
-                Les startups les plus soutenues dominent le classement et attirent en un clin d'œil l'attention des curieux, des partenaires, des médias et des futurs utilisateurs.
-              </p>
-            </div>
-            
-            <div className="glass-card border border-startupia-turquoise/20 p-5 flex items-center gap-4 bg-black/40">
-              <Rocket size={24} className="text-startupia-turquoise" />
-              <p className="text-lg font-medium">
-                Un bon projet + des votes = une startup qui explose.
-              </p>
-            </div>
-            
-            <div className="pt-8">
+            <div className="pt-8 flex justify-center">
               <Button size="lg" className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black font-semibold text-lg py-6 px-8" asChild>
                 <Link to="/startup">
                   <Rocket size={20} className="mr-2" />

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ForumPost } from '@/types/community';
 import { Badge } from '@/components/ui/badge';

@@ -44,7 +44,7 @@ const ProjectCardFooter: React.FC<ProjectCardFooterProps> = ({
 
   return (
     <CardFooter className="flex flex-col gap-4 border-t border-white/10 pt-4">
-      <div className="flex items-center justify-between w-full">
+      <div className="flex items-center justify-between w-full bg-black p-3 rounded-t-lg">
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={initiatorAvatar} alt={initiatorName} />
@@ -69,16 +69,16 @@ const ProjectCardFooter: React.FC<ProjectCardFooterProps> = ({
           </div>
         </div>
       </div>
-      <div className="flex gap-2 w-full">
+      <div className="flex gap-2 w-full bg-startupia-turquoise/20 p-3 rounded-b-lg">
         <Button 
           variant="outline" 
-          className="flex-1 h-10"
+          className="flex-1 h-10 bg-black text-white hover:bg-black/80"
           onClick={onViewDetails}
         >
           En savoir plus
         </Button>
         <Button 
-          className="flex-1 h-10"
+          className="flex-1 h-10 bg-startupia-turquoise text-black hover:bg-startupia-turquoise/80"
           onClick={onContact}
         >
           Contacter
@@ -89,3 +89,4 @@ const ProjectCardFooter: React.FC<ProjectCardFooterProps> = ({
 };
 
 export default ProjectCardFooter;
+

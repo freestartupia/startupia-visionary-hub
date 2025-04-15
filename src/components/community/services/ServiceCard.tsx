@@ -99,13 +99,20 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       <CardFooter className="flex flex-col gap-4 border-t border-white/10 pt-4">
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage 
-              src={service.providerAvatar} 
-              alt={service.providerName || ''} 
-            />
-            <AvatarFallback>{service.providerName ? getInitials(service.providerName) : 'U'}</AvatarFallback>
+            {service.providerAvatar ? (
+              <AvatarImage 
+                src={service.providerAvatar} 
+                alt={service.providerName || 'Prestataire'} 
+              />
+            ) : (
+              <AvatarFallback>
+                {service.providerName ? getInitials(service.providerName) : 'U'}
+              </AvatarFallback>
+            )}
           </Avatar>
-          <span className="font-medium">{service.providerName}</span>
+          <span className="font-medium">
+            {service.providerName || 'Utilisateur'}
+          </span>
         </div>
         <div className="flex gap-2 w-full">
           {service.linkedinUrl && (

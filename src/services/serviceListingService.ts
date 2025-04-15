@@ -61,8 +61,44 @@ export const fetchServices = async (): Promise<ServiceListing[]> => {
       throw error;
     }
     
+    // Process the services to ensure all have provider data
     if (data && data.length > 0) {
-      return data.map(mapDbServiceToServiceListing);
+      const processedServices = await Promise.all(
+        data.map(async (service) => {
+          const dbService = mapDbServiceToServiceListing(service);
+          
+          // If the service has a provider ID but is missing name or avatar, try to fetch it
+          if (dbService.providerId && (!dbService.providerName || !dbService.providerAvatar)) {
+            try {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('first_name, last_name, avatar_url')
+                .eq('id', dbService.providerId)
+                .single();
+                
+              if (profileData) {
+                const fullName = [profileData.first_name, profileData.last_name]
+                  .filter(Boolean)
+                  .join(' ');
+                  
+                if (fullName && !dbService.providerName) {
+                  dbService.providerName = fullName;
+                }
+                
+                if (profileData.avatar_url && !dbService.providerAvatar) {
+                  dbService.providerAvatar = profileData.avatar_url;
+                }
+              }
+            } catch (err) {
+              console.error('Error fetching profile data for service:', err);
+            }
+          }
+          
+          return dbService;
+        })
+      );
+      
+      return processedServices;
     } else {
       console.log('No services found in the database');
       return [];
@@ -92,8 +128,16 @@ export const addService = async (service: ServiceListing): Promise<ServiceListin
           .filter(Boolean)
           .join(' ');
           
-        service.providerName = fullName || service.providerName;
-        service.providerAvatar = profileData.avatar_url || service.providerAvatar;
+        // Only use profile data if the service doesn't already have this info
+        if (fullName) {
+          service.providerName = fullName;
+          console.log('Setting provider name from profile:', fullName);
+        }
+        
+        if (profileData.avatar_url) {
+          service.providerAvatar = profileData.avatar_url;
+          console.log('Found avatar URL in profiles:', profileData.avatar_url);
+        }
       }
     }
     

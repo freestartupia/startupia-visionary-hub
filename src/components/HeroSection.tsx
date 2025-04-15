@@ -3,16 +3,15 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Search, Rocket, ArrowRight, Users, MessageSquare, Star } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-
 const HeroSection = () => {
   const isMobile = useIsMobile();
-  
-  return (
-    <section className="min-h-screen relative flex flex-col items-center justify-center pt-16 overflow-hidden">
+  return <section className="min-h-screen relative flex flex-col items-center justify-center pt-16 overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-20 z-0"></div>
       <div className="absolute top-1/3 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
-      <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{
+      animationDelay: '2s'
+    }}></div>
       
       <div className="container mx-auto px-4 z-10 text-center">
         {/* Small badge */}
@@ -77,33 +76,19 @@ const HeroSection = () => {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-4">
-          <Button 
-            size={isMobile ? "default" : "lg"}
-            className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold text-lg py-6 px-8 w-full sm:w-auto"
-            asChild
-          >
+          <Button size={isMobile ? "default" : "lg"} className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold text-lg py-6 px-8 w-full sm:w-auto" asChild>
             <Link to="/startups">
               <Search size={20} className="mr-2" />
               Explorer les startups
             </Link>
           </Button>
-          <Button 
-            size={isMobile ? "default" : "lg"}
-            variant="outline" 
-            className="border-startupia-gold text-startupia-gold hover:bg-startupia-gold/20 text-lg py-6 px-8 w-full sm:w-auto"
-            asChild
-          >
+          <Button size={isMobile ? "default" : "lg"} variant="outline" className="border-startupia-gold text-startupia-gold hover:bg-startupia-gold/20 text-lg py-6 px-8 w-full sm:w-auto" asChild>
             <Link to="/community">
               <Users size={20} className="mr-2" />
               Rejoindre la communauté
             </Link>
           </Button>
-          <Button 
-            size={isMobile ? "default" : "lg"}
-            variant="outline" 
-            className="border-startupia-turquoise text-startupia-turquoise hover:bg-startupia-turquoise/20 text-lg py-6 px-8 w-full sm:w-auto"
-            asChild
-          >
+          <Button size={isMobile ? "default" : "lg"} variant="outline" className="border-startupia-turquoise text-startupia-turquoise hover:bg-startupia-turquoise/20 text-lg py-6 px-8 w-full sm:w-auto" asChild>
             <Link to="/cofounder">
               <Rocket size={20} className="mr-2" />
               Trouver un cofondateur
@@ -113,17 +98,9 @@ const HeroSection = () => {
 
         {/* Down arrow indicator */}
         <div className="flex flex-col items-center justify-center mt-6">
-          <a 
-            href="#startup-index" 
-            className="flex flex-col items-center hover:text-startupia-gold transition-colors"
-          >
-            <span className="text-sm mb-2 opacity-80">Découvrir</span>
-            <ArrowRight size={24} className="rotate-90" />
-          </a>
+          
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default HeroSection;

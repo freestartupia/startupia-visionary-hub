@@ -24,6 +24,7 @@ import SEO from '@/components/SEO';
 import { Startup } from '@/types/startup';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import TopStartups from '@/components/ecosystem/TopStartups';
 
 const AIEcosystem = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,6 +134,20 @@ const AIEcosystem = () => {
             </div>
           </Card>
         )}
+        
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold mb-4 flex items-center">
+            <ThumbsUp className="mr-2 text-startupia-turquoise" size={20} />
+            Projets les plus populaires
+          </h2>
+          
+          <TopStartups 
+            searchQuery={searchQuery}
+            showFilters={showFilters}
+            sortOrder={sortOrder}
+            limit={4}
+          />
+        </section>
         
         <Tabs defaultValue="all" className="mb-6 max-w-4xl mx-auto">
           <TabsList className="bg-black border border-startupia-turquoise/20 w-auto inline-flex space-x-1">

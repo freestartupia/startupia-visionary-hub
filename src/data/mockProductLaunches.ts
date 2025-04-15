@@ -23,7 +23,8 @@ export const mockProductLaunches: ProductLaunch[] = [
         userAvatar: "https://i.pravatar.cc/150?img=65",
         content: "J'ai testé la version bêta, l'intégration avec Notion est incroyable !",
         createdAt: new Date(Date.now() - 3600000).toISOString(),
-        likes: 7
+        likes: 7,
+        productId: "genius-copilot" // Ajout de la propriété productId
       }
     ],
     status: "upcoming",
@@ -53,7 +54,8 @@ export const mockProductLaunches: ProductLaunch[] = [
         userAvatar: "https://i.pravatar.cc/150?img=23",
         content: "Enfin une solution qui ne nécessite pas de connaissances en programmation !",
         createdAt: new Date(Date.now() - 7200000).toISOString(),
-        likes: 18
+        likes: 18,
+        productId: "neuron-labs" // Ajout de la propriété productId
       }
     ],
     status: "launching_today",
@@ -84,7 +86,8 @@ export const mockProductLaunches: ProductLaunch[] = [
         userAvatar: "https://i.pravatar.cc/150?img=12",
         content: "On utilise Sentient depuis deux semaines et nos KPIs de satisfaction client ont augmenté de 23% !",
         createdAt: new Date(Date.now() - 86400000).toISOString(),
-        likes: 31
+        likes: 31,
+        productId: "sentient" // Ajout de la propriété productId
       }
     ],
     status: "launched",

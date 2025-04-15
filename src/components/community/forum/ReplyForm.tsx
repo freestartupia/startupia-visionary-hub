@@ -99,23 +99,24 @@ const ReplyForm: React.FC<ReplyFormProps> = ({
         replyingTo
       );
       
-      // Vider le formulaire après l'ajout
+      // Réinitialiser le formulaire et notifier l'utilisateur
       setContent('');
       toast.success('Réponse ajoutée avec succès');
-      
-      // Le formulaire est vidé mais pas fermé pour permettre d'autres réponses
-      // Le canal temps réel configuré dans ForumPostDetail va gérer la mise à jour de l'UI
       
       // Déclencher l'effet pour masquer le formulaire de réponse à un commentaire
       if (replyingTo) {
         onCancelReply();
       }
       
+      // Mise à jour de l'interface UI optimiste instantanée est gérée par le canal en temps réel dans ForumPostDetail
+      
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la réponse:', error);
       toast.error('Erreur lors de l\'ajout de la réponse');
     } finally {
       setIsSubmitting(false);
+      // Appeler le callback même en cas d'erreur pour réinitialiser l'état du parent si nécessaire
+      onReplyAdded();
     }
   };
 

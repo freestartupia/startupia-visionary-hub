@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,6 +42,86 @@ const ForumPostDetail = () => {
     }
   };
 
+  // Handle new reply in real-time
+  const handleNewReply = (payload: any) => {
+    console.log('Nouvelle réponse détectée:', payload);
+    // Update post immediately with the new reply
+    setPost(prevPost => {
+      if (!prevPost) return null;
+      
+      // Get the new reply data
+      const newReply = payload.new;
+      
+      // Check if this is a reply to the main post or a nested reply
+      if (!newReply.reply_parent_id) {
+        // It's a reply to the main post
+        const updatedReplies = prevPost.replies ? [...prevPost.replies] : [];
+        // Add the new reply if it's not already in the list
+        if (!updatedReplies.some(reply => reply.id === newReply.id)) {
+          updatedReplies.push({
+            id: newReply.id,
+            content: newReply.content,
+            authorId: newReply.author_id,
+            authorName: newReply.author_name,
+            authorAvatar: newReply.author_avatar,
+            createdAt: newReply.created_at,
+            parentId: newReply.parent_id,
+            likes: 0,
+            isLiked: false,
+            nestedReplies: []
+          });
+        }
+        
+        return {
+          ...prevPost,
+          replies: updatedReplies
+        };
+      } else {
+        // It's a nested reply to another reply
+        const updatedReplies = prevPost.replies ? [...prevPost.replies] : [];
+        
+        // Find the parent reply
+        const parentReplyIndex = updatedReplies.findIndex(
+          reply => reply.id === newReply.reply_parent_id
+        );
+        
+        if (parentReplyIndex !== -1) {
+          // Clone the parent reply
+          const updatedParentReply = {...updatedReplies[parentReplyIndex]};
+          
+          // Ensure nestedReplies exists
+          updatedParentReply.nestedReplies = updatedParentReply.nestedReplies || [];
+          
+          // Add the nested reply if it's not already in the list
+          if (!updatedParentReply.nestedReplies.some(reply => reply.id === newReply.id)) {
+            updatedParentReply.nestedReplies.push({
+              id: newReply.id,
+              content: newReply.content,
+              authorId: newReply.author_id,
+              authorName: newReply.author_name,
+              authorAvatar: newReply.author_avatar,
+              createdAt: newReply.created_at,
+              parentId: newReply.parent_id,
+              replyParentId: newReply.reply_parent_id,
+              likes: 0,
+              isLiked: false
+            });
+          }
+          
+          // Update the parent reply in the array
+          updatedReplies[parentReplyIndex] = updatedParentReply;
+          
+          return {
+            ...prevPost,
+            replies: updatedReplies
+          };
+        }
+      }
+      
+      return prevPost;
+    });
+  };
+
   useEffect(() => {
     fetchPost();
     
@@ -58,11 +139,7 @@ const ForumPostDetail = () => {
           table: 'forum_replies',
           filter: `parent_id=eq.${postId}`
         },
-        (payload) => {
-          console.log('Nouvelle réponse détectée:', payload);
-          // Rafraîchir le post et ses réponses immédiatement
-          fetchPost();
-        }
+        handleNewReply
       )
       .on(
         'postgres_changes',
@@ -123,19 +200,7 @@ const ForumPostDetail = () => {
           table: 'forum_replies',
           filter: `reply_parent_id=is.not.null`
         },
-        (payload) => {
-          console.log('Nouvelle réponse imbriquée détectée:', payload);
-          
-          // Vérifier si la réponse imbriquée appartient à ce post
-          if (post && post.replies && Array.isArray(post.replies)) {
-            const replyParentId = payload.new.reply_parent_id;
-            const belongsToPost = post.replies.some(reply => reply.id === replyParentId);
-            
-            if (belongsToPost) {
-              fetchPost();
-            }
-          }
-        }
+        handleNewReply
       )
       .subscribe();
       
@@ -151,7 +216,8 @@ const ForumPostDetail = () => {
   };
   
   const handleReplyAdded = () => {
-    setReplyingTo(null);
+    // No need to reset replyingTo here as we handle it in ReplyForm
+    // The real-time subscription will automatically update the UI
   };
   
   const handleReplyToComment = (replyId: string) => {
@@ -308,7 +374,7 @@ const ForumPostDetail = () => {
       />
       
       <ReplyList 
-        replies={post.replies}
+        replies={post.replies || []}
         onLikeReply={handleLikeReply}
         onReplyToComment={handleReplyToComment}
       />

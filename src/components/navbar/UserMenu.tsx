@@ -1,234 +1,101 @@
 
-import React, { useState, useEffect } from 'react';
-import { User, Bell, LogOut, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User, Settings, LogOut } from 'lucide-react';
+import NotificationsDropdown from './NotificationsDropdown';
 
-interface UserMenuProps {
-  isMobile?: boolean;
-}
-
-export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
+const UserMenu = () => {
   const { user, signOut } = useAuth();
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const navigate = useNavigate();
 
-  // Fetch user profile and notifications count when user is logged in
-  useEffect(() => {
-    if (!user) return;
+  // If no user is logged in, return nothing
+  if (!user) return null;
 
-    const fetchUserData = async () => {
-      try {
-        // Fetch user profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
+  // Extract user info
+  const email = user.email || '';
+  const firstName = user.user_metadata?.first_name || '';
+  const lastName = user.user_metadata?.last_name || '';
+  const fullName = `${firstName} ${lastName}`.trim() || email;
+  const initials = firstName && lastName 
+    ? `${firstName[0]}${lastName[0]}`.toUpperCase() 
+    : email ? email[0].toUpperCase() : 'U';
+  const avatarUrl = user.user_metadata?.avatar_url;
 
-        if (!profileError && profileData) {
-          setUserProfile(profileData);
-        }
-
-        // Fetch notifications
-        const { data: notifData, error: notifError } = await supabase
-          .from('match_notifications')
-          .select('id')
-          .eq('recipient_id', user.id)
-          .eq('status', 'pending');
-
-        if (notifError) {
-          console.error('Error fetching notifications:', notifError);
-          return;
-        }
-
-        setNotificationCount(notifData?.length || 0);
-      } catch (error) {
-        console.error('Error in user data fetch:', error);
-      }
-    };
-
-    fetchUserData();
-
-    // Set up realtime subscription for new notifications
-    const channel = supabase
-      .channel('match_notifications_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'match_notifications',
-        filter: `recipient_id=eq.${user.id}`,
-      }, () => {
-        fetchUserData();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
-  const getDisplayName = () => {
-    if (userProfile?.first_name && userProfile?.last_name) {
-      return `${userProfile.first_name} ${userProfile.last_name}`;
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    } finally {
+      setIsLoggingOut(false);
     }
-    return user?.email?.split('@')[0] || 'Utilisateur';
   };
-  
-  const getInitials = () => {
-    if (userProfile?.first_name && userProfile?.last_name) {
-      return `${userProfile.first_name[0]}${userProfile.last_name[0]}`.toUpperCase();
-    }
-    return user?.email?.[0].toUpperCase() || 'U';
+
+  const handleProfileClick = () => {
+    navigate('/profile');
   };
-  
-  if (isMobile) {
-    return (
-      <div className="border-t border-white/10 pt-4 mt-2">
-        <div className="flex justify-between items-center px-4 py-2">
-          <div className="flex items-center">
-            <Avatar className="h-8 w-8 mr-3">
-              {userProfile?.avatar_url ? (
-                <AvatarImage src={userProfile.avatar_url} alt={getDisplayName()} />
-              ) : (
-                <AvatarFallback className="bg-black text-white">
-                  {getInitials()}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            <span className="text-white/80 truncate">{getDisplayName()}</span>
-          </div>
-          <div className="relative">
-            <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10">
-              <Bell size={18} />
-            </Button>
-            {notificationCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500">
-                {notificationCount}
-              </Badge>
-            )}
-          </div>
-        </div>
-        <div className="mt-2 space-y-2">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-white/80 hover:text-white hover:bg-white/5"
-            asChild
-          >
-            <Link to="/profile">
-              <User size={16} className="mr-2" />
-              Mon profil
-            </Link>
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-white/80 hover:text-white hover:bg-white/5"
-            asChild
-          >
-            <Link to="/profile?tab=settings">
-              <Settings size={16} className="mr-2" />
-              Paramètres
-            </Link>
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
-            onClick={handleSignOut}
-          >
-            <LogOut size={16} className="mr-2" />
-            Se déconnecter
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="flex items-center gap-4 ml-4">
-      <div className="relative">
-        <Link to="/profile">
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
-            <Bell size={20} />
-            {notificationCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500">
-                {notificationCount}
-              </Badge>
-            )}
-          </Button>
-        </Link>
-      </div>
+    <div className="flex items-center gap-2">
+      <NotificationsDropdown />
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="text-white hover:bg-white/10 rounded-full p-0 h-9 w-9">
-            <Avatar>
-              {userProfile?.avatar_url ? (
-                <AvatarImage src={userProfile.avatar_url} alt={getDisplayName()} />
-              ) : (
-                <AvatarFallback className="bg-black text-white border border-white/20">
-                  {getInitials()}
-                </AvatarFallback>
-              )}
+          <Button variant="ghost" className="p-0 h-8 w-8 rounded-full">
+            <Avatar className="h-8 w-8 border border-white/20">
+              <AvatarImage src={avatarUrl} alt={fullName} />
+              <AvatarFallback className="bg-startupia-turquoise/20 text-startupia-turquoise">
+                {initials}
+              </AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 bg-black/90 backdrop-blur-lg border border-white/10 text-white">
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex items-center space-x-2">
-              <Avatar className="h-8 w-8">
-                {userProfile?.avatar_url ? (
-                  <AvatarImage src={userProfile.avatar_url} alt={getDisplayName()} />
-                ) : (
-                  <AvatarFallback className="bg-black text-white border border-white/20">
-                    {getInitials()}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <div>
-                <p className="font-medium truncate">{getDisplayName()}</p>
-                <p className="text-xs text-white/60 truncate">{user?.email}</p>
-              </div>
-            </div>
-          </DropdownMenuLabel>
+        <DropdownMenuContent align="end" className="w-56 bg-black border border-white/20">
+          <div className="p-2 text-center">
+            <p className="font-medium">{fullName}</p>
+            <p className="text-xs text-white/60">{email}</p>
+          </div>
           <DropdownMenuSeparator className="bg-white/10" />
-          <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer">
-            <Link to="/profile" className="flex w-full">
-              <User className="mr-2 h-4 w-4" />
-              <span>Profil</span>
-              {notificationCount > 0 && (
-                <Badge className="ml-2 bg-red-500">{notificationCount}</Badge>
-              )}
-            </Link>
+          <DropdownMenuItem 
+            className="cursor-pointer flex items-center" 
+            onClick={handleProfileClick}
+          >
+            <User className="mr-2 h-4 w-4" />
+            <span>Profil</span>
           </DropdownMenuItem>
-          <DropdownMenuItem className="text-white/80 hover:text-white hover:bg-white/10 cursor-pointer">
-            <Link to="/profile?tab=settings" className="flex w-full">
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Paramètres</span>
-            </Link>
+          <DropdownMenuItem 
+            className="cursor-pointer flex items-center" 
+            onClick={() => navigate('/profile?tab=settings')}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Paramètres</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-white/10" />
-          <DropdownMenuItem onClick={handleSignOut} className="text-rose-500 hover:bg-rose-500/10 cursor-pointer">
+          <DropdownMenuItem 
+            className="cursor-pointer text-startupia-turquoise flex items-center" 
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
             <LogOut className="mr-2 h-4 w-4" />
-            <span>Se déconnecter</span>
+            <span>{isLoggingOut ? 'Déconnexion...' : 'Se déconnecter'}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
   );
 };
+
+export default UserMenu;

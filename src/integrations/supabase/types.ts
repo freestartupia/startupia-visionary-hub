@@ -457,6 +457,48 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          is_read: boolean | null
+          recipient_id: string
+          sender_avatar: string | null
+          sender_id: string | null
+          sender_name: string | null
+          type: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          is_read?: boolean | null
+          recipient_id: string
+          sender_avatar?: string | null
+          sender_id?: string | null
+          sender_name?: string | null
+          type: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          is_read?: boolean | null
+          recipient_id?: string
+          sender_avatar?: string | null
+          sender_id?: string | null
+          sender_name?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
       post_upvotes: {
         Row: {
           created_at: string

@@ -1,3 +1,3 @@
-import { useToast, toast } from "@/hooks/use-toast";
 
-export { useToast, toast };
+// This file is a re-export to maintain compatibility with shadcn/ui conventions
+export { useToast, toast } from "@/hooks/use-toast";

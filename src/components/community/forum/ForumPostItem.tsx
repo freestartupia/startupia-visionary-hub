@@ -65,7 +65,7 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
             <span className="font-medium text-slate-950">{post.authorName}</span>
           </div>
           
-          <div className="flex gap-4 bg-slate-950">
+          <div className="flex gap-4 bg-startupia-turquoise">
             {onUpvotePost && <AuthRequired forActiveParticipation={true}>
                 <button onClick={e => onUpvotePost(e, post.id)} className={`flex items-center gap-1 ${post.isUpvoted ? "text-startupia-turquoise" : "text-white/60 hover:text-white"} transition-colors`}>
                   <ArrowUp size={16} className={post.isUpvoted ? "stroke-startupia-turquoise" : "stroke-white/60"} />

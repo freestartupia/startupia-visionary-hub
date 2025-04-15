@@ -41,7 +41,7 @@ const TrustSignals = () => {
           </div>
           
           <div className="w-full sm:w-auto">
-            <div className="text-3xl font-bold text-yellow-400">100%</div>
+            <div className="text-3xl font-bold text-startupia-turquoise">100%</div>
             <p className="text-white/70">gratuit pour tous</p>
           </div>
           
@@ -54,4 +54,3 @@ const TrustSignals = () => {
     </section>;
 };
 export default TrustSignals;
-

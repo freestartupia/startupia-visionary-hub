@@ -8,7 +8,7 @@ export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
     const { data, error } = await supabase
       .from('blog_posts')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('createdAt', { ascending: false });
       
     if (error) throw error;
     return data || [];
@@ -36,9 +36,18 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
 
 export const createBlogPost = async (post: Partial<BlogPost>): Promise<BlogPost | null> => {
   try {
+    // Ensure required fields are present
+    const postData = {
+      ...post,
+      authorName: post.authorName || 'Utilisateur',
+      createdAt: new Date().toISOString(),
+      status: post.status || 'draft',
+      readingTime: post.readingTime || '1 min'
+    };
+
     const { data, error } = await supabase
       .from('blog_posts')
-      .insert([post])
+      .insert([postData])
       .select()
       .single();
       
@@ -68,7 +77,10 @@ export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promi
   try {
     const { data, error } = await supabase
       .from('blog_posts')
-      .update(post)
+      .update({
+        ...post,
+        updatedAt: new Date().toISOString()
+      })
       .eq('id', id)
       .select()
       .single();

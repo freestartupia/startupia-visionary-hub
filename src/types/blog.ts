@@ -24,13 +24,5 @@ export interface BlogPost {
   tags: string[];
   featured?: boolean;
   readingTime: string;
-}
-
-export interface BlogAuthor {
-  id: string;
-  name: string;
-  avatar?: string;
-  bio?: string;
-  role?: string;
-  company?: string;
+  status?: 'draft' | 'published' | 'pending';
 }

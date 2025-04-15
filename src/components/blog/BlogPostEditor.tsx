@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -155,6 +154,7 @@ const BlogPostEditor = () => {
         authorAvatar: user.user_metadata?.avatar_url || null,
         readingTime: estimateReadingTime(data.content),
         status: status,
+        featured: false,
       };
 
       // Créer ou mettre à jour l'article
@@ -162,7 +162,6 @@ const BlogPostEditor = () => {
       if (existingPost) {
         result = await updateBlogPost(existingPost.id, blogData);
       } else {
-        blogData.createdAt = new Date().toISOString();
         result = await createBlogPost(blogData);
       }
 

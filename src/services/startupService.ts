@@ -13,6 +13,25 @@ export const getStartups = async (): Promise<Startup[]> => {
       throw new Error('Failed to fetch startups');
     }
     
+    // Get the current user to check upvotes
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // Get all upvotes for the current user
+    let userUpvotes: Record<string, boolean> = {};
+    if (user) {
+      const { data: upvotesData } = await supabase
+        .from('startup_upvotes')
+        .select('startup_id')
+        .eq('user_id', user.id);
+        
+      if (upvotesData) {
+        userUpvotes = upvotesData.reduce((acc, upvote) => {
+          acc[upvote.startup_id] = true;
+          return acc;
+        }, {} as Record<string, boolean>);
+      }
+    }
+    
     return data.map(item => ({
       id: item.id,
       name: item.name,
@@ -34,7 +53,8 @@ export const getStartups = async (): Promise<Startup[]> => {
       dateAdded: item.date_added,
       viewCount: item.view_count || 0,
       isFeatured: item.is_featured || false,
-      upvotes: item.upvotes || 0, // Get actual upvotes from DB
+      upvotes: item.upvotes || 0,
+      isUpvoted: userUpvotes[item.id] || false,
     })) as Startup[];
   } catch (error) {
     console.error('Error in getStartups:', error);
@@ -53,6 +73,21 @@ export const getStartupById = async (id: string): Promise<Startup | null> => {
     if (error) {
       console.error('Error fetching startup:', error);
       return null;
+    }
+    
+    // Get the current user to check if they've upvoted this startup
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    let isUpvoted = false;
+    if (user) {
+      const { data: upvoteData, error: upvoteError } = await supabase
+        .from('startup_upvotes')
+        .select('*')
+        .eq('startup_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+        
+      isUpvoted = !!upvoteData;
     }
     
     // If we got here, we have data
@@ -77,7 +112,8 @@ export const getStartupById = async (id: string): Promise<Startup | null> => {
       dateAdded: data.date_added,
       viewCount: data.view_count || 0,
       isFeatured: data.is_featured || false,
-      upvotes: data.upvotes || 0, // Get actual upvotes from DB
+      upvotes: data.upvotes || 0,
+      isUpvoted: isUpvoted,
     } as Startup;
   } catch (error) {
     console.error('Error in getStartupById:', error);
@@ -85,15 +121,37 @@ export const getStartupById = async (id: string): Promise<Startup | null> => {
   }
 };
 
-// Update these functions to handle upvotes
+// Update functions to handle upvotes persistently in the database
 export const upvoteStartup = async (startupId: string): Promise<boolean> => {
   try {
-    // Since we don't have a real database yet, we'll just simulate a successful upvote
-    console.log(`Upvoting startup with ID: ${startupId}`);
+    // Get the current user
+    const { data: { user } } = await supabase.auth.getUser();
     
-    // In a real implementation, we would update the database
-    // const { error } = await supabase.rpc('increment_startup_upvotes', { startup_id: startupId });
-    // return !error;
+    if (!user) {
+      console.error('User not authenticated');
+      return false;
+    }
+    
+    // Add an upvote record
+    const { error: upvoteError } = await supabase
+      .from('startup_upvotes')
+      .insert({
+        startup_id: startupId,
+        user_id: user.id
+      });
+      
+    if (upvoteError) {
+      console.error('Error adding upvote:', upvoteError);
+      return false;
+    }
+    
+    // Increment the upvote count in the startups table
+    const { error: incrementError } = await supabase.rpc('increment_startup_upvotes', { startup_id: startupId });
+    
+    if (incrementError) {
+      console.error('Error incrementing upvotes:', incrementError);
+      return false;
+    }
     
     return true;
   } catch (error) {
@@ -104,12 +162,33 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
 
 export const downvoteStartup = async (startupId: string): Promise<boolean> => {
   try {
-    // Since we don't have a real database yet, we'll just simulate a successful downvote
-    console.log(`Downvoting startup with ID: ${startupId}`);
+    // Get the current user
+    const { data: { user } } = await supabase.auth.getUser();
     
-    // In a real implementation, we would update the database
-    // const { error } = await supabase.rpc('decrement_startup_upvotes', { startup_id: startupId });
-    // return !error;
+    if (!user) {
+      console.error('User not authenticated');
+      return false;
+    }
+    
+    // Remove the upvote record
+    const { error: deleteError } = await supabase
+      .from('startup_upvotes')
+      .delete()
+      .eq('startup_id', startupId)
+      .eq('user_id', user.id);
+      
+    if (deleteError) {
+      console.error('Error removing upvote:', deleteError);
+      return false;
+    }
+    
+    // Decrement the upvote count in the startups table
+    const { error: decrementError } = await supabase.rpc('decrement_startup_upvotes', { startup_id: startupId });
+    
+    if (decrementError) {
+      console.error('Error decrementing upvotes:', decrementError);
+      return false;
+    }
     
     return true;
   } catch (error) {
@@ -120,8 +199,18 @@ export const downvoteStartup = async (startupId: string): Promise<boolean> => {
 
 export const getStartupUpvotes = async (startupId: string): Promise<number> => {
   try {
-    // For now, just return a mock value
-    return Math.floor(Math.random() * 50);
+    const { data, error } = await supabase
+      .from('startups')
+      .select('upvotes')
+      .eq('id', startupId)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching startup upvotes:', error);
+      return 0;
+    }
+    
+    return data.upvotes || 0;
   } catch (error) {
     console.error('Error in getStartupUpvotes:', error);
     return 0;
@@ -130,8 +219,26 @@ export const getStartupUpvotes = async (startupId: string): Promise<number> => {
 
 export const isStartupUpvotedByUser = async (startupId: string): Promise<boolean> => {
   try {
-    // For now, just return a mock value
-    return Math.random() > 0.5;
+    // Get the current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return false;
+    }
+    
+    const { data, error } = await supabase
+      .from('startup_upvotes')
+      .select('*')
+      .eq('startup_id', startupId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+      
+    if (error) {
+      console.error('Error checking if startup is upvoted:', error);
+      return false;
+    }
+    
+    return !!data;
   } catch (error) {
     console.error('Error in isStartupUpvotedByUser:', error);
     return false;

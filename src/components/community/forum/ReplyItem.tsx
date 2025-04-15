@@ -49,33 +49,33 @@ const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }
   };
 
   return (
-    <Card className="glass-card">
-      <CardHeader>
+    <Card className="glass-card border-white/20 shadow-md backdrop-blur-md">
+      <CardHeader className="pb-2">
         <div className="flex items-center space-x-4">
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-9 w-9 border border-white/20">
             <AvatarImage src={reply.authorAvatar} alt={reply.authorName} />
-            <AvatarFallback>{getInitials(reply.authorName)}</AvatarFallback>
+            <AvatarFallback className="bg-startupia-turquoise/30 text-white">{getInitials(reply.authorName)}</AvatarFallback>
           </Avatar>
           <div>
-            <h4 className="font-medium">{reply.authorName}</h4>
-            <div className="text-sm text-white/60">
+            <h4 className="font-medium text-white">{reply.authorName}</h4>
+            <div className="text-xs text-white/70">
               {formatDate(reply.createdAt)}
             </div>
           </div>
         </div>
       </CardHeader>
       
-      <CardContent>
-        <p className="whitespace-pre-wrap">{reply.content}</p>
+      <CardContent className="pb-3">
+        <p className="whitespace-pre-wrap text-white/90 leading-relaxed">{reply.content}</p>
       </CardContent>
       
-      <CardFooter className="flex justify-between pt-2">
+      <CardFooter className="flex justify-between pt-2 border-t border-white/10">
         <div className="flex gap-4">
           <button 
             onClick={handleLikeClick}
-            className={`flex items-center gap-1 ${reply.isLiked ? "text-startupia-turquoise" : "text-white/60 hover:text-white"}`}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-full ${reply.isLiked ? "bg-startupia-turquoise/20 text-white" : "text-white/70 hover:text-white hover:bg-white/5"} transition-colors`}
           >
-            <ThumbsUp size={16} />
+            <ThumbsUp size={16} className={reply.isLiked ? "text-startupia-turquoise" : ""} />
             <span>{reply.likes}</span>
           </button>
           
@@ -87,7 +87,7 @@ const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }
               }
               onReplyToComment(reply.id);
             }}
-            className="flex items-center gap-1 text-white/60 hover:text-white"
+            className="flex items-center gap-1.5 px-2 py-1 rounded-full text-white/70 hover:text-white hover:bg-white/5 transition-colors"
           >
             <MessageCircle size={16} />
             <span>Répondre</span>
@@ -96,7 +96,7 @@ const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }
       </CardFooter>
       
       {reply.nestedReplies && reply.nestedReplies.length > 0 && (
-        <div className="ml-8 pl-4 border-l border-white/10 mt-2 space-y-3">
+        <div className="ml-8 pl-4 border-l border-white/20 mt-2 mb-4 mx-4 space-y-3">
           {reply.nestedReplies.map((nestedReply) => (
             <NestedReply key={nestedReply.id} reply={nestedReply} />
           ))}

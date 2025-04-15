@@ -13,7 +13,9 @@ interface ReplyListProps {
 const ReplyList: React.FC<ReplyListProps> = ({ replies, onLikeReply, onReplyToComment }) => {
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-semibold">Réponses ({replies.length || 0})</h3>
+      <h3 className="text-xl font-semibold text-white border-b border-white/20 pb-2">
+        Réponses ({replies.length || 0})
+      </h3>
       
       {replies.length > 0 ? (
         replies.map((reply) => (
@@ -25,10 +27,10 @@ const ReplyList: React.FC<ReplyListProps> = ({ replies, onLikeReply, onReplyToCo
           />
         ))
       ) : (
-        <div className="text-center py-12 text-white/60">
+        <div className="text-center py-12 text-white/60 glass-card border border-white/20 rounded-xl backdrop-blur-md">
           <MessageCircle className="mx-auto h-12 w-12 mb-4 opacity-50" />
-          <h4 className="text-lg font-medium">Aucune réponse pour l'instant</h4>
-          <p>Soyez le premier à répondre à cette discussion !</p>
+          <h4 className="text-lg font-medium text-white/80">Aucune réponse pour l'instant</h4>
+          <p className="text-white/60">Soyez le premier à répondre à cette discussion !</p>
         </div>
       )}
     </div>

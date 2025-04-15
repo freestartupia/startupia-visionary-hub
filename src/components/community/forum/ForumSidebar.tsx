@@ -1,218 +1,146 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { getForumPosts } from '@/services/forumService';
-import { ForumPost } from '@/types/community';
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarHeader,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarSeparator
-} from '@/components/ui/sidebar';
-import { ArrowLeft, MessageCircle, TrendingUp, Clock, Pin, ListFilter } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Home, Flame, Users, Book, MessageSquare, Settings, Info, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const ForumSidebar = () => {
-  const [recentPosts, setRecentPosts] = useState<ForumPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchRecentPosts = async () => {
-      try {
-        setIsLoading(true);
-        const posts = await getForumPosts();
-        const sortedPosts = [...posts].sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        setRecentPosts(sortedPosts.slice(0, 10));
-      } catch (error) {
-        console.error('Erreur lors du chargement des posts récents:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchRecentPosts();
-  }, []);
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd MMM', { locale: fr });
-    } catch (error) {
-      return 'date inconnue';
-    }
+  const getInitials = (name: string) => {
+    if (!name) return "U";
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
   };
 
-  const handleGoBack = () => {
-    navigate('/community?tab=forum');
-  };
+  const userInitials = user 
+    ? getInitials(user.user_metadata?.full_name || user.email || 'User')
+    : 'U';
+  
+  const userName = user
+    ? user.user_metadata?.full_name || user.email?.split('@')[0] || 'Utilisateur'
+    : 'Non connecté';
 
-  const isPostDetail = location.pathname.includes('/post/');
+  const avatarUrl = user?.user_metadata?.avatar_url;
 
   return (
-    <Sidebar 
-      className="border-r border-white/10 overflow-hidden fixed top-16 left-0 h-[calc(100vh-4rem)]" 
-      collapsible="icon"
-    >
-      <SidebarHeader className="px-4 py-3 border-b border-white/10">
-        <button 
-          onClick={handleGoBack}
-          className="flex items-center gap-2 text-sm font-medium hover:text-startupia-turquoise transition-colors"
-        >
-          {isPostDetail && <ArrowLeft size={16} />}
-          <MessageCircle size={16} className="shrink-0" />
-          <span className="truncate">Forum IA</span>
-        </button>
-      </SidebarHeader>
-      
-      <SidebarContent>
-        {isPostDetail && (
-          <div className="px-4 py-2 md:hidden">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleGoBack}
-              className="w-full flex items-center justify-center gap-2"
-            >
-              <ArrowLeft size={16} />
-              Retour au forum
+    <div className="w-[280px] min-h-[calc(100vh-80px)] bg-black/60 border-r border-white/20 p-4 hidden md:block">
+      <div className="flex flex-col h-full">
+        <div className="mb-6">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-white hover:bg-white/10 mb-2"
+            onClick={() => navigate('/community')}
+          >
+            <Home className="mr-2 h-5 w-5 text-startupia-turquoise" />
+            Accueil Forum
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-white hover:bg-white/10 mb-2"
+          >
+            <Flame className="mr-2 h-5 w-5 text-white/70" />
+            Populaires
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-white hover:bg-white/10 mb-2"
+          >
+            <MessageSquare className="mr-2 h-5 w-5 text-white/70" />
+            Récents
+          </Button>
+        </div>
+        
+        <Separator className="my-4 bg-white/20" />
+        
+        <div className="mb-4">
+          <h3 className="font-semibold text-white/80 px-3 py-2 text-sm">CATÉGORIES</h3>
+          <div className="space-y-1">
+            <Button variant="ghost" className="w-full justify-start text-white/80 hover:bg-white/10">
+              Général
+            </Button>
+            <Button variant="ghost" className="w-full justify-start text-white/80 hover:bg-white/10">
+              Tech & Dev IA
+            </Button>
+            <Button variant="ghost" className="w-full justify-start text-white/80 hover:bg-white/10">
+              Startups IA
+            </Button>
+            <Button variant="ghost" className="w-full justify-start text-white/80 hover:bg-white/10">
+              Prompt Engineering
+            </Button>
+            <Button variant="ghost" className="w-full justify-start text-white/80 hover:bg-white/10">
+              No-code & IA
             </Button>
           </div>
-        )}
-      
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <Clock size={14} className="mr-1 shrink-0" />
-            Posts récents
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <SidebarMenuItem key={i}>
-                    <div className="w-full px-2 py-1.5">
-                      <Skeleton className="h-4 w-3/4 mb-2" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </div>
-                  </SidebarMenuItem>
-                ))
-              ) : (
-                recentPosts.map(post => (
-                  <SidebarMenuItem key={post.id}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={post.title}
-                      isActive={location.pathname.includes(`/post/${post.id}`)}
-                    >
-                      <a 
-                        href={`/community/post/${post.id}`}
-                        className="flex flex-col items-start"
-                      >
-                        <span className="text-sm truncate w-full font-medium">
-                          {post.isPinned && <Pin size={12} className="inline mr-1 text-startupia-turquoise" />}
-                          {post.title}
-                        </span>
-                        <div className="flex items-center gap-2 text-xs text-white/60">
-                          <span>{formatDate(post.createdAt)}</span>
-                          <span>•</span>
-                          <span>{post.replies?.length || 0} réponses</span>
-                        </div>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        </div>
         
-        <SidebarSeparator />
-
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <TrendingUp size={14} className="mr-1 shrink-0" />
-            Posts populaires
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {isLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <SidebarMenuItem key={i}>
-                    <div className="w-full px-2 py-1.5">
-                      <Skeleton className="h-4 w-3/4 mb-2" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </div>
-                  </SidebarMenuItem>
-                ))
-              ) : (
-                [...recentPosts]
-                  .sort((a, b) => b.likes - a.likes)
-                  .slice(0, 5)
-                  .map(post => (
-                    <SidebarMenuItem key={post.id}>
-                      <SidebarMenuButton
-                        asChild
-                        tooltip={post.title}
-                        isActive={location.pathname.includes(`/post/${post.id}`)}
-                      >
-                        <a 
-                          href={`/community/post/${post.id}`}
-                          className="flex flex-col items-start"
-                        >
-                          <span className="text-sm truncate w-full font-medium">{post.title}</span>
-                          <div className="flex items-center gap-2 text-xs text-white/60">
-                            <span>{post.likes} likes</span>
-                            <span>•</span>
-                            <span>{post.views} vues</span>
-                          </div>
-                        </a>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <Separator className="my-4 bg-white/20" />
         
-        <SidebarSeparator />
+        <div className="mb-4">
+          <h3 className="font-semibold text-white/80 px-3 py-2 text-sm">STARTUPIA</h3>
+          <div className="space-y-1">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-white/80 hover:bg-white/10"
+              onClick={() => navigate('/community')}
+            >
+              <Users className="mr-2 h-5 w-5" />
+              Communauté
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-white/80 hover:bg-white/10"
+              onClick={() => navigate('/tools')}
+            >
+              <Settings className="mr-2 h-5 w-5" />
+              Outils IA
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-white/80 hover:bg-white/10"
+              onClick={() => navigate('/blog')}
+            >
+              <Book className="mr-2 h-5 w-5" />
+              Blog
+            </Button>
+          </div>
+        </div>
         
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <ListFilter size={14} className="mr-1 shrink-0" />
-            Catégories
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {['IA Générative', 'Startups', 'Business', 'Développement', 'Éthique'].map(category => (
-                <SidebarMenuItem key={category}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={category}
-                  >
-                    <a 
-                      href={`/community?tab=forum&category=${encodeURIComponent(category)}`}
-                      className="flex items-center"
-                    >
-                      <span className="text-sm">{category}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+        <div className="mt-auto pt-4 border-t border-white/20">
+          {user ? (
+            <div className="flex items-center p-2">
+              <Avatar className="h-9 w-9 mr-2 border border-white/20">
+                {avatarUrl ? (
+                  <AvatarImage src={avatarUrl} alt={userName} />
+                ) : (
+                  <AvatarFallback className="bg-startupia-turquoise/30 text-white">{userInitials}</AvatarFallback>
+                )}
+              </Avatar>
+              <div className="overflow-hidden">
+                <p className="text-sm font-medium text-white truncate">{userName}</p>
+                <p className="text-xs text-white/60 truncate">{user.email}</p>
+              </div>
+            </div>
+          ) : (
+            <Button 
+              className="w-full bg-startupia-turquoise text-black hover:bg-startupia-turquoise/80"
+              onClick={() => navigate('/auth')}
+            >
+              Se connecter
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

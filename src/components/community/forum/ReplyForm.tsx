@@ -65,41 +65,46 @@ const ReplyForm: React.FC<ReplyFormProps> = ({
 
   if (!user) {
     return (
-      <div className="text-center py-6 glass-card">
-        <p className="text-white/70 mb-4">Connectez-vous pour participer à la discussion</p>
-        <Button onClick={() => navigate('/auth')}>Se connecter</Button>
+      <div className="text-center py-6 glass-card border border-white/20 rounded-xl backdrop-blur-md">
+        <p className="text-white/80 mb-4">Connectez-vous pour participer à la discussion</p>
+        <Button 
+          onClick={() => navigate('/auth')}
+          className="bg-startupia-turquoise text-black hover:bg-startupia-turquoise/80 transition-colors"
+        >
+          Se connecter
+        </Button>
       </div>
     );
   }
 
   return (
-    <Card id="reply-form" className="glass-card border-white/10 w-full">
-      <CardHeader className="pb-2">
+    <Card id="reply-form" className="glass-card border-white/20 shadow-lg backdrop-blur-md">
+      <CardHeader className={`pb-2 ${replyingTo ? 'border-b border-white/10' : ''}`}>
         <CardTitle className="text-lg flex justify-between items-center">
-          <span>
+          <span className="text-white">
             {replyingTo ? 'Répondre au commentaire' : 'Ajouter une réponse'}
           </span>
           {replyingTo && (
-            <Button variant="ghost" size="icon" onClick={onCancelReply} className="h-6 w-6">
+            <Button variant="ghost" size="icon" onClick={onCancelReply} className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10">
               <X size={16} />
             </Button>
           )}
         </CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent>
+        <CardContent className="pt-4">
           <Textarea
             placeholder="Partagez votre avis..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[100px] bg-white/5 border-white/10 focus-visible:ring-startupia-turquoise"
+            className="min-h-[120px] bg-white/5 border-white/20 focus-visible:ring-startupia-turquoise text-white/90 resize-none"
           />
         </CardContent>
-        <CardFooter className="flex justify-end">
+        <CardFooter className="flex justify-end pt-2 border-t border-white/10">
           <Button 
             type="submit" 
             disabled={isSubmitting || content.trim() === ''} 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-startupia-turquoise text-black hover:bg-startupia-turquoise/80 transition-colors"
           >
             <Send size={16} /> 
             Publier

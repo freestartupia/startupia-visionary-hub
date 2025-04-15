@@ -62,7 +62,7 @@
 
   /* Custom styling with updated colors */
   .glass-card {
-    @apply backdrop-blur-xl bg-black bg-opacity-80 border border-startupia-turquoise border-opacity-20 rounded-lg shadow-lg;
+    @apply backdrop-blur-xl bg-black/80 border border-white/20 rounded-lg shadow-lg;
   }
 
   .gradient-text {

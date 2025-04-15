@@ -1,4 +1,3 @@
-
 export interface Contributor {
   id: string;
   name: string;
@@ -20,17 +19,18 @@ export interface ForumPost {
   category: ForumCategory;
   likes: number;
   views: number;
-  replies: number;
+  replies: ForumReply[];
   isPinned?: boolean;
   isLocked?: boolean;
   tags?: string[];
   likedBy?: string[];
+  isLiked?: boolean;
+  upvotesCount?: number;
+  isUpvoted?: boolean;
 }
 
 export interface ForumReply {
   id: string;
-  postId: string;
-  parentId?: string;
   content: string;
   authorId: string;
   authorName: string;
@@ -38,9 +38,10 @@ export interface ForumReply {
   createdAt: string;
   updatedAt?: string;
   likes: number;
-  likedBy?: string[];
-  replies?: ForumReply[];
-  isAcceptedAnswer?: boolean;
+  parentId: string;
+  replyParentId?: string;
+  isLiked?: boolean;
+  nestedReplies?: ForumReply[];
 }
 
 export enum ForumCategory {
@@ -64,7 +65,7 @@ export interface UpvoteResponse {
   success: boolean;
   error?: string;
   upvotes: number;
-  isUpvoted: boolean;
+  isUpvoted?: boolean;
 }
 
 export interface ServiceListing {

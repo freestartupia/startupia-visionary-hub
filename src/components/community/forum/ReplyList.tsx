@@ -18,14 +18,16 @@ const ReplyList: React.FC<ReplyListProps> = ({ replies, onLikeReply, onReplyToCo
       </h3>
       
       {replies.length > 0 ? (
-        replies.map((reply) => (
-          <ReplyItem 
-            key={reply.id} 
-            reply={reply}
-            onLike={onLikeReply}
-            onReplyToComment={onReplyToComment}
-          />
-        ))
+        <div className="space-y-6">
+          {replies.map((reply) => (
+            <ReplyItem 
+              key={reply.id} 
+              reply={reply}
+              onLike={onLikeReply}
+              onReplyToComment={onReplyToComment}
+            />
+          ))}
+        </div>
       ) : (
         <div className="text-center py-12 text-white/60 glass-card border border-white/20 rounded-xl backdrop-blur-md">
           <MessageCircle className="mx-auto h-12 w-12 mb-4 opacity-50" />

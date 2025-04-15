@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ThumbsUp, MessageCircle } from 'lucide-react';
+import { ThumbsUp, MessageCircle, ChevronDown, ChevronUp, Reply } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { ForumReply } from '@/types/community';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -19,6 +20,7 @@ interface ReplyItemProps {
 const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [showReplies, setShowReplies] = useState(false);
   
   const formatDate = (dateString: string) => {
     try {
@@ -47,6 +49,8 @@ const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }
     
     onLike(reply.id);
   };
+
+  const hasNestedReplies = reply.nestedReplies && reply.nestedReplies.length > 0;
 
   return (
     <Card className="glass-card border-white/20 shadow-md backdrop-blur-md">
@@ -89,16 +93,40 @@ const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }
             }}
             className="flex items-center gap-1.5 px-2 py-1 rounded-full text-white/70 hover:text-white hover:bg-white/5 transition-colors"
           >
-            <MessageCircle size={16} />
+            <Reply size={16} />
             <span>Répondre</span>
           </button>
         </div>
+        
+        {hasNestedReplies && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setShowReplies(!showReplies)}
+            className="text-white/70 hover:text-white hover:bg-white/10"
+          >
+            {showReplies ? (
+              <>
+                <ChevronUp size={16} className="mr-1" /> Masquer les réponses
+              </>
+            ) : (
+              <>
+                <ChevronDown size={16} className="mr-1" /> Voir {reply.nestedReplies?.length} réponse{reply.nestedReplies?.length > 1 ? 's' : ''}
+              </>
+            )}
+          </Button>
+        )}
       </CardFooter>
       
-      {reply.nestedReplies && reply.nestedReplies.length > 0 && (
+      {hasNestedReplies && showReplies && (
         <div className="ml-8 pl-4 border-l border-white/20 mt-2 mb-4 mx-4 space-y-3">
-          {reply.nestedReplies.map((nestedReply) => (
-            <NestedReply key={nestedReply.id} reply={nestedReply} />
+          {reply.nestedReplies?.map((nestedReply) => (
+            <NestedReply 
+              key={nestedReply.id} 
+              reply={nestedReply} 
+              onLike={onLike}
+              onReplyToComment={onReplyToComment}
+            />
           ))}
         </div>
       )}

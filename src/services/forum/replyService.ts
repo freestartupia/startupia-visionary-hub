@@ -43,6 +43,39 @@ export const addReplyToPost = async (
     throw error;
   }
   
+  // Si c'est une réponse à un commentaire, créer une notification pour l'auteur du commentaire parent
+  if (replyParentId) {
+    try {
+      // Récupérer le commentaire parent pour connaître son auteur
+      const { data: parentReply } = await supabase
+        .from('forum_replies')
+        .select('author_id, author_name')
+        .eq('id', replyParentId)
+        .single();
+      
+      if (parentReply && parentReply.author_id !== userData.user.id) {
+        // Créer une notification pour l'auteur du commentaire parent
+        await supabase
+          .from('notifications')
+          .insert({
+            type: 'reply',
+            content: `a répondu à votre commentaire`,
+            sender_id: userData.user.id,
+            sender_name: authorName,
+            sender_avatar: authorAvatar,
+            recipient_id: parentReply.author_id,
+            entity_id: data.id,
+            entity_type: 'forum_reply'
+          });
+        
+        console.log('Notification créée pour la réponse au commentaire');
+      }
+    } catch (notifError) {
+      console.error('Erreur lors de la création de la notification:', notifError);
+      // Ne pas échouer la fonction principale si la notification échoue
+    }
+  }
+  
   return mapReplyFromDB(data);
 };
 
@@ -87,5 +120,27 @@ export const getPostReplies = async (postId: string): Promise<ForumReply[]> => {
     }
   }
   
-  return replies;
+  // Organiser les réponses en hiérarchie
+  const rootReplies: ForumReply[] = [];
+  const nestedRepliesMap: Record<string, ForumReply[]> = {};
+  
+  // Regrouper les réponses imbriquées par leur parent
+  replies.forEach(reply => {
+    if (reply.replyParentId) {
+      if (!nestedRepliesMap[reply.replyParentId]) {
+        nestedRepliesMap[reply.replyParentId] = [];
+      }
+      nestedRepliesMap[reply.replyParentId].push(reply);
+    } else {
+      rootReplies.push(reply);
+    }
+  });
+  
+  // Ajouter les réponses imbriquées à leurs parents
+  rootReplies.forEach(reply => {
+    const nestedReplies = nestedRepliesMap[reply.id] || [];
+    reply.nestedReplies = nestedReplies;
+  });
+  
+  return rootReplies;
 };

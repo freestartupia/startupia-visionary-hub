@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ForumPost, ForumReply } from '@/types/community';
 import { 
@@ -6,19 +7,22 @@ import {
   PostSortOption 
 } from '@/services/forum/postFetchService';
 import { togglePostLike } from '@/services/forum/postLikeService';
+import { toggleReplyLike } from '@/services/forum/replyLikeService';
 import { createForumPost } from '@/services/forum/postCreateService';
 import { incrementPostViews } from '@/services/forum/postViewService';
+import { addReplyToPost } from '@/services/forum/replyService';
 import { toast } from 'sonner';
 
-// Clés de requête pour React Query
+// Query keys for React Query
 export const forumKeys = {
   all: ['forum'] as const,
   posts: () => [...forumKeys.all, 'posts'] as const,
   sortedPosts: (sortBy: PostSortOption) => [...forumKeys.posts(), sortBy] as const,
   post: (id: string) => [...forumKeys.all, 'post', id] as const,
+  replies: (postId: string) => [...forumKeys.all, 'replies', postId] as const,
 };
 
-// Hook pour récupérer tous les posts du forum avec mise en cache
+// Hook to fetch all forum posts with caching
 export const useForumPosts = (sortBy: PostSortOption = 'recent') => {
   return useQuery({
     queryKey: forumKeys.sortedPosts(sortBy),
@@ -28,7 +32,7 @@ export const useForumPosts = (sortBy: PostSortOption = 'recent') => {
   });
 };
 
-// Hook pour récupérer un post spécifique avec mise en cache
+// Hook to fetch a specific post with caching
 export const useForumPost = (postId: string) => {
   return useQuery({
     queryKey: forumKeys.post(postId),
@@ -39,7 +43,7 @@ export const useForumPost = (postId: string) => {
   });
 };
 
-// Hook pour liker un post avec mise à jour optimiste
+// Hook for liking a post with optimistic update
 export const useTogglePostLike = () => {
   const queryClient = useQueryClient();
   
@@ -48,10 +52,10 @@ export const useTogglePostLike = () => {
       return togglePostLike(postId);
     },
     onMutate: async ({ postId }) => {
-      // Annuler les requêtes en cours
+      // Cancel ongoing queries
       await queryClient.cancelQueries({ queryKey: forumKeys.post(postId) });
       
-      // Snapshot de l'état précédent
+      // Snapshot of previous state
       const previousPost = queryClient.getQueryData<ForumPost>(forumKeys.post(postId));
       
       // Optimistic update
@@ -68,21 +72,35 @@ export const useTogglePostLike = () => {
       return { previousPost };
     },
     onError: (err, { postId }, context) => {
-      // Restaurer l'état précédent en cas d'erreur
+      // Restore previous state in case of error
       if (context?.previousPost) {
         queryClient.setQueryData(forumKeys.post(postId), context.previousPost);
       }
       toast.error("Impossible de mettre à jour votre appréciation");
     },
     onSettled: (_, __, { postId }) => {
-      // Invalider et rafraîchir
+      // Invalidate and refresh
       queryClient.invalidateQueries({ queryKey: forumKeys.post(postId) });
       queryClient.invalidateQueries({ queryKey: forumKeys.posts() });
     },
   });
 };
 
-// Hook pour créer un nouveau post
+// Hook for liking a reply with optimistic update
+export const useToggleReplyLike = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (replyId: string) => {
+      return toggleReplyLike(replyId);
+    },
+    onError: () => {
+      toast.error("Impossible de mettre à jour votre appréciation");
+    },
+  });
+};
+
+// Hook for creating a new post
 export const useCreateForumPost = () => {
   const queryClient = useQueryClient();
   
@@ -112,10 +130,44 @@ export const useCreateForumPost = () => {
   });
 };
 
-// Hook pour incrémenter les vues d'un post
+// Hook for adding a reply to a post or to another reply
+export const useAddReplyToPost = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (replyData: {
+      postId: string;
+      content: string;
+      authorName: string;
+      authorAvatar?: string;
+      replyParentId?: string | null;
+    }) => {
+      return addReplyToPost(
+        replyData.postId,
+        replyData.content,
+        replyData.authorName,
+        replyData.authorAvatar,
+        replyData.replyParentId
+      );
+    },
+    onSuccess: (_, variables) => {
+      toast.success(variables.replyParentId 
+        ? "Votre réponse au commentaire a été publiée" 
+        : "Votre réponse a été publiée"
+      );
+      queryClient.invalidateQueries({ queryKey: forumKeys.post(variables.postId) });
+      queryClient.invalidateQueries({ queryKey: forumKeys.replies(variables.postId) });
+    },
+    onError: () => {
+      toast.error("Impossible de publier votre réponse");
+    }
+  });
+};
+
+// Hook for incrementing post views
 export const useIncrementPostViews = () => {
   return useMutation({
     mutationFn: incrementPostViews,
-    // Pas besoin d'invalidation car le compte de vues n'est pas affiché en temps réel
+    // No need for invalidation as the view count is not displayed in real-time
   });
 };

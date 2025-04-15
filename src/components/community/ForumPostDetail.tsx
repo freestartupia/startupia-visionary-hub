@@ -3,15 +3,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowUp } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { ForumPost, ForumReply } from '@/types/community';
-import { 
-  getForumPost, 
-  togglePostLike, 
-  toggleReplyLike, 
-  incrementPostViews 
-} from '@/services/forumService';
+import { useForumPost } from '@/hooks/use-forum-query';
+import { togglePostLike } from '@/services/forum/postLikeService';
+import { toggleReplyLike } from '@/services/forum/replyLikeService';
 import { togglePostUpvote } from '@/services/forumUpvoteService';
+import { incrementPostViews } from '@/services/forum/postViewService';
+import { getPostReplies } from '@/services/forum/replyService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import PostContent from './forum/PostContent';
@@ -24,19 +23,32 @@ const ForumPostDetail = () => {
   const [post, setPost] = useState<ForumPost | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyingToName, setReplyingToName] = useState<string>('');
+  const [replies, setReplies] = useState<ForumReply[]>([]);
   const channelRef = useRef<any>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  const { data: postData, isLoading: isPostLoading } = useForumPost(postId || '');
 
+  // Fetch post and replies
   useEffect(() => {
-    const fetchPost = async () => {
+    const fetchPostAndReplies = async () => {
       if (!postId) return;
       
       try {
         setIsLoading(true);
-        const fetchedPost = await getForumPost(postId);
-        setPost(fetchedPost);
-        incrementPostViews(postId);
+        
+        if (postData) {
+          setPost(postData);
+          
+          // Fetch replies separately
+          const fetchedReplies = await getPostReplies(postId);
+          setReplies(fetchedReplies);
+          
+          // Increment view count
+          incrementPostViews(postId);
+        }
       } catch (error) {
         console.error('Erreur lors du chargement du post:', error);
         toast.error('Impossible de charger la discussion');
@@ -45,16 +57,16 @@ const ForumPostDetail = () => {
       }
     };
     
-    fetchPost();
-  }, [postId]);
+    fetchPostAndReplies();
+  }, [postId, postData]);
   
-  // Configurer le canal Realtime pour les nouvelles réponses
+  // Configure Realtime for new replies
   useEffect(() => {
     if (!postId) return;
     
     console.log('Configuration du canal Realtime pour les réponses du post:', postId);
     
-    // Créer un canal pour écouter les nouvelles réponses
+    // Create a channel to listen for new replies
     const channel = supabase
       .channel(`post-${postId}-replies`)
       .on(
@@ -68,65 +80,50 @@ const ForumPostDetail = () => {
         (payload) => {
           console.log('Nouvelle réponse détectée:', payload);
           
-          // Ne pas ajouter la réponse si elle est déjà dans l'état (pour éviter les doublons)
-          if (post && Array.isArray(post.replies)) {
-            const replyExists = post.replies.some(reply => reply.id === payload.new.id);
-            if (!replyExists) {
-              const newReply = mapReplyFromDB(payload.new);
-              
-              // Mettre à jour l'état pour inclure la nouvelle réponse
-              setPost(prevPost => {
-                if (!prevPost) return null;
-                
-                if (newReply.replyParentId) {
-                  // C'est une réponse imbriquée, l'ajouter au parent approprié
-                  const updatedReplies = prevPost.replies.map(reply => {
-                    if (reply.id === newReply.replyParentId) {
-                      return {
-                        ...reply,
-                        nestedReplies: [...(reply.nestedReplies || []), newReply]
-                      };
-                    }
-                    return reply;
-                  });
-                  
+          // Map the new reply from the database format
+          const newReply = mapReplyFromDB(payload.new);
+          
+          // Check if this is a reply to another comment or direct to the post
+          if (newReply.replyParentId) {
+            // This is a nested reply, add it to its parent
+            setReplies(prevReplies => {
+              return prevReplies.map(reply => {
+                if (reply.id === newReply.replyParentId) {
+                  // Add to the parent's nested replies
+                  const updatedNestedReplies = [...(reply.nestedReplies || []), newReply];
                   return {
-                    ...prevPost,
-                    replies: updatedReplies
-                  };
-                } else {
-                  // C'est une réponse principale, l'ajouter directement à la liste
-                  return {
-                    ...prevPost,
-                    replies: [...prevPost.replies, newReply]
+                    ...reply,
+                    nestedReplies: updatedNestedReplies
                   };
                 }
+                return reply;
               });
-            }
+            });
+          } else {
+            // This is a direct reply to the post
+            // Check if the reply is already in the state to avoid duplicates
+            setReplies(prevReplies => {
+              const exists = prevReplies.some(reply => reply.id === newReply.id);
+              if (exists) return prevReplies;
+              return [...prevReplies, { ...newReply, nestedReplies: [] }];
+            });
           }
         }
       )
-      .subscribe((status) => {
-        console.log('Statut de l\'abonnement aux réponses:', status);
-      });
+      .subscribe();
     
-    // Sauvegarder la référence au canal
     channelRef.current = channel;
     
-    // Nettoyage lors du démontage du composant
     return () => {
-      console.log('Nettoyage du canal Realtime pour les réponses');
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
     };
-  }, [postId, post]);
+  }, [postId]);
   
-  // Configurer un canal séparé pour les mises à jour des "j'aime" sur les réponses
+  // Configure a separate channel for reply likes updates
   useEffect(() => {
-    if (!postId || !post) return;
-    
-    console.log('Configuration du canal Realtime pour les likes des réponses');
+    if (!postId) return;
     
     const likesChannel = supabase
       .channel(`post-${postId}-reply-likes`)
@@ -138,13 +135,11 @@ const ForumPostDetail = () => {
           table: 'forum_reply_likes'
         },
         async (payload) => {
-          console.log('Changement détecté dans les likes de réponses:', payload);
-          
-          // Identifier l'ID de la réponse concernée
+          // Get the reply ID from the payload
           const replyId = payload.new?.reply_id || payload.old?.reply_id;
           
-          if (replyId && post) {
-            // Mettre à jour le nombre de likes pour cette réponse
+          if (replyId) {
+            // Fetch the updated like count for this reply
             const { data } = await supabase
               .from('forum_replies')
               .select('id, likes')
@@ -152,36 +147,30 @@ const ForumPostDetail = () => {
               .single();
               
             if (data) {
-              setPost(prevPost => {
-                if (!prevPost) return null;
-                
-                // Mettre à jour les réponses principales et imbriquées
-                const updateReplies = (replies: ForumReply[]) => {
-                  return replies.map(reply => {
-                    if (reply.id === replyId) {
-                      return {
-                        ...reply,
-                        likes: data.likes,
-                        isLiked: payload.eventType === 'INSERT' && user?.id === payload.new.user_id
-                      };
-                    }
-                    
-                    if (reply.nestedReplies && reply.nestedReplies.length > 0) {
-                      return {
-                        ...reply,
-                        nestedReplies: updateReplies(reply.nestedReplies)
-                      };
-                    }
-                    
-                    return reply;
-                  });
-                };
-                
-                return {
-                  ...prevPost,
-                  replies: updateReplies(prevPost.replies)
-                };
-              });
+              // Function to update likes in a nested structure
+              const updateReplyLikes = (replyList: ForumReply[]): ForumReply[] => {
+                return replyList.map(reply => {
+                  if (reply.id === replyId) {
+                    return {
+                      ...reply,
+                      likes: data.likes,
+                      isLiked: payload.eventType === 'INSERT' && user?.id === payload.new?.user_id
+                    };
+                  }
+                  
+                  if (reply.nestedReplies && reply.nestedReplies.length > 0) {
+                    return {
+                      ...reply,
+                      nestedReplies: updateReplyLikes(reply.nestedReplies)
+                    };
+                  }
+                  
+                  return reply;
+                });
+              };
+              
+              // Update the replies state with new like count
+              setReplies(prevReplies => updateReplyLikes(prevReplies));
             }
           }
         }
@@ -191,53 +180,38 @@ const ForumPostDetail = () => {
     return () => {
       supabase.removeChannel(likesChannel);
     };
-  }, [postId, post, user]);
+  }, [postId, user?.id]);
   
   const handleGoBack = () => {
     navigate('/community?tab=forum');
   };
   
-  const handleReplyAdded = (newReply?: ForumReply) => {
-    if (!postId) return;
-    
-    if (newReply) {
-      // Mise à jour optimiste pour afficher immédiatement la réponse
-      setPost(prevPost => {
-        if (!prevPost) return null;
-        
-        if (newReply.replyParentId) {
-          // C'est une réponse imbriquée, l'ajouter au parent approprié
-          const updatedReplies = prevPost.replies.map(reply => {
-            if (reply.id === newReply.replyParentId) {
-              const nestedReplies = reply.nestedReplies || [];
-              return {
-                ...reply,
-                nestedReplies: [...nestedReplies, newReply]
-              };
-            }
-            return reply;
-          });
-          
-          return {
-            ...prevPost,
-            replies: updatedReplies
-          };
-        } else {
-          // C'est une réponse principale, l'ajouter directement à la liste
-          return {
-            ...prevPost,
-            replies: [...prevPost.replies, newReply]
-          };
-        }
-      });
-    }
-    
-    // Réinitialiser l'état de réponse
+  const handleReplyAdded = () => {
+    // Reset the replying state
     setReplyingTo(null);
+    setReplyingToName('');
   };
   
   const handleReplyToComment = (replyId: string) => {
+    // Find the reply name to display in the form
+    const findReplyName = (replyList: ForumReply[]): string => {
+      for (const reply of replyList) {
+        if (reply.id === replyId) {
+          return reply.authorName;
+        }
+        if (reply.nestedReplies && reply.nestedReplies.length > 0) {
+          const nestedName = findReplyName(reply.nestedReplies);
+          if (nestedName) return nestedName;
+        }
+      }
+      return '';
+    };
+    
+    const authorName = findReplyName(replies);
     setReplyingTo(replyId);
+    setReplyingToName(authorName);
+    
+    // Scroll to reply form
     document.getElementById('reply-form')?.scrollIntoView({ behavior: 'smooth' });
   };
   
@@ -249,19 +223,10 @@ const ForumPostDetail = () => {
     }
     
     try {
-      const result = await togglePostLike(post.id);
-      
-      setPost(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          likes: result.newCount,
-          isLiked: result.liked
-        };
-      });
-      
+      await togglePostLike(post.id);
     } catch (error) {
       console.error('Erreur lors du like:', error);
+      toast.error('Impossible de liker le post');
     }
   };
   
@@ -273,19 +238,10 @@ const ForumPostDetail = () => {
     }
     
     try {
-      const result = await togglePostUpvote(post.id);
-      
-      setPost(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          upvotesCount: result.newCount,
-          isUpvoted: result.upvoted
-        };
-      });
-      
+      await togglePostUpvote(post.id);
     } catch (error) {
       console.error('Erreur lors de l\'upvote:', error);
+      toast.error('Impossible d\'upvoter le post');
     }
   };
   
@@ -297,45 +253,14 @@ const ForumPostDetail = () => {
     }
     
     try {
-      const result = await toggleReplyLike(replyId);
-      
-      // Mise à jour optimiste immédiate de l'UI
-      setPost(prev => {
-        if (!prev) return null;
-        
-        const updateReplies = (replies: ForumReply[]): ForumReply[] => {
-          return replies.map(reply => {
-            if (reply.id === replyId) {
-              return {
-                ...reply,
-                likes: result.newCount,
-                isLiked: result.liked
-              };
-            }
-            
-            if (reply.nestedReplies && reply.nestedReplies.length > 0) {
-              return {
-                ...reply,
-                nestedReplies: updateReplies(reply.nestedReplies)
-              };
-            }
-            
-            return reply;
-          });
-        };
-        
-        return {
-          ...prev,
-          replies: updateReplies(prev.replies)
-        };
-      });
-      
+      await toggleReplyLike(replyId);
     } catch (error) {
-      console.error('Erreur lors du like:', error);
+      console.error('Erreur lors du like de la réponse:', error);
+      toast.error('Impossible de liker la réponse');
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isPostLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
@@ -374,12 +299,16 @@ const ForumPostDetail = () => {
         postId={post.id}
         user={user}
         replyingTo={replyingTo}
+        replyingToName={replyingToName}
         onReplyAdded={handleReplyAdded}
-        onCancelReply={() => setReplyingTo(null)}
+        onCancelReply={() => {
+          setReplyingTo(null);
+          setReplyingToName('');
+        }}
       />
       
       <ReplyList 
-        replies={post.replies || []}
+        replies={replies}
         onLikeReply={handleLikeReply}
         onReplyToComment={handleReplyToComment}
       />

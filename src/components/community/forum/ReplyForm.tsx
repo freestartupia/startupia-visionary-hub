@@ -1,22 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { addReplyToPost } from '@/services/forum/replyService';
-import { User } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Send, X } from 'lucide-react';
+import { addReplyToPost } from '@/services/forumReplyService';
+import { User } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { ForumReply } from '@/types/community';
-import { mapReplyFromDB } from '@/utils/forumMappers';
 
 interface ReplyFormProps {
   postId: string;
   user: User | null;
   replyingTo: string | null;
-  onReplyAdded: (newReply?: ForumReply) => void;
+  replyingToName?: string;
+  onReplyAdded: () => void;
   onCancelReply: () => void;
 }
 
@@ -24,162 +22,127 @@ const ReplyForm: React.FC<ReplyFormProps> = ({
   postId, 
   user, 
   replyingTo, 
+  replyingToName,
   onReplyAdded, 
   onCancelReply 
 }) => {
-  const [content, setContent] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [replyContent, setReplyContent] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
+  // Reset content when switching between replying to post vs comment
   useEffect(() => {
-    // Récupérer les données du profil de l'utilisateur connecté
-    const fetchUserProfile = async () => {
-      if (user) {
-        console.log('Récupération du profil utilisateur pour le forum:', user.id);
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-          
-        if (!error && data) {
-          console.log('Profil utilisateur récupéré pour le forum:', data);
-          setUserProfile(data);
-        } else {
-          console.error('Erreur lors de la récupération du profil pour le forum:', error);
-        }
-      }
-    };
-    
-    fetchUserProfile();
-  }, [user]);
+    setReplyContent('');
+  }, [replyingTo]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmitReply = async () => {
     if (!user) {
-      toast.error('Vous devez être connecté pour répondre');
+      toast.error("Vous devez être connecté pour répondre");
       navigate('/auth');
       return;
     }
     
-    if (content.trim() === '') {
-      toast.error('Le contenu de la réponse ne peut pas être vide');
-      return;
-    }
+    if (!replyContent.trim()) return;
     
     try {
       setIsSubmitting(true);
+      const userName = `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || user.email || 'Utilisateur';
+      const avatarUrl = user.user_metadata?.avatar_url;
       
-      // Déterminer le nom complet et l'avatar de l'utilisateur
-      let fullName = 'Utilisateur';
-      let avatarUrl = null;
-      
-      if (userProfile) {
-        const firstName = userProfile.first_name || '';
-        const lastName = userProfile.last_name || '';
-        fullName = `${firstName} ${lastName}`.trim();
-        
-        if (!fullName || fullName === '') {
-          fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
-        }
-        
-        avatarUrl = userProfile.avatar_url;
-      } else {
-        fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
-        avatarUrl = user.user_metadata?.avatar_url;
-      }
-      
-      console.log('Ajout de réponse forum avec nom:', fullName, 'et avatar:', avatarUrl);
-      
-      // Créer l'objet de réponse localement pour mettre à jour l'UI instantanément
-      const optimisticReply: ForumReply = {
-        id: crypto.randomUUID(), // ID temporaire qui sera remplacé par celui de la base de données
-        content,
-        authorName: fullName !== '' ? fullName : 'Utilisateur',
-        authorAvatar: avatarUrl,
-        authorId: user.id,
-        parentId: postId,
-        replyParentId: replyingTo,
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        isLiked: false,
-        nestedReplies: []
-      };
-      
-      // Mettre à jour l'interface utilisateur immédiatement avec la réponse optimiste
-      onReplyAdded(optimisticReply);
-      
-      // Nettoyer le formulaire immédiatement pour une meilleure expérience utilisateur
-      setContent('');
-      
-      // Puis envoyer la réponse au serveur
       await addReplyToPost(
         postId,
-        content,
-        fullName !== '' ? fullName : 'Utilisateur',
+        replyContent,
+        userName,
         avatarUrl,
         replyingTo
       );
       
-      toast.success('Réponse ajoutée avec succès');
+      // Reset the form
+      setReplyContent('');
+      toast.success(replyingTo ? "Réponse au commentaire envoyée" : "Réponse envoyée");
+      onReplyAdded();
+      
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la réponse:', error);
-      toast.error('Erreur lors de l\'ajout de la réponse');
+      toast.error("Impossible d'envoyer votre réponse");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!user) {
-    return (
-      <div className="text-center py-6 glass-card border border-white/20 rounded-xl backdrop-blur-md">
-        <p className="text-white/80 mb-4">Connectez-vous pour participer à la discussion</p>
-        <Button 
-          onClick={() => navigate('/auth')}
-          className="bg-startupia-turquoise text-black hover:bg-startupia-turquoise/80 transition-colors"
-        >
-          Se connecter
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <Card id="reply-form" className="glass-card border-white/20 shadow-lg backdrop-blur-md">
-      <CardHeader className={`pb-2 ${replyingTo ? 'border-b border-white/10' : ''}`}>
-        <CardTitle className="text-lg flex justify-between items-center">
-          <span className="text-white">
-            {replyingTo ? 'Répondre au commentaire' : 'Ajouter une réponse'}
-          </span>
+    <Card className="glass-card" id="reply-form">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-medium flex items-center">
+            {replyingTo ? (
+              <div className="flex items-center">
+                <span className="text-startupia-turquoise font-semibold">Réponse</span>
+                <span className="mx-1">à</span>
+                {replyingToName && (
+                  <span className="font-semibold">{replyingToName}</span>
+                )}
+              </div>
+            ) : (
+              "Ajouter une réponse"
+            )}
+          </h3>
+          
           {replyingTo && (
-            <Button variant="ghost" size="icon" onClick={onCancelReply} className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/10">
-              <X size={16} />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onCancelReply}
+              className="text-white/60 hover:text-white h-8 px-2"
+            >
+              <X size={16} className="mr-1" />
+              Annuler
             </Button>
           )}
-        </CardTitle>
+        </div>
+        
+        {replyingTo && (
+          <div className="text-sm text-white/60 italic border-l-2 pl-2 border-startupia-turquoise/50 mt-1">
+            Vous répondez à un commentaire spécifique
+          </div>
+        )}
       </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="pt-4">
-          <Textarea
-            placeholder="Partagez votre avis..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[120px] bg-white/5 border-white/20 focus-visible:ring-startupia-turquoise text-white/90 resize-none"
-          />
-        </CardContent>
-        <CardFooter className="flex justify-end pt-2 border-t border-white/10">
-          <Button 
-            type="submit" 
-            disabled={isSubmitting || content.trim() === ''} 
-            className="flex items-center gap-2 bg-startupia-turquoise text-black hover:bg-startupia-turquoise/80 transition-colors"
-          >
-            <Send size={16} /> 
-            Publier
+      
+      <CardContent>
+        <Textarea
+          placeholder={user ? "Votre réponse..." : "Connectez-vous pour répondre"}
+          value={replyContent}
+          onChange={(e) => setReplyContent(e.target.value)}
+          className="min-h-[100px] bg-black/30"
+          disabled={!user || isSubmitting}
+        />
+      </CardContent>
+      
+      <CardFooter className="flex justify-end">
+        {!user ? (
+          <Button onClick={() => navigate('/auth')}>
+            Se connecter pour répondre
           </Button>
-        </CardFooter>
-      </form>
+        ) : (
+          <Button 
+            onClick={handleSubmitReply} 
+            disabled={!replyContent.trim() || isSubmitting}
+            className="bg-startupia-turquoise hover:bg-startupia-turquoise/80 text-black"
+          >
+            {isSubmitting ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-t-transparent mr-2"></div>
+                <span>Envoi...</span>
+              </div>
+            ) : (
+              <>
+                <Send className="mr-2 h-4 w-4" /> 
+                Répondre
+              </>
+            )}
+          </Button>
+        )}
+      </CardFooter>
     </Card>
   );
 };

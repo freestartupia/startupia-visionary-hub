@@ -19,3 +19,15 @@ export interface StartupVote {
   startupId: string;
   createdAt: string;
 }
+
+// Adding these interfaces for the StartupFilters component
+export interface StartupComment {
+  id: string;
+  startupId: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  content: string;
+  createdAt: string;
+  likes: number;
+}

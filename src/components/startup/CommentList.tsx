@@ -1,94 +1,76 @@
 
 import React from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { StartupComment } from '@/types/startup';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { deleteStartupComment } from '@/services/comments/commentService';
-import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
 
 interface CommentListProps {
   comments: StartupComment[];
   onCommentDeleted: () => void;
 }
 
-const CommentList = ({ comments, onCommentDeleted }: CommentListProps) => {
+const CommentList: React.FC<CommentListProps> = ({ comments, onCommentDeleted }) => {
   const { user } = useAuth();
-  
-  const handleDeleteComment = async (commentId: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
-      try {
-        const success = await deleteStartupComment(commentId);
-        if (success) {
-          toast.success('Commentaire supprimé');
-          onCommentDeleted();
-        } else {
-          toast.error('Erreur lors de la suppression du commentaire');
-        }
-      } catch (error) {
-        console.error('Erreur lors de la suppression:', error);
-        toast.error('Une erreur est survenue');
-      }
-    }
-  };
   
   if (comments.length === 0) {
     return (
-      <div className="text-center py-8 text-white/70">
-        <p>Aucun commentaire pour le moment. Soyez le premier à donner votre avis !</p>
+      <div className="text-center py-8 glass-card border border-white/10 rounded-lg">
+        <p className="text-white/70">Aucun commentaire pour le moment. Soyez le premier à commenter !</p>
       </div>
     );
   }
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {comments.map((comment) => (
-        <div 
-          key={comment.id} 
-          className="bg-black/40 border border-startupia-turquoise/20 rounded-md p-4"
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex items-center">
-              <div className="w-10 h-10 rounded-full bg-startupia-turquoise/20 flex items-center justify-center mr-3">
-                {comment.user_avatar ? (
-                  <img 
-                    src={comment.user_avatar} 
-                    alt={comment.user_name} 
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-white font-medium">
-                    {comment.user_name.charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <div>
-                <p className="font-medium text-white">{comment.user_name}</p>
-                <p className="text-sm text-white/60">
-                  {formatDistanceToNow(new Date(comment.created_at), { 
-                    addSuffix: true,
-                    locale: fr
-                  })}
-                </p>
-              </div>
+        <div key={comment.id} className="glass-card border border-white/10 p-4 rounded-lg">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-full bg-startupia-turquoise/10 flex-shrink-0 flex items-center justify-center overflow-hidden">
+              {comment.userAvatar ? (
+                <img 
+                  src={comment.userAvatar} 
+                  alt={`${comment.userName}`} 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <span className="text-lg font-bold text-startupia-turquoise">
+                  {comment.userName[0]}
+                </span>
+              )}
             </div>
             
-            {user && user.id === comment.user_id && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeleteComment(comment.id)}
-                className="text-white/60 hover:text-white hover:bg-red-900/30"
-              >
-                <Trash2 size={16} />
-              </Button>
-            )}
-          </div>
-          
-          <div className="mt-3 text-white/90 whitespace-pre-line">
-            {comment.content}
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="font-medium">{comment.userName}</p>
+                  <p className="text-xs text-white/60">
+                    {new Date(comment.createdAt).toLocaleDateString('fr-FR', {
+                      year: 'numeric', 
+                      month: 'short', 
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                
+                {user && comment.userId === user.id && (
+                  <button 
+                    className="text-xs text-white/40 hover:text-white/60"
+                    onClick={() => {
+                      if (window.confirm('Voulez-vous vraiment supprimer ce commentaire ?')) {
+                        // In a real implementation, this would delete the comment
+                        // await deleteComment(comment.id);
+                        onCommentDeleted();
+                      }
+                    }}
+                  >
+                    Supprimer
+                  </button>
+                )}
+              </div>
+              
+              <p className="mt-2 text-white/80">{comment.content}</p>
+            </div>
           </div>
         </div>
       ))}

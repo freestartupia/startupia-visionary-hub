@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Startup, Sector, MaturityLevel, BusinessModel, AITool } from "@/types/startup";
+import { Startup } from "@/types/startup";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,120 +21,83 @@ interface StartupFiltersProps {
 
 const StartupFilters = ({ startups, setFilteredStartups }: StartupFiltersProps) => {
   // Filter states
-  const [selectedSectors, setSelectedSectors] = useState<Sector[]>([]);
-  const [selectedMaturity, setSelectedMaturity] = useState<MaturityLevel[]>([]);
-  const [selectedBusinessModels, setSelectedBusinessModels] = useState<BusinessModel[]>([]);
-  const [selectedAITools, setSelectedAITools] = useState<AITool[]>([]);
-  const [selectedAIScores, setSelectedAIScores] = useState<number[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedAITechnologies, setSelectedAITechnologies] = useState<string[]>([]);
+  const [selectedLaunchPeriods, setSelectedLaunchPeriods] = useState<string[]>([]);
 
   // Get unique values for each filter
-  const uniqueSectors = [...new Set(startups.map((s) => s.sector))];
-  const uniqueMaturity = [...new Set(startups.map((s) => s.maturityLevel))];
-  const uniqueBusinessModels = [...new Set(startups.map((s) => s.businessModel))];
-  const uniqueAITools = [...new Set(startups.flatMap((s) => s.aiTools))];
-  const uniqueTags = [...new Set(startups.flatMap((s) => s.tags))];
+  const uniqueCategories = [...new Set(startups.map((s) => s.category))];
+  const uniqueAITechnologies = [...new Set(startups.map((s) => s.aiTechnology).filter(Boolean) as string[])];
 
   // Apply filters
   useEffect(() => {
     let filtered = [...startups];
 
-    if (selectedSectors.length > 0) {
-      filtered = filtered.filter((s) => selectedSectors.includes(s.sector));
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter((s) => selectedCategories.includes(s.category));
     }
 
-    if (selectedMaturity.length > 0) {
-      filtered = filtered.filter((s) => selectedMaturity.includes(s.maturityLevel));
-    }
-
-    if (selectedBusinessModels.length > 0) {
-      filtered = filtered.filter((s) => selectedBusinessModels.includes(s.businessModel));
-    }
-
-    if (selectedAITools.length > 0) {
+    if (selectedAITechnologies.length > 0) {
       filtered = filtered.filter((s) => 
-        s.aiTools.some(tool => selectedAITools.includes(tool))
+        s.aiTechnology && selectedAITechnologies.includes(s.aiTechnology)
       );
     }
 
-    if (selectedAIScores.length > 0) {
-      filtered = filtered.filter((s) => selectedAIScores.includes(s.aiImpactScore));
-    }
-
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter((s) =>
-        s.tags.some(tag => selectedTags.includes(tag))
-      );
+    if (selectedLaunchPeriods.length > 0) {
+      const now = new Date();
+      filtered = filtered.filter((s) => {
+        if (!s.launchDate) return false;
+        
+        const launchDate = new Date(s.launchDate);
+        const monthsDiff = (now.getFullYear() - launchDate.getFullYear()) * 12 + 
+                          now.getMonth() - launchDate.getMonth();
+        
+        if (selectedLaunchPeriods.includes('recent') && monthsDiff <= 3) return true;
+        if (selectedLaunchPeriods.includes('thisyear') && monthsDiff <= 12) return true;
+        if (selectedLaunchPeriods.includes('established') && monthsDiff > 12) return true;
+        
+        return false;
+      });
     }
 
     setFilteredStartups(filtered);
   }, [
     startups,
-    selectedSectors,
-    selectedMaturity,
-    selectedBusinessModels,
-    selectedAITools,
-    selectedAIScores,
-    selectedTags,
+    selectedCategories,
+    selectedAITechnologies,
+    selectedLaunchPeriods,
     setFilteredStartups,
   ]);
 
   // Reset all filters
   const resetFilters = () => {
-    setSelectedSectors([]);
-    setSelectedMaturity([]);
-    setSelectedBusinessModels([]);
-    setSelectedAITools([]);
-    setSelectedAIScores([]);
-    setSelectedTags([]);
+    setSelectedCategories([]);
+    setSelectedAITechnologies([]);
+    setSelectedLaunchPeriods([]);
   };
 
   // Toggle selection of filters
-  const toggleSector = (sector: Sector) => {
-    setSelectedSectors(prev =>
-      prev.includes(sector)
-        ? prev.filter(s => s !== sector)
-        : [...prev, sector]
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
     );
   };
 
-  const toggleMaturity = (maturity: MaturityLevel) => {
-    setSelectedMaturity(prev =>
-      prev.includes(maturity)
-        ? prev.filter(m => m !== maturity)
-        : [...prev, maturity]
+  const toggleAITechnology = (technology: string) => {
+    setSelectedAITechnologies(prev =>
+      prev.includes(technology)
+        ? prev.filter(t => t !== technology)
+        : [...prev, technology]
     );
   };
 
-  const toggleBusinessModel = (model: BusinessModel) => {
-    setSelectedBusinessModels(prev =>
-      prev.includes(model)
-        ? prev.filter(m => m !== model)
-        : [...prev, model]
-    );
-  };
-
-  const toggleAITool = (tool: AITool) => {
-    setSelectedAITools(prev =>
-      prev.includes(tool)
-        ? prev.filter(t => t !== tool)
-        : [...prev, tool]
-    );
-  };
-
-  const toggleAIScore = (score: number) => {
-    setSelectedAIScores(prev =>
-      prev.includes(score)
-        ? prev.filter(s => s !== score)
-        : [...prev, score]
-    );
-  };
-
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
+  const toggleLaunchPeriod = (period: string) => {
+    setSelectedLaunchPeriods(prev =>
+      prev.includes(period)
+        ? prev.filter(p => p !== period)
+        : [...prev, period]
     );
   };
 
@@ -153,153 +116,94 @@ const StartupFilters = ({ startups, setFilteredStartups }: StartupFiltersProps) 
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Secteur */}
+        {/* Catégorie */}
         <Collapsible defaultOpen>
           <CollapsibleTrigger className="flex justify-between items-center w-full text-left mb-2">
-            <span className="font-medium">Secteur</span>
+            <span className="font-medium">Catégorie</span>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-2">
-            {uniqueSectors.map((sector) => (
-              <div key={sector} className="flex items-center">
+            {uniqueCategories.map((category) => (
+              <div key={category} className="flex items-center">
                 <Checkbox
-                  id={`sector-${sector}`}
-                  checked={selectedSectors.includes(sector)}
-                  onCheckedChange={() => toggleSector(sector)}
+                  id={`category-${category}`}
+                  checked={selectedCategories.includes(category)}
+                  onCheckedChange={() => toggleCategory(category)}
                   className="border-startupia-turquoise data-[state=checked]:bg-startupia-turquoise"
                 />
                 <label
-                  htmlFor={`sector-${sector}`}
+                  htmlFor={`category-${category}`}
                   className="ml-2 text-sm cursor-pointer"
                 >
-                  {sector}
+                  {category}
                 </label>
               </div>
             ))}
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Maturité */}
+        {/* Technologie IA */}
         <Collapsible defaultOpen>
           <CollapsibleTrigger className="flex justify-between items-center w-full text-left mb-2">
-            <span className="font-medium">Niveau de maturité</span>
+            <span className="font-medium">Technologie IA</span>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-2">
-            {uniqueMaturity.map((maturity) => (
-              <div key={maturity} className="flex items-center">
+            {uniqueAITechnologies.map((tech) => (
+              <div key={tech} className="flex items-center">
                 <Checkbox
-                  id={`maturity-${maturity}`}
-                  checked={selectedMaturity.includes(maturity)}
-                  onCheckedChange={() => toggleMaturity(maturity)}
+                  id={`tech-${tech}`}
+                  checked={selectedAITechnologies.includes(tech)}
+                  onCheckedChange={() => toggleAITechnology(tech)}
                   className="border-startupia-turquoise data-[state=checked]:bg-startupia-turquoise"
                 />
                 <label
-                  htmlFor={`maturity-${maturity}`}
+                  htmlFor={`tech-${tech}`}
                   className="ml-2 text-sm cursor-pointer"
                 >
-                  {maturity}
+                  {tech}
                 </label>
               </div>
             ))}
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Business Model */}
+        {/* Période de lancement */}
         <Collapsible defaultOpen>
           <CollapsibleTrigger className="flex justify-between items-center w-full text-left mb-2">
-            <span className="font-medium">Business Model</span>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-2">
-            {uniqueBusinessModels.map((model) => (
-              <div key={model} className="flex items-center">
-                <Checkbox
-                  id={`model-${model}`}
-                  checked={selectedBusinessModels.includes(model)}
-                  onCheckedChange={() => toggleBusinessModel(model)}
-                  className="border-startupia-turquoise data-[state=checked]:bg-startupia-turquoise"
-                />
-                <label
-                  htmlFor={`model-${model}`}
-                  className="ml-2 text-sm cursor-pointer"
-                >
-                  {model}
-                </label>
-              </div>
-            ))}
-          </CollapsibleContent>
-        </Collapsible>
-
-        {/* Outils IA */}
-        <Collapsible defaultOpen>
-          <CollapsibleTrigger className="flex justify-between items-center w-full text-left mb-2">
-            <span className="font-medium">Outils IA utilisés</span>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-2">
-            {uniqueAITools.map((tool) => (
-              <div key={tool} className="flex items-center">
-                <Checkbox
-                  id={`tool-${tool}`}
-                  checked={selectedAITools.includes(tool)}
-                  onCheckedChange={() => toggleAITool(tool)}
-                  className="border-startupia-turquoise data-[state=checked]:bg-startupia-turquoise"
-                />
-                <label
-                  htmlFor={`tool-${tool}`}
-                  className="ml-2 text-sm cursor-pointer"
-                >
-                  {tool}
-                </label>
-              </div>
-            ))}
-          </CollapsibleContent>
-        </Collapsible>
-
-        {/* Score IA */}
-        <Collapsible defaultOpen>
-          <CollapsibleTrigger className="flex justify-between items-center w-full text-left mb-2">
-            <span className="font-medium">Score d'impact IA</span>
+            <span className="font-medium">Période de lancement</span>
           </CollapsibleTrigger>
           <CollapsibleContent>
             <ToggleGroup type="multiple" variant="outline" className="justify-start">
-              {[1, 2, 3, 4, 5].map((score) => (
-                <ToggleGroupItem
-                  key={score}
-                  value={String(score)}
-                  aria-label={`Score ${score}`}
-                  className={`data-[state=on]:bg-startupia-turquoise/20 data-[state=on]:text-startupia-turquoise border-startupia-turquoise/30 ${
-                    selectedAIScores.includes(score) ? "bg-startupia-turquoise/20 text-startupia-turquoise" : ""
-                  }`}
-                  onClick={() => toggleAIScore(score)}
-                >
-                  {score}
-                </ToggleGroupItem>
-              ))}
+              <ToggleGroupItem
+                value="recent"
+                aria-label="Moins de 3 mois"
+                className={`data-[state=on]:bg-startupia-turquoise/20 data-[state=on]:text-startupia-turquoise border-startupia-turquoise/30 ${
+                  selectedLaunchPeriods.includes("recent") ? "bg-startupia-turquoise/20 text-startupia-turquoise" : ""
+                }`}
+                onClick={() => toggleLaunchPeriod("recent")}
+              >
+                &lt; 3 mois
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="thisyear"
+                aria-label="Cette année"
+                className={`data-[state=on]:bg-startupia-turquoise/20 data-[state=on]:text-startupia-turquoise border-startupia-turquoise/30 ${
+                  selectedLaunchPeriods.includes("thisyear") ? "bg-startupia-turquoise/20 text-startupia-turquoise" : ""
+                }`}
+                onClick={() => toggleLaunchPeriod("thisyear")}
+              >
+                &lt; 1 an
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="established"
+                aria-label="Plus d'un an"
+                className={`data-[state=on]:bg-startupia-turquoise/20 data-[state=on]:text-startupia-turquoise border-startupia-turquoise/30 ${
+                  selectedLaunchPeriods.includes("established") ? "bg-startupia-turquoise/20 text-startupia-turquoise" : ""
+                }`}
+                onClick={() => toggleLaunchPeriod("established")}
+              >
+                &gt; 1 an
+              </ToggleGroupItem>
             </ToggleGroup>
-          </CollapsibleContent>
-        </Collapsible>
-
-        {/* Tags */}
-        <Collapsible defaultOpen>
-          <CollapsibleTrigger className="flex justify-between items-center w-full text-left mb-2">
-            <span className="font-medium">Tags</span>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="flex flex-wrap gap-2">
-              {uniqueTags.slice(0, 15).map((tag) => (
-                <Button
-                  key={tag}
-                  variant="outline"
-                  size="sm"
-                  className={`border-startupia-turquoise/30 rounded-full text-xs py-1 px-3 ${
-                    selectedTags.includes(tag)
-                      ? "bg-startupia-turquoise/20 text-startupia-turquoise"
-                      : "text-white/70 hover:text-white hover:bg-startupia-turquoise/10"
-                  }`}
-                  onClick={() => toggleTag(tag)}
-                >
-                  {tag}
-                </Button>
-              ))}
-            </div>
           </CollapsibleContent>
         </Collapsible>
       </div>

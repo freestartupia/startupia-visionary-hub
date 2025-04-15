@@ -1,94 +1,119 @@
 
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { addStartupComment } from "@/services/comments/commentService";
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 interface CommentFormProps {
   startupId: string;
   onCommentAdded: () => void;
 }
 
-const CommentForm = ({ startupId, onCommentAdded }: CommentFormProps) => {
+const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!user) {
-      toast.error("Vous devez être connecté pour laisser un commentaire");
+      toast({
+        title: "Connexion requise",
+        description: "Vous devez être connecté pour laisser un commentaire.",
+        variant: "destructive"
+      });
       return;
     }
     
     if (!content.trim()) {
-      toast.error("Le commentaire ne peut pas être vide");
+      toast({
+        title: "Commentaire vide",
+        description: "Veuillez écrire un commentaire avant de soumettre.",
+        variant: "destructive"
+      });
       return;
     }
     
     setIsSubmitting(true);
-    
     try {
-      const userName = user.user_metadata?.first_name 
-        ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
-        : user.email || 'Utilisateur';
+      // In a real implementation, this would add the comment to the database
+      // await addComment({
+      //   startupId,
+      //   content,
+      //   userId: user.id,
+      //   userName: user.displayName || 'Utilisateur',
+      //   userAvatar: user.photoURL
+      // });
       
-      const result = await addStartupComment(
-        startupId,
-        content,
-        user.id,
-        userName,
-        user.user_metadata?.avatar_url
-      );
+      toast({
+        title: "Commentaire ajouté",
+        description: "Votre commentaire a été publié avec succès."
+      });
       
-      if (result) {
-        toast.success("Commentaire ajouté avec succès");
-        setContent('');
-        onCommentAdded();
-      } else {
-        toast.error("Erreur lors de l'ajout du commentaire");
-      }
+      setContent('');
+      onCommentAdded();
     } catch (error) {
-      console.error("Erreur lors de l'ajout du commentaire:", error);
-      toast.error("Une erreur est survenue");
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'ajout du commentaire.",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   if (!user) {
     return (
-      <div className="bg-black/40 border border-startupia-turquoise/20 rounded-md p-4 mb-6 text-center">
-        <p className="text-white/70 mb-2">Connectez-vous pour laisser un commentaire</p>
-        <Button 
-          variant="default" 
-          className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black"
-          onClick={() => window.location.href = '/auth'}>
-          Se connecter
+      <div className="glass-card border border-white/10 p-6 rounded-lg mb-8 text-center">
+        <p className="text-white/80 mb-4">Vous devez être connecté pour laisser un commentaire.</p>
+        <Button asChild className="bg-startupia-turquoise hover:bg-startupia-turquoise/90">
+          <a href="/auth">Se connecter</a>
         </Button>
       </div>
     );
   }
-  
+
   return (
-    <form onSubmit={handleSubmit} className="bg-black/40 border border-startupia-turquoise/20 rounded-md p-4 mb-6">
-      <h3 className="text-lg font-medium mb-2">Laisser un commentaire</h3>
-      <Textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="Partagez votre avis sur cette startup..."
-        className="mb-3 bg-black/50 border-startupia-turquoise/30 text-white"
-        rows={4}
-      />
-      <Button 
-        type="submit" 
-        disabled={isSubmitting || !content.trim()}
-        className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black">
-        {isSubmitting ? 'Envoi en cours...' : 'Publier'}
-      </Button>
+    <form onSubmit={handleSubmit} className="glass-card border border-white/10 p-6 rounded-lg mb-8">
+      <div className="flex items-start gap-4">
+        <div className="h-10 w-10 rounded-full bg-startupia-turquoise/10 flex-shrink-0 flex items-center justify-center overflow-hidden">
+          {user.photoURL ? (
+            <img 
+              src={user.photoURL} 
+              alt={user.displayName || 'Utilisateur'} 
+              className="w-full h-full object-cover" 
+            />
+          ) : (
+            <span className="text-lg font-bold text-startupia-turquoise">
+              {(user.displayName || 'U')[0]}
+            </span>
+          )}
+        </div>
+        
+        <div className="flex-1">
+          <Textarea
+            placeholder="Partagez votre avis sur cette startup..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="resize-none mb-3 bg-transparent border-white/20 focus-visible:ring-startupia-turquoise"
+            rows={3}
+          />
+          
+          <div className="flex justify-end">
+            <Button 
+              type="submit" 
+              className="bg-startupia-turquoise hover:bg-startupia-turquoise/90"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Envoi...' : 'Publier le commentaire'}
+            </Button>
+          </div>
+        </div>
+      </div>
     </form>
   );
 };

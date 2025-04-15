@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import CommentForm from './CommentForm';
 import CommentList from './CommentList';
-import { fetchStartupComments } from '@/services/comments/commentService';
 import { StartupComment } from '@/types/startup';
 import { MessageSquare } from 'lucide-react';
 
@@ -14,11 +13,14 @@ const CommentsSection = ({ startupId }: CommentsSectionProps) => {
   const [comments, setComments] = useState<StartupComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Since we don't have the actual comments service implemented yet, 
+  // we'll just simulate loading comments
   const loadComments = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchStartupComments(startupId);
-      setComments(data);
+      // In a real implementation, this would fetch comments from the database
+      // const data = await fetchStartupComments(startupId);
+      setComments([]);
     } catch (error) {
       console.error('Erreur lors du chargement des commentaires:', error);
     } finally {

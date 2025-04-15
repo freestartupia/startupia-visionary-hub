@@ -6,10 +6,45 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUpRight, Award, BarChart3, Bell, Clock, Rocket, TrendingUp, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from '@/components/navbar/Navbar';
-import StartupCard from '@/components/StartupCard';
-import { mockStartups } from '@/data/mockStartups';
-import { Startup, Sector } from '@/types/startup';
 import { Link } from 'react-router-dom';
+
+// Mock startup types for existing components
+type Sector = "Santé" | "RH" | "Finance" | "Marketing" | "Développement" | "Education";
+
+interface Startup {
+  id: string;
+  name: string;
+  logoUrl?: string;
+  shortDescription: string;
+  sector: Sector;
+  dateAdded?: string;
+  aiImpactScore?: number;
+}
+
+// Mock data for existing components
+const mockStartups: Startup[] = [
+  {
+    id: "1",
+    name: "IA Santé",
+    shortDescription: "Solution IA pour le diagnostic médical",
+    sector: "Santé",
+    aiImpactScore: 85
+  },
+  {
+    id: "2",
+    name: "RH Vision",
+    shortDescription: "Recrutement optimisé par IA",
+    sector: "RH",
+    aiImpactScore: 78
+  },
+  {
+    id: "3",
+    name: "FinTech IA",
+    shortDescription: "Analyse financière automatisée",
+    sector: "Finance",
+    aiImpactScore: 92
+  }
+];
 
 // Helper function to get recent startups (less than 14 days old)
 const getRecentStartups = (startups: Startup[]) => {
@@ -80,9 +115,9 @@ const mockFundingRounds = [
   },
   {
     id: "fr4",
-    startupId: mockStartups[3].id,
-    startupName: mockStartups[3].name,
-    startupLogoUrl: mockStartups[3].logoUrl,
+    startupId: "4",
+    startupName: "AlgoFin",
+    startupLogoUrl: undefined,
     amount: 800000,
     date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     mainInvestor: "Business Angels",
@@ -122,6 +157,49 @@ const RadarIA = () => {
     // Title update
     document.title = "Radar IA - Startupia.fr";
   }, []);
+
+  // Create a simple card component for startups to replace the missing StartupCard component
+  const StartupCard = ({ startup }: { startup: Startup }) => (
+    <Card className="glass-card overflow-hidden border border-startupia-turquoise/20 bg-black/30 hover:bg-black/40 transition-colors">
+      <CardContent className="p-4">
+        <div className="flex items-center mb-3">
+          <div className="h-10 w-10 rounded-full bg-startupia-turquoise/10 overflow-hidden mr-3">
+            {startup.logoUrl ? (
+              <img 
+                src={startup.logoUrl} 
+                alt={`${startup.name} logo`} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-lg font-bold text-startupia-turquoise">
+                  {startup.name.charAt(0)}
+                </span>
+              </div>
+            )}
+          </div>
+          <h3 className="font-semibold">{startup.name}</h3>
+        </div>
+        <p className="text-sm text-white/70 mb-3">{startup.shortDescription}</p>
+        <div className="flex justify-between items-center">
+          <Badge variant="outline" className="text-xs">
+            {startup.sector}
+          </Badge>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-startupia-turquoise hover:text-white"
+            asChild
+          >
+            <Link to={`/startup/${startup.id}`}>
+              <span className="text-xs">Détails</span>
+              <ArrowUpRight size={14} className="ml-1" />
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen bg-black text-white">

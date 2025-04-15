@@ -27,6 +27,10 @@ const navLinks: NavLink[] = [
     label: "Blog & Actualités"
   },
   {
+    path: '/startup',
+    label: "Startups"
+  },
+  {
     path: '/tools',
     label: "Outils IA"
   }

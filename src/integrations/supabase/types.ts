@@ -425,15 +425,7 @@ export type Database = {
           source_url?: string | null
           startup_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "funding_rounds_startup_id_fkey"
-            columns: ["startup_id"]
-            isOneToOne: false
-            referencedRelation: "startups"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       match_notifications: {
         Row: {
@@ -615,15 +607,7 @@ export type Database = {
           upvotes?: number | null
           website_url?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "product_launches_startup_id_fkey"
-            columns: ["startup_id"]
-            isOneToOne: false
-            referencedRelation: "startups"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       product_upvotes: {
         Row: {
@@ -772,48 +756,7 @@ export type Database = {
         }
         Relationships: []
       }
-      startup_comments: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          startup_id: string
-          updated_at: string
-          user_avatar: string | null
-          user_id: string
-          user_name: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          startup_id: string
-          updated_at?: string
-          user_avatar?: string | null
-          user_id: string
-          user_name: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          startup_id?: string
-          updated_at?: string
-          user_avatar?: string | null
-          user_id?: string
-          user_name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "startup_comments_startup_id_fkey"
-            columns: ["startup_id"]
-            isOneToOne: false
-            referencedRelation: "startups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      startup_upvotes: {
+      startup_votes: {
         Row: {
           created_at: string
           id: string
@@ -834,7 +777,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "startup_upvotes_startup_id_fkey"
+            foreignKeyName: "startup_votes_startup_id_fkey"
             columns: ["startup_id"]
             isOneToOne: false
             referencedRelation: "startups"
@@ -844,79 +787,43 @@ export type Database = {
       }
       startups: {
         Row: {
-          ai_impact_score: number
-          ai_tools: string[] | null
-          ai_use_cases: string | null
-          business_model: string
-          created_at: string | null
-          crunchbase_url: string | null
-          date_added: string | null
-          founders: Json | null
+          ai_technology: string | null
+          category: string
+          created_at: string
+          created_by: string
           id: string
-          is_featured: boolean | null
+          launch_date: string | null
           logo_url: string | null
-          long_term_vision: string | null
-          maturity_level: string
           name: string
-          notion_url: string | null
-          pitch_deck_url: string | null
-          sector: string
           short_description: string
-          tags: string[] | null
-          updated_at: string | null
-          upvotes: number | null
-          view_count: number | null
-          website_url: string | null
+          upvotes: number
+          website_url: string
         }
         Insert: {
-          ai_impact_score: number
-          ai_tools?: string[] | null
-          ai_use_cases?: string | null
-          business_model: string
-          created_at?: string | null
-          crunchbase_url?: string | null
-          date_added?: string | null
-          founders?: Json | null
+          ai_technology?: string | null
+          category: string
+          created_at?: string
+          created_by: string
           id?: string
-          is_featured?: boolean | null
+          launch_date?: string | null
           logo_url?: string | null
-          long_term_vision?: string | null
-          maturity_level: string
           name: string
-          notion_url?: string | null
-          pitch_deck_url?: string | null
-          sector: string
           short_description: string
-          tags?: string[] | null
-          updated_at?: string | null
-          upvotes?: number | null
-          view_count?: number | null
-          website_url?: string | null
+          upvotes?: number
+          website_url: string
         }
         Update: {
-          ai_impact_score?: number
-          ai_tools?: string[] | null
-          ai_use_cases?: string | null
-          business_model?: string
-          created_at?: string | null
-          crunchbase_url?: string | null
-          date_added?: string | null
-          founders?: Json | null
+          ai_technology?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string
           id?: string
-          is_featured?: boolean | null
+          launch_date?: string | null
           logo_url?: string | null
-          long_term_vision?: string | null
-          maturity_level?: string
           name?: string
-          notion_url?: string | null
-          pitch_deck_url?: string | null
-          sector?: string
           short_description?: string
-          tags?: string[] | null
-          updated_at?: string | null
-          upvotes?: number | null
-          view_count?: number | null
-          website_url?: string | null
+          upvotes?: number
+          website_url?: string
         }
         Relationships: []
       }

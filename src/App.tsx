@@ -10,6 +10,8 @@ import ScrollToTop from "./components/ScrollToTop";
 import Navbar from "./components/navbar/Navbar";
 import Index from "./pages/Index";
 import StartupDetails from "./pages/StartupDetails";
+import StartupView from "./pages/StartupView";
+import Startup from "./pages/Startup";
 import RadarIA from "./pages/RadarIA";
 import CoFounder from "./pages/CoFounder";
 import Community from "./pages/Community";
@@ -40,10 +42,11 @@ const App = () => (
             <div className="min-h-screen pt-16 w-full">
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/startup/:id" element={<StartupDetails />} />
+                <Route path="/startup" element={<Startup />} />
+                <Route path="/startup/:id" element={<StartupView />} />
                 <Route path="/radar" element={<RadarIA />} />
                 <Route path="/ecosystem" element={<NotFound />} />
-                <Route path="/startups" element={<NotFound />} />
+                <Route path="/startups" element={<Navigate to="/startup" replace />} />
                 <Route path="/cofounder" element={<CoFounder />} />
                 <Route path="/cofounder/create" element={<CofounderProfileEdit />} />
                 <Route path="/cofounder/edit/:id" element={<CofounderProfileEdit />} />

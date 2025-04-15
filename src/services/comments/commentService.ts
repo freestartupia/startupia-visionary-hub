@@ -1,21 +1,38 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { StartupComment } from '@/types/startup';
 
-export async function fetchStartupComments(startupId: string): Promise<StartupComment[]> {
+interface PaginatedComments {
+  data: StartupComment[];
+  total: number;
+}
+
+export async function fetchStartupComments(
+  startupId: string, 
+  page: number = 1, 
+  pageSize: number = 5
+): Promise<PaginatedComments> {
   try {
-    const { data, error } = await supabase
+    // Calculer l'offset basé sur la page et la taille de page
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    // Récupérer les commentaires avec pagination
+    const { data, error, count } = await supabase
       .from('startup_comments')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('startup_id', startupId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, to);
     
     if (error) throw error;
     
-    return data.map(transformCommentFromDB);
+    return {
+      data: data.map(transformCommentFromDB),
+      total: count || 0
+    };
   } catch (error) {
     console.error(`Erreur lors de la récupération des commentaires pour la startup ${startupId}:`, error);
-    return [];
+    return { data: [], total: 0 };
   }
 }
 

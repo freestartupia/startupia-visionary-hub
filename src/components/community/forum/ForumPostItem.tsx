@@ -6,6 +6,7 @@ import { fr } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import AuthRequired from '@/components/AuthRequired';
+
 interface ForumPostItemProps {
   post: ForumPost;
   onViewPost: (postId: string) => void;
@@ -13,6 +14,7 @@ interface ForumPostItemProps {
   onUpvotePost?: (e: React.MouseEvent, postId: string) => void;
   requireAuth?: boolean;
 }
+
 const ForumPostItem: React.FC<ForumPostItemProps> = ({
   post,
   onViewPost,
@@ -29,9 +31,11 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
       return 'date inconnue';
     }
   };
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
+
   return <div className="glass-card hover:bg-white/5 transition-colors cursor-pointer rounded-xl border border-white/20 shadow-lg backdrop-blur-md overflow-hidden" onClick={() => onViewPost(post.id)}>
       <div className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -67,31 +71,32 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
           
           <div className="flex gap-4 bg-startupia-turquoise">
             {onUpvotePost && <AuthRequired forActiveParticipation={true}>
-                <button onClick={e => onUpvotePost(e, post.id)} className={`flex items-center gap-1 ${post.isUpvoted ? "text-startupia-turquoise" : "text-white/60 hover:text-white"} transition-colors`}>
-                  <ArrowUp size={16} className={post.isUpvoted ? "stroke-startupia-turquoise" : "stroke-white/60"} />
-                  <span>{post.upvotesCount || 0}</span>
+                <button onClick={e => onUpvotePost(e, post.id)} className={`flex items-center gap-1 ${post.isUpvoted ? "text-startupia-turquoise" : "text-black/60 hover:text-black"} transition-colors`}>
+                  <ArrowUp size={16} className={post.isUpvoted ? "stroke-startupia-turquoise" : "stroke-black/60"} />
+                  <span className="text-black">{post.upvotesCount || 0}</span>
                 </button>
               </AuthRequired>}
             
             <AuthRequired forActiveParticipation={true}>
-              <button onClick={e => onLikePost(e, post.id)} className={`flex items-center gap-1 ${post.isLiked ? "text-startupia-turquoise" : "text-white/60 hover:text-white"} transition-colors`}>
-                <ThumbsUp size={16} className={post.isLiked ? "stroke-startupia-turquoise" : "stroke-white/60"} />
-                <span className="text-gray-950">{post.likes}</span>
+              <button onClick={e => onLikePost(e, post.id)} className={`flex items-center gap-1 ${post.isLiked ? "text-startupia-turquoise" : "text-black/60 hover:text-black"} transition-colors`}>
+                <ThumbsUp size={16} className={post.isLiked ? "stroke-startupia-turquoise" : "stroke-black/60"} />
+                <span className="text-black">{post.likes}</span>
               </button>
             </AuthRequired>
             
-            <div className="flex items-center gap-1 text-white/60">
+            <div className="flex items-center gap-1 text-black/60">
               <MessageCircle size={16} />
-              <span>{post.replies?.length || 0}</span>
+              <span className="text-black">{post.replies?.length || 0}</span>
             </div>
             
-            <div className="flex items-center gap-1 text-white/60">
+            <div className="flex items-center gap-1 text-black/60">
               <Eye size={16} />
-              <span>{post.views}</span>
+              <span className="text-black">{post.views}</span>
             </div>
           </div>
         </div>
       </div>
     </div>;
 };
+
 export default ForumPostItem;

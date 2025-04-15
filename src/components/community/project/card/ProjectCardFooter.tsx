@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Heart, Users } from 'lucide-react';
 import { CardFooter } from '@/components/ui/card';
@@ -68,7 +69,7 @@ const ProjectCardFooter: React.FC<ProjectCardFooterProps> = ({
           </div>
         </div>
       </div>
-      <div className="flex gap-2 w-full bg-startupia-turquoise/20 p-3 rounded-b-lg">
+      <div className="flex gap-2 w-full">
         <Button 
           variant="outline" 
           className="flex-1 h-10"

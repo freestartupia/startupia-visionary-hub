@@ -1,175 +1,96 @@
-export type ForumCategory = 
-  | 'Général'
-  | 'Tech & Dev IA'
-  | 'Prompt Engineering'
-  | 'No-code & IA'
-  | 'Startups IA'
-  | 'Trouver un projet / recruter'
-  | 'Formations & conseils';
 
-export type ServiceCategory =
-  | 'Prompt Engineering'
-  | 'Développement'
-  | 'Design IA'
-  | 'Automatisation'
-  | 'Stratégie IA'
-  | 'Formation'
-  | 'Conseil'
-  | 'Autre';
+export type FounderType = {
+  name: string;
+  linkedinUrl: string;
+};
 
-export type ResourceFormat = 'Vidéo' | 'Article' | 'E-book' | 'Webinaire' | 'Bootcamp' | 'Cours' | 'Podcast' | 'Autre';
+export type MaturityLevel = 
+  | "Idée"
+  | "MVP"
+  | "Seed"
+  | "Série A"
+  | "Série B"
+  | "Série C+"
+  | "Profitable";
 
-export type ProjectStatus =
-  | 'Idée'
-  | 'En cours'
-  | 'Recherche de collaborateurs'
-  | 'MVP'
-  | 'Lancé';
+export type BusinessModel =
+  | "SaaS"
+  | "Service"
+  | "Marketplace"
+  | "API"
+  | "Freemium"
+  | "B2B"
+  | "B2C"
+  | "B2B2C"
+  | "Hardware"
+  | "Autre";
 
-export type UserBadge =
-  | 'Membre actif'
-  | 'Formateur'
-  | 'Freelance IA'
-  | 'Prompt Expert'
-  | 'Startuper IA'
-  | 'Développeur IA'
-  | 'Designer IA'
-  | 'Contributeur';
+export type AITool =
+  | "ChatGPT"
+  | "Claude"
+  | "LLama"
+  | "Stable Diffusion"
+  | "Midjourney"
+  | "API interne"
+  | "Hugging Face"
+  | "Vertex AI"
+  | "AWS Bedrock"
+  | "Autre";
 
-export interface ForumPost {
-  id: string;
-  title: string;
-  content: string;
-  category: ForumCategory;
-  authorId: string;
-  authorName: string;
-  authorAvatar?: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt?: string;
-  likes: number;
-  replies: ForumReply[];
-  views: number;
-  isPinned?: boolean;
-  isLiked?: boolean;
-  upvotesCount?: number; // New field for upvotes
-  isUpvoted?: boolean;   // Track if current user upvoted
-}
+export type Sector =
+  | "Santé"
+  | "RH"
+  | "Retail"
+  | "Finance"
+  | "Education"
+  | "Marketing"
+  | "Légal"
+  | "Transport"
+  | "Immobilier"
+  | "Agriculture"
+  | "Energie"
+  | "Autre";
 
-export interface ForumReply {
-  id: string;
-  content: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar?: string;
-  createdAt: string;
-  updatedAt?: string;
-  likes: number;
-  parentId?: string;
-  replyParentId?: string;
-  isLiked?: boolean;
-  nestedReplies?: ForumReply[];
-}
-
-export interface ServiceListing {
-  id: string;
-  title: string;
-  description: string;
-  category: ServiceCategory;
-  expertise: string[];
-  price?: string; // Can be a range or "Sur devis"
-  providerId: string;
-  providerName: string;
-  providerAvatar?: string;
-  contactLink?: string; // Calendly or other booking link
-  linkedinUrl?: string;
-  createdAt: string;
-}
-
-export interface ResourceListing {
-  id: string;
-  title: string;
-  description: string;
-  format: ResourceFormat;
-  target_audience: string;
-  access_link: string;
-  is_paid: boolean;
-  price: string | null;
-  author_id: string | null;
-  author_name: string;
-  author_avatar: string | null;
-  created_at: string;
-  community_validated: boolean | null;
-  votes: number | null;
-}
-
-export interface CollaborativeProject {
-  id: string;
-  title: string;
-  description: string;
-  status: ProjectStatus;
-  skills: string[];
-  // Updated field names to match the snake_case format from Supabase/mock data
-  initiator_id?: string;
-  initiator_name: string;
-  initiator_avatar?: string;
-  created_at: string;
-  likes: number;
-  applications: number;
-  category: string;
-}
-
-export interface CommunityActivity {
-  id: string;
-  type: 'post' | 'service' | 'resource' | 'project' | 'comment';
-  title: string;
-  summary: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
-  createdAt: string;
-  targetId: string; // ID of the related content
-  targetType: 'forum' | 'service' | 'resource' | 'project';
-}
-
-export interface LikeResponse {
-  success: boolean;
-  message: string;
-  liked: boolean;
-  newCount: number;
-}
-
-export interface UpvoteResponse {
-  success: boolean;
-  message: string;
-  upvoted: boolean;
-  newCount: number;
-}
-
-export interface Startup {
+export type Startup = {
   id: string;
   name: string;
-  logoUrl?: string;
+  logoUrl: string;
   shortDescription: string;
-  sector: string;
-  businessModel: string;
-  maturityLevel: string;
-  aiImpactScore: number;
+  longTermVision: string;
+  founders: FounderType[];
+  aiUseCases: string;
+  aiTools: AITool[];
+  sector: Sector;
+  businessModel: BusinessModel;
+  maturityLevel: MaturityLevel;
+  aiImpactScore: 1 | 2 | 3 | 4 | 5 | number;
   tags: string[];
-  aiTools?: string[];
-  aiUseCases?: string;
-  longTermVision?: string;
-  websiteUrl?: string;
+  websiteUrl: string;
+  pitchDeckUrl?: string;
   crunchbaseUrl?: string;
   notionUrl?: string;
-  pitchDeckUrl?: string;
-  founders?: Founder[];
+  dateAdded?: string; // ISO date string
+  viewCount?: number;
   isFeatured?: boolean;
-  votesCount?: number; // New field for counting votes
-  isUpvoted?: boolean; // New field to track if current user upvoted
-}
+  fundingRounds?: FundingRound[];
+};
 
-export interface Founder {
-  name: string;
-  linkedinUrl?: string;
-}
+export type FundingRound = {
+  id: string;
+  amount: number; // Amount in euros
+  date: string; // ISO date string
+  mainInvestor: string;
+  round: "Pré-seed" | "Seed" | "Série A" | "Série B" | "Série C" | "Série D+" | "Growth";
+  sourceUrl?: string;
+};
+
+export type StartupComment = {
+  id: string;
+  startup_id: string;
+  user_id: string;
+  user_name: string;
+  user_avatar?: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+};

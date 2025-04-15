@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,16 +12,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Camera, Mail, Bell, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const ProfileSettings = () => {
+interface ProfileSettingsProps {
+  userData: any;
+}
+
+const ProfileSettings: React.FC<ProfileSettingsProps> = ({ userData }) => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    first_name: user?.user_metadata?.first_name || '',
-    last_name: user?.user_metadata?.last_name || '',
-    avatar_url: user?.user_metadata?.avatar_url || '',
-    email_notifications: true
+    first_name: userData?.first_name || '',
+    last_name: userData?.last_name || '',
+    avatar_url: userData?.avatar_url || '',
+    email_notifications: userData?.email_notifications || false
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(formData.avatar_url);
@@ -277,14 +282,14 @@ const ProfileSettings = () => {
       <h3 className="text-lg font-medium mb-4 flex items-center">
         <Shield className="mr-2" /> Sécurité
       </h3>
-      <Button variant="outline" className="mb-4 w-full sm:w-auto">
+      <Button variant="outline" onClick={handleChangePassword} className="mb-4 w-full sm:w-auto">
         Changer de mot de passe
       </Button>
 
       <Separator className="my-6 bg-white/10" />
       
       <h3 className="text-lg font-medium mb-4 text-rose-500">Zone de danger</h3>
-      <Button variant="destructive" className="w-full sm:w-auto">
+      <Button variant="destructive" onClick={handleDeleteAccount} disabled={loading} className="w-full sm:w-auto">
         Supprimer mon compte
       </Button>
     </div>

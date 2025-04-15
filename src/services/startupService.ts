@@ -6,7 +6,8 @@ export const getStartups = async (): Promise<Startup[]> => {
   try {
     const { data, error } = await supabase
       .from('startups')
-      .select('*');
+      .select('*')
+      .order('upvotes', { ascending: false }); // Tri par nombre de votes décroissant
       
     if (error) {
       console.error('Error fetching startups:', error);
@@ -129,6 +130,19 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
     
     if (!user) {
       console.error('User not authenticated');
+      return false;
+    }
+    
+    // Check if the user has already upvoted this startup
+    const { data: existingUpvote } = await supabase
+      .from('startup_upvotes')
+      .select('*')
+      .eq('startup_id', startupId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+      
+    if (existingUpvote) {
+      console.log('User has already upvoted this startup');
       return false;
     }
     

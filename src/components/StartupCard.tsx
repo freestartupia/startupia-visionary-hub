@@ -40,9 +40,10 @@ const StartupCard = ({ startup, onUpvote }: StartupCardProps) => {
       if (isUpvoted) {
         const success = await downvoteStartup(startup.id);
         if (success) {
-          setUpvotes(prev => Math.max(0, prev - 1));
+          const newCount = Math.max(0, upvotes - 1);
+          setUpvotes(newCount);
           setIsUpvoted(false);
-          if (onUpvote) onUpvote(startup.id, upvotes - 1);
+          if (onUpvote) onUpvote(startup.id, newCount);
           toast.success("Vote retiré");
         } else {
           toast.error("Erreur lors du retrait du vote");
@@ -50,9 +51,10 @@ const StartupCard = ({ startup, onUpvote }: StartupCardProps) => {
       } else {
         const success = await upvoteStartup(startup.id);
         if (success) {
-          setUpvotes(prev => prev + 1);
+          const newCount = upvotes + 1;
+          setUpvotes(newCount);
           setIsUpvoted(true);
-          if (onUpvote) onUpvote(startup.id, upvotes + 1);
+          if (onUpvote) onUpvote(startup.id, newCount);
           toast.success("Vote enregistré !");
         } else {
           toast.error("Erreur lors du vote");

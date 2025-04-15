@@ -1,178 +1,122 @@
 
-import React, { useState, useEffect } from 'react';
-import Navbar from '@/components/navbar/Navbar';
-import Footer from '@/components/Footer';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, Filter, TrendingUp, BadgePlus, ThumbsUp, Calendar, Clock, Rocket, SortAsc } from 'lucide-react';
-import { 
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
-import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import DirectoryView from '@/components/ecosystem/DirectoryView';
-import SubmitStartupModal from '@/components/ecosystem/SubmitStartupModal';
-import SEO from '@/components/SEO';
-import { Startup } from '@/types/startup';
-import { supabase } from '@/integrations/supabase/client';
-import { Skeleton } from '@/components/ui/skeleton';
+import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getStartups } from "@/services/startupService";
+import DirectoryView from "@/components/ecosystem/DirectoryView";
+import MapView from "@/components/ecosystem/MapView";
+import RadarView from "@/components/ecosystem/RadarView";
+import TopStartups from "@/components/ecosystem/TopStartups";
+import NewLaunches from "@/components/ecosystem/NewLaunches";
+import SubmitStartupModal from "@/components/ecosystem/SubmitStartupModal";
+import Footer from "@/components/Footer";
+import Navbar from "@/components/navbar/Navbar";
+import SEO from "@/components/SEO";
 
 const AIEcosystem = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortOrder, setSortOrder] = useState('votes'); // Changed default to 'votes' for Product Hunt style
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [viewMode, setViewMode] = useState('directory');
-  const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("directory");
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const handleAddStartup = () => {
-    setShowSubmitModal(true);
+  const {
+    data: startups = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["startups"],
+    queryFn: getStartups,
+  });
+
+  // Sort startups by upvotes (descending)
+  const sortedStartups = [...startups].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+
+  const handleUpvote = (startupId: string, newCount: number) => {
+    // This is optional as the backend will handle the upvote count
+    // But we can update the local state for immediate feedback
+    console.log(`Startup ${startupId} upvotes updated to ${newCount}`);
+    // Refetch to get the latest data
+    refetch();
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <SEO 
-        title="StartupIA.fr – Le Hub des Startups & Outils IA en France"
-        description="Découvrez les meilleures startups IA françaises, les outils d'intelligence artificielle du moment, et connectez-vous à une communauté active d'innovateurs. Rejoignez le hub de l'IA en France !"
+    <div className="min-h-screen bg-hero-pattern text-white">
+      <SEO
+        title="Écosystème des Startups IA Françaises - Startupia"
+        description="Découvrez les startups françaises spécialisées en IA, leurs cas d'usage, et trouvez des opportunités dans l'écosystème de l'intelligence artificielle."
       />
-      
+
+      {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
-      <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
-      <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-purple/20 rounded-full blur-3xl animate-pulse-slow"></div>
+      <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-purple/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
 
-      <Navbar />
-      
-      <main className="container mx-auto pt-16 pb-16 px-4 relative z-10">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2 text-startupia-turquoise">
-            Hub IA Français
-          </h1>
-          <p className="text-lg text-white/80 max-w-3xl mx-auto">
-            Explorez les meilleures startups IA françaises, votez pour vos préférées et suivez les derniers lancements
-          </p>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-4 mb-6 max-w-4xl mx-auto">
-          <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50" />
-            <Input
-              type="text"
-              placeholder="Rechercher une startup ou un produit IA..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-black/20 border-startupia-turquoise/30 focus-visible:ring-startupia-turquoise/50"
-            />
+      <main className="container mx-auto px-4 pt-24 pb-16 relative z-10">
+        <div className="flex flex-col lg:flex-row justify-between items-start mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+              L'Écosystème des Startups IA Françaises
+            </h1>
+            <p className="text-white/70 max-w-2xl">
+              Explorez les startups françaises qui innovent avec l'intelligence artificielle et transforment 
+              les industries. Découvrez leurs cas d'usage, leurs technologies et plus encore.
+            </p>
           </div>
-          
-          <div className="flex gap-2">
-            <Select defaultValue={sortOrder} onValueChange={value => setSortOrder(value)}>
-              <SelectTrigger className="bg-black/20 border-startupia-turquoise/30 w-36">
-                <ThumbsUp className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Plus votés" />
-              </SelectTrigger>
-              <SelectContent className="bg-black border-startupia-turquoise/30">
-                <SelectGroup>
-                  <SelectItem value="votes">👍 Plus votés</SelectItem>
-                  <SelectItem value="trending">🔥 Tendance</SelectItem>
-                  <SelectItem value="newest">⏱️ Récent</SelectItem>
-                  <SelectItem value="alphabetical">🔤 Alphabétique</SelectItem>
-                  <SelectItem value="impact">⚡ Impact IA</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            
-            <Button
-              variant="outline"
-              className="border-startupia-turquoise/30 bg-black text-white"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="h-4 w-4" />
-              <span className="ml-1">Filtres</span>
-            </Button>
 
-            <Button
-              variant="default"
-              className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black"
-              onClick={handleAddStartup}
+          <div className="flex flex-wrap gap-2">
+            <button
+              className={`px-3 py-1 rounded-full transition-colors ${
+                activeTab === "directory"
+                  ? "bg-startupia-purple text-white"
+                  : "bg-black/20 text-white/70 hover:bg-black/30"
+              }`}
+              onClick={() => setActiveTab("directory")}
             >
-              <BadgePlus className="h-4 w-4" />
-              <span className="ml-1">Ajouter un projet</span>
-            </Button>
-            
-            <Button
-              variant="outline"
-              className={`border-startupia-turquoise/30 bg-black text-white ${viewMode === 'directory' ? 'bg-startupia-turquoise/10' : ''}`}
+              Annuaire
+            </button>
+            <button
+              className={`px-3 py-1 rounded-full transition-colors ${
+                activeTab === "map"
+                  ? "bg-startupia-purple text-white"
+                  : "bg-black/20 text-white/70 hover:bg-black/30"
+              }`}
+              onClick={() => setActiveTab("map")}
             >
-              Vue détaillée
-            </Button>
+              Carte
+            </button>
+            <button
+              className={`px-3 py-1 rounded-full transition-colors ${
+                activeTab === "radar"
+                  ? "bg-startupia-purple text-white"
+                  : "bg-black/20 text-white/70 hover:bg-black/30"
+              }`}
+              onClick={() => setActiveTab("radar")}
+            >
+              Radar IA
+            </button>
+
+            <button
+              onClick={() => setModalOpen(true)}
+              className="bg-startupia-gold text-black hover:bg-startupia-light-gold px-3 py-1 rounded-full transition-colors ml-2"
+            >
+              Ajouter une startup
+            </button>
           </div>
         </div>
 
-        {showFilters && (
-          <Card className="p-4 mb-6 bg-black/30 border border-startupia-turquoise/30 max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <h3 className="mb-2 font-medium">Catégorie</h3>
-                <Select defaultValue={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="bg-black/20 border-startupia-turquoise/30">
-                    <SelectValue placeholder="Toutes les catégories" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-black border-startupia-turquoise/30">
-                    <SelectItem value="all">Toutes les catégories</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </Card>
+        <div className="mb-12">
+          <TopStartups startups={sortedStartups.slice(0, 3)} onUpvote={handleUpvote} />
+        </div>
+
+        <div className="mb-12">
+          <NewLaunches startups={sortedStartups.filter(s => s.isFeatured).slice(0, 4)} />
+        </div>
+
+        {activeTab === "directory" && (
+          <DirectoryView startups={sortedStartups} isLoading={isLoading} onUpvote={handleUpvote} />
         )}
-        
-        <Tabs defaultValue="all" className="mb-6 max-w-4xl mx-auto">
-          <TabsList className="bg-black border border-startupia-turquoise/20 w-auto inline-flex space-x-1">
-            <TabsTrigger value="all" className="data-[state=active]:bg-startupia-turquoise/20 data-[state=active]:text-white">
-              <ThumbsUp className="mr-2 h-4 w-4" />
-              Tous
-            </TabsTrigger>
-            <TabsTrigger value="featured" className="data-[state=active]:bg-startupia-turquoise/20 data-[state=active]:text-white">
-              <Rocket className="mr-2 h-4 w-4" />
-              Lancement du jour
-            </TabsTrigger>
-            <TabsTrigger value="recent" className="data-[state=active]:bg-startupia-turquoise/20 data-[state=active]:text-white">
-              <Clock className="mr-2 h-4 w-4" />
-              Récents
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all" className="mt-6">
-            <DirectoryView searchQuery={searchQuery} showFilters={false} sortOrder={sortOrder} />
-          </TabsContent>
-          
-          <TabsContent value="featured" className="mt-6">
-            <DirectoryView searchQuery="" showFilters={false} sortOrder="votes" />
-          </TabsContent>
-          
-          <TabsContent value="recent" className="mt-6">
-            <DirectoryView searchQuery="" showFilters={false} sortOrder="newest" />
-          </TabsContent>
-        </Tabs>
+        {activeTab === "map" && <MapView startups={startups} />}
+        {activeTab === "radar" && <RadarView startups={startups} />}
       </main>
 
-      <SubmitStartupModal 
-        open={showSubmitModal} 
-        onOpenChange={setShowSubmitModal}
-        onSubmitSuccess={() => {
-          toast.success("Votre projet a été ajouté avec succès!");
-        }}
-      />
-
+      <SubmitStartupModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
       <Footer />
     </div>
   );

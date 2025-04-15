@@ -104,6 +104,11 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
     toast.success("Votre service a été ajouté avec succès!");
   };
 
+  const handleServiceDeleted = (serviceId: string) => {
+    // Remove the deleted service from our local state
+    setServices(services.filter(service => service.id !== serviceId));
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -145,6 +150,7 @@ const ServicesMarketplace: React.FC<ServicesMarketplaceProps> = ({ requireAuth =
               service={service}
               formatDate={formatDate}
               getInitials={getInitials}
+              onDelete={handleServiceDeleted}
             />
           ))
         ) : (

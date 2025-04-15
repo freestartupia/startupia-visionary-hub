@@ -1,24 +1,42 @@
 
 import React from 'react';
-import { Calendar, Linkedin, Mail, Instagram, ExternalLink } from 'lucide-react';
+import { Calendar, Linkedin, Mail, Instagram, ExternalLink, Trash2 } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ServiceListing } from '@/types/community';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ServiceCardProps {
   service: ServiceListing;
   formatDate: (dateString: string) => string;
   getInitials: (name: string) => string;
+  onDelete?: (serviceId: string) => void;
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({ 
   service, 
   formatDate, 
-  getInitials 
+  getInitials,
+  onDelete 
 }) => {
+  const { user } = useAuth();
+  const isOwner = user && service.providerId === user.id;
+  
   const getContactIcon = () => {
     if (!service.contactLink) return <ExternalLink className="h-4 w-4 mr-2" />;
 
@@ -71,6 +89,32 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
     
     console.log("Contact clicked for service:", service.title);
   };
+  
+  const handleDeleteService = async () => {
+    if (!isOwner) {
+      toast.error("Vous n'êtes pas autorisé à supprimer ce service");
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('service_listings')
+        .delete()
+        .eq('id', service.id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      toast.success("Service supprimé avec succès");
+      if (onDelete) {
+        onDelete(service.id);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression du service:", error);
+      toast.error("Erreur lors de la suppression du service");
+    }
+  };
 
   return (
     <Card key={service.id} className="glass-card hover-scale transition-transform duration-300 flex flex-col h-full">
@@ -81,7 +125,32 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
             {formatDate(service.createdAt)}
           </span>
         </div>
-        <h3 className="text-xl font-semibold">{service.title}</h3>
+        <div className="flex justify-between items-start">
+          <h3 className="text-xl font-semibold">{service.title}</h3>
+          {isOwner && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-white/60 hover:text-red-500 hover:bg-red-500/10">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action ne peut pas être annulée. Le service sera définitivement supprimé.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteService} className="bg-red-500 hover:bg-red-600">
+                    Supprimer
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="flex-grow">
         <p className="text-white/80 mb-4">{service.description}</p>

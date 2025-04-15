@@ -41,12 +41,6 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!user) {
-      toast.error("Vous devez être connecté pour voter");
-      navigate('/auth');
-      return;
-    }
-    
     if (isUpvoting) return;
     
     setIsUpvoting(true);

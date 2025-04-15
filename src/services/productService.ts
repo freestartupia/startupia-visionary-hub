@@ -62,8 +62,8 @@ export const addComment = async (
       userAvatar: null,
       createdAt: new Date().toISOString(),
       replies: [],
-      likes: 0, // Add this property to match the type
-      userId: '' // Add this property to match the type
+      likes: 0,
+      userId: ''
     };
     
     // Trouver le produit correspondant dans les données mockées
@@ -85,32 +85,9 @@ export const addComment = async (
  * Vérifie si l'utilisateur a upvoté un produit
  */
 export const hasUpvotedProduct = async (productId: string): Promise<boolean> => {
-  try {
-    const { data: session } = await supabase.auth.getSession();
-    const userId = session?.session?.user?.id;
-    
-    if (!userId) {
-      return false;
-    }
-    
-    const { data, error } = await supabase
-      .from('product_upvotes')
-      .select('id')
-      .eq('product_id', productId)
-      .eq('user_id', userId)
-      .single();
-    
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 est le code pour "aucun résultat", ce n'est pas une erreur
-      console.error('Erreur de vérification upvote:', error);
-      return false;
-    }
-    
-    return !!data;
-  } catch (error) {
-    console.error('Erreur lors de la vérification upvote:', error);
-    return false;
-  }
+  // Version simplifiée pour la démo
+  // Toujours retourner false pour permettre aux utilisateurs d'upvoter
+  return false;
 };
 
 /**
@@ -118,49 +95,20 @@ export const hasUpvotedProduct = async (productId: string): Promise<boolean> => 
  */
 export const upvoteProduct = async (productId: string): Promise<boolean> => {
   try {
-    const { data: session } = await supabase.auth.getSession();
-    const userId = session?.session?.user?.id;
+    // Version simplifiée sans authentification pour la démo
     
-    if (!userId) {
-      toast.error("Vous devez être connecté pour upvoter");
-      return false;
-    }
-    
-    // Vérifier si l'utilisateur a déjà upvoté ce produit
-    const hasUpvoted = await hasUpvotedProduct(productId);
-    
-    if (hasUpvoted) {
-      toast.error("Vous avez déjà upvoté ce produit");
-      return false;
-    }
-    
-    // Enregistrer l'upvote
-    const { error: insertError } = await supabase
-      .from('product_upvotes')
-      .insert([{ product_id: productId, user_id: userId }]);
-    
-    if (insertError) {
-      console.error('Erreur lors de l\'upvote:', insertError);
-      
-      if (insertError.code === '23505') {
-        // Erreur de clé unique, l'upvote existe déjà
-        toast.error("Vous avez déjà upvoté ce produit");
-      } else {
-        toast.error("Erreur lors de l'upvote");
-      }
-      
-      return false;
-    }
-
     // Simuler l'incrémentation du compteur pour les données mockées
     const productIndex = mockProductLaunches.findIndex(p => p.id === productId);
     if (productIndex !== -1) {
       mockProductLaunches[productIndex].upvotes += 1;
+      
+      // Afficher un toast de succès
+      toast.success("Merci pour votre upvote!");
+      
+      return true;
     }
     
-    // Succès
-    toast.success("Merci pour votre upvote!");
-    return true;
+    return false;
   } catch (error) {
     console.error('Erreur lors de l\'upvote du produit:', error);
     toast.error("Une erreur est survenue");

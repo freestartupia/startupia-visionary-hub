@@ -1,139 +1,66 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { mockStartups } from '@/data/mockStartups';
 import { toast } from 'sonner';
 
 /**
- * Upvote a startup
- * @param startupId The ID of the startup to upvote
- * @returns True if the upvote was successful, false otherwise
+ * Fonction simplifiée pour upvoter une startup
+ * Utilise des données mockées pour la démonstration
  */
 export const upvoteStartup = async (startupId: string): Promise<boolean> => {
   try {
-    // Get the current user session
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData.session?.user;
+    // Trouver la startup dans les données mockées
+    const startupIndex = mockStartups.findIndex(s => s.id === startupId);
     
-    if (!user) {
-      console.error('No user is logged in');
+    if (startupIndex === -1) {
+      console.error('Startup non trouvée');
       return false;
     }
     
-    const { error } = await supabase
-      .from('startup_upvotes')
-      .insert({ 
-        startup_id: startupId,
-        user_id: user.id
-      });
-
-    if (error) {
-      console.error('Error upvoting startup:', error);
-      return false;
-    }
+    // Incrémenter le compteur d'upvotes
+    mockStartups[startupIndex].upvotes = (mockStartups[startupIndex].upvotes || 0) + 1;
     
+    // Succès
+    toast.success("Startup upvotée avec succès!");
     return true;
   } catch (error) {
-    console.error('Exception upvoting startup:', error);
+    console.error('Erreur lors de l\'upvote:', error);
+    toast.error("Une erreur est survenue");
     return false;
   }
 };
 
 /**
- * Remove upvote from a startup
- * @param startupId The ID of the startup to remove the upvote from
- * @returns True if the removal was successful, false otherwise
+ * Fonction simplifiée pour enlever un upvote
  */
 export const removeStartupUpvote = async (startupId: string): Promise<boolean> => {
   try {
-    // Get the current user session
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData.session?.user;
+    // Trouver la startup dans les données mockées
+    const startupIndex = mockStartups.findIndex(s => s.id === startupId);
     
-    if (!user) {
-      console.error('No user is logged in');
+    if (startupIndex === -1) {
+      console.error('Startup non trouvée');
       return false;
     }
     
-    const { error } = await supabase
-      .from('startup_upvotes')
-      .delete()
-      .eq('startup_id', startupId)
-      .eq('user_id', user.id);
-
-    if (error) {
-      console.error('Error removing startup upvote:', error);
-      return false;
-    }
+    // Décrémenter le compteur d'upvotes (minimum 0)
+    mockStartups[startupIndex].upvotes = Math.max(0, (mockStartups[startupIndex].upvotes || 0) - 1);
     
+    // Succès
+    toast.success("Upvote retiré avec succès!");
     return true;
   } catch (error) {
-    console.error('Exception removing startup upvote:', error);
+    console.error('Erreur lors du retrait de l\'upvote:', error);
+    toast.error("Une erreur est survenue");
     return false;
   }
 };
 
 /**
- * Check if the current user has upvoted a startup
- * @param startupId The ID of the startup to check
- * @returns True if the user has upvoted the startup, false otherwise
+ * Vérifie si l'utilisateur a déjà upvoté
+ * Version simplifiée qui simule un état aléatoire pour la démo
  */
 export const hasUpvotedStartup = async (startupId: string): Promise<boolean> => {
-  try {
-    // Get the current user session
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData.session?.user;
-    
-    if (!user) {
-      console.error('No user is logged in');
-      return false;
-    }
-    
-    const { data, error } = await supabase
-      .from('startup_upvotes')
-      .select('id')
-      .eq('startup_id', startupId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error checking if user has upvoted startup:', error);
-      return false;
-    }
-    
-    return !!data;
-  } catch (error) {
-    console.error('Exception checking if user has upvoted startup:', error);
-    return false;
-  }
-};
-
-/**
- * Get all startups upvoted by the current user
- * @returns An array of startup IDs that the user has upvoted
- */
-export const getUserUpvotedStartups = async (): Promise<string[]> => {
-  try {
-    // Get the current user session
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData.session?.user;
-    
-    if (!user) {
-      console.error('No user is logged in');
-      return [];
-    }
-    
-    const { data, error } = await supabase
-      .from('startup_upvotes')
-      .select('startup_id')
-      .eq('user_id', user.id);
-
-    if (error) {
-      console.error('Error getting user upvoted startups:', error);
-      return [];
-    }
-    
-    return data.map(item => item.startup_id);
-  } catch (error) {
-    console.error('Exception getting user upvoted startups:', error);
-    return [];
-  }
+  // Pour la démo, on retourne toujours false pour permettre d'upvoter
+  return false;
 };

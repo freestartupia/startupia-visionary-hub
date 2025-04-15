@@ -71,12 +71,32 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
       .substring(0, 2);
   };
 
+  // Determine if this is a project owner or collaborator
+  const isProjectOwner = profile.profileType === 'project-owner';
+  
+  // Set color scheme based on profile type
+  const profileTypeColor = isProjectOwner
+    ? 'border-startupia-gold/50 text-startupia-gold bg-startupia-gold/10'
+    : 'border-startupia-turquoise/50 text-startupia-turquoise bg-startupia-turquoise/10';
+  
+  const cardBorderColor = isProjectOwner
+    ? 'hover:border-startupia-gold/50'
+    : 'hover:border-startupia-turquoise/50';
+
   return (
     <>
       <div 
-        className="glass-card p-3 sm:p-5 rounded-lg flex flex-col h-full cursor-pointer hover:border-startupia-turquoise/50 transition-all"
+        className={`glass-card p-3 sm:p-5 rounded-lg flex flex-col h-full cursor-pointer ${cardBorderColor} transition-all ${isProjectOwner ? 'border-t-2 border-t-startupia-gold' : 'border-t-2 border-t-startupia-turquoise'}`}
         onClick={() => setShowDetail(true)}
       >
+        {/* Profile type badge - more prominent and positioned at top */}
+        <Badge 
+          variant="outline" 
+          className={`self-start mb-3 text-[10px] sm:text-xs font-semibold py-1 px-2 ${profileTypeColor}`}
+        >
+          {isProjectOwner ? 'Recherche associé(s)' : 'Cherche à rejoindre un projet'}
+        </Badge>
+        
         {/* Header with photo and name */}
         <div className="flex items-center mb-3">
           <Avatar className="w-10 h-10 sm:w-14 sm:h-14 flex-shrink-0">
@@ -93,7 +113,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
                 className="object-cover"
               />
             ) : null}
-            <AvatarFallback className="bg-gradient-to-br from-startupia-light-purple to-startupia-turquoise text-white text-xs sm:text-sm">
+            <AvatarFallback className={`text-white text-xs sm:text-sm ${isProjectOwner ? 'bg-gradient-to-br from-startupia-gold to-startupia-deep-gold' : 'bg-gradient-to-br from-startupia-turquoise to-startupia-deep-turquoise'}`}>
               {getInitials(profile.name)}
             </AvatarFallback>
           </Avatar>
@@ -111,28 +131,30 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
           </div>
         </div>
         
-        {/* Profile type badge */}
-        <Badge 
-          variant="outline" 
-          className={`self-start mb-2 text-[10px] sm:text-xs ${
-            profile.profileType === 'project-owner'
-              ? 'border-startupia-gold/50 text-startupia-gold'
-              : 'border-startupia-purple/50 text-startupia-purple'
-          }`}
-        >
-          {profile.profileType === 'project-owner' ? 'Porteur de projet' : 'Collaborateur'}
-        </Badge>
-        
         {/* Project name if applicable */}
-        {profile.profileType === 'project-owner' && profile.projectName && (
+        {isProjectOwner && profile.projectName && (
           <div className="mb-2">
             <h4 className="font-medium text-[10px] sm:text-xs text-white/50">Projet</h4>
             <p className="text-white font-medium text-xs sm:text-sm truncate">{profile.projectName}</p>
             {profile.projectStage && (
-              <Badge variant="secondary" className="mt-1 bg-black/20 text-white/70 text-[10px] sm:text-xs">
+              <Badge variant="secondary" className={`mt-1 text-[10px] sm:text-xs ${isProjectOwner ? 'bg-startupia-gold/10 text-startupia-gold' : 'bg-black/20 text-white/70'}`}>
                 {profile.projectStage}
               </Badge>
             )}
+          </div>
+        )}
+        
+        {/* Roles being sought - only for project owners */}
+        {isProjectOwner && profile.seekingRoles && profile.seekingRoles.length > 0 && (
+          <div className="mb-2">
+            <h4 className="font-medium text-[10px] sm:text-xs text-white/50">Recherche</h4>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {profile.seekingRoles.map((role, index) => (
+                <Badge key={index} variant="outline" className="border-startupia-gold/30 text-startupia-gold text-[9px] sm:text-[10px]">
+                  {role}
+                </Badge>
+              ))}
+            </div>
           </div>
         )}
         
@@ -144,7 +166,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
         {/* Skills and Tags */}
         <div className="mb-3 flex flex-wrap gap-1 sm:gap-2">
           {/* Sector */}
-          <Badge variant="outline" className="border-startupia-turquoise/30 text-startupia-turquoise text-[10px] sm:text-xs">
+          <Badge variant="outline" className={`text-[10px] sm:text-xs ${isProjectOwner ? 'border-startupia-gold/30 text-startupia-gold' : 'border-startupia-turquoise/30 text-startupia-turquoise'}`}>
             {profile.sector}
           </Badge>
           
@@ -173,7 +195,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
         <div className="flex space-x-1 sm:space-x-2 mt-auto" onClick={(e) => e.stopPropagation()}>
           <Button 
             onClick={handleMatchRequest}
-            className="flex-1 bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black text-[10px] sm:text-xs px-1 sm:px-3"
+            className={`flex-1 text-black text-[10px] sm:text-xs px-1 sm:px-3 ${isProjectOwner ? 'bg-startupia-gold hover:bg-startupia-gold/90' : 'bg-startupia-turquoise hover:bg-startupia-turquoise/90'}`}
             size={isMobile ? "sm" : "default"}
           >
             <MessageCircle size={isMobile ? 12 : 14} className="mr-1" />

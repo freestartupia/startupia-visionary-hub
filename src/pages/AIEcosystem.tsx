@@ -106,17 +106,17 @@ const AIEcosystem = () => {
         </div>
 
         <div className="mb-12">
-          <NewLaunches startups={sortedStartups.filter(s => s.isFeatured).slice(0, 4)} />
+          <NewLaunches startupsFeatured={sortedStartups.filter(s => s.isFeatured).slice(0, 4)} />
         </div>
 
         {activeTab === "directory" && (
           <DirectoryView startups={sortedStartups} isLoading={isLoading} onUpvote={handleUpvote} />
         )}
-        {activeTab === "map" && <MapView startups={startups} />}
-        {activeTab === "radar" && <RadarView startups={startups} />}
+        {activeTab === "map" && <MapView startupList={startups} />}
+        {activeTab === "radar" && <RadarView startupList={startups} />}
       </main>
 
-      <SubmitStartupModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      <SubmitStartupModal open={modalOpen} onClose={() => setModalOpen(false)} />
       <Footer />
     </div>
   );

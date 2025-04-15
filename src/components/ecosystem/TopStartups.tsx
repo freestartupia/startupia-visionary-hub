@@ -1,6 +1,6 @@
 
 import React from "react";
-import { ArrowTrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { Startup } from "@/types/startup";
 import StartupCard from "@/components/StartupCard";
 
@@ -17,7 +17,7 @@ const TopStartups = ({ startups, onUpvote }: TopStartupsProps) => {
   return (
     <section>
       <div className="flex items-center mb-4">
-        <ArrowTrendingUp size={20} className="mr-2 text-startupia-gold" />
+        <TrendingUp size={20} className="mr-2 text-startupia-gold" />
         <h2 className="text-2xl font-bold">Top Startups</h2>
       </div>
       

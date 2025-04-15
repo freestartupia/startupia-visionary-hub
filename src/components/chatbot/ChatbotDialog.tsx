@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, Send, X } from "lucide-react";
+import { MessageCircle, Send, X, Mail } from "lucide-react";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { useChatbot } from '@/hooks/use-chatbot';
 import { cn } from '@/lib/utils';
@@ -99,6 +99,33 @@ const ChatContent = ({ onClose, isMobile = false }: { onClose: () => void, isMob
     sendMessage(question);
   };
 
+  // Function to format message content with email highlighting
+  const formatMessageContent = (content: string) => {
+    const emailRegex = /startupia@gowithia\.fr/g;
+    if (emailRegex.test(content)) {
+      const parts = content.split(emailRegex);
+      return (
+        <>
+          {parts.map((part, index) => (
+            <React.Fragment key={index}>
+              {part}
+              {index < parts.length - 1 && (
+                <a 
+                  href="mailto:startupia@gowithia.fr" 
+                  className="text-startupia-turquoise hover:underline font-medium flex items-center inline-flex"
+                >
+                  <Mail size={14} className="mr-1" />
+                  startupia@gowithia.fr
+                </a>
+              )}
+            </React.Fragment>
+          ))}
+        </>
+      );
+    }
+    return content;
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -132,7 +159,9 @@ const ChatContent = ({ onClose, isMobile = false }: { onClose: () => void, isMob
                   : "bg-white/10 text-white"
               )}
             >
-              {message.content}
+              {message.sender === 'bot' 
+                ? formatMessageContent(message.content) 
+                : message.content}
             </div>
           </div>
         ))}

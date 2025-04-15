@@ -36,6 +36,11 @@ export const checkReplyLike = async (replyId: string): Promise<boolean> => {
 };
 
 /**
+ * Alias de checkReplyLike pour maintenir la compatibilité avec l'API
+ */
+export const getReplyLikeStatus = checkReplyLike;
+
+/**
  * Ajoute ou supprime un like à une réponse
  * @param replyId ID de la réponse
  * @returns Object contenant le nouveau nombre de likes et le statut du like

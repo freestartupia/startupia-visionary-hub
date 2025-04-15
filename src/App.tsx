@@ -26,6 +26,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import UserProfile from "./pages/UserProfile";
 import CofounderProfileEdit from "./pages/CofounderProfileEdit";
 import CommunityAIChatbot from "./components/chatbot/CommunityAIChatbot";
+import LegalMentions from "./pages/LegalMentions";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const App = () => (
                 <Route path="/product/:id" element={<ProductDetails />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/profile" element={<UserProfile />} />
+                <Route path="/legal" element={<LegalMentions />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <CommunityAIChatbot />

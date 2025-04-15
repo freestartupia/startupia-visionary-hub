@@ -7,6 +7,7 @@ import {
   Mail,
   ChevronRight
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -110,9 +111,9 @@ const Footer = () => {
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
+                    <Link to="/legal" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">
                       <ChevronRight size={14} className="mr-1" /> Mentions légales
-                    </a>
+                    </Link>
                   </li>
                   <li>
                     <a href="#" className="text-white/60 hover:text-startupia-turquoise inline-flex items-center">

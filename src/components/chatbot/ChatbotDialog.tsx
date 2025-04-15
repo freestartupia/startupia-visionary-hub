@@ -2,8 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { MessageCircle, Send, X, Mail } from "lucide-react";
+import { MessageCircle, X, Mail } from "lucide-react";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { useChatbot } from '@/hooks/use-chatbot';
 import { cn } from '@/lib/utils';
@@ -78,25 +77,15 @@ export const ChatbotButton = () => {
 
 const ChatContent = ({ onClose, isMobile = false }: { onClose: () => void, isMobile?: boolean }) => {
   const { messages, sendMessage, suggestedQuestions } = useChatbot();
-  const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showContactEmail, setShowContactEmail] = useState(false);
   
-  const handleSend = () => {
-    if (inputValue.trim()) {
-      sendMessage(inputValue);
-      setInputValue('');
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
   const handleSuggestedQuestion = (question: string) => {
     sendMessage(question);
+  };
+
+  const handleTalkToHuman = () => {
+    setShowContactEmail(true);
   };
 
   // Function to format message content with email highlighting
@@ -182,25 +171,31 @@ const ChatContent = ({ onClose, isMobile = false }: { onClose: () => void, isMob
             ))}
           </div>
         )}
-      </div>
-      
-      <div className="border-t border-white/10 p-4">
-        <div className="flex gap-2">
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Posez votre question..."
-            className="bg-black/30 border-white/20"
-          />
-          <Button
-            onClick={handleSend}
-            className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 p-2"
-            disabled={!inputValue.trim()}
-          >
-            <Send size={18} />
-          </Button>
-        </div>
+        
+        {showContactEmail ? (
+          <div className="mt-6 p-4 bg-white/10 rounded-lg text-center">
+            <p className="mb-2 text-white">Contactez-nous à :</p>
+            <a 
+              href="mailto:startupia@gowithia.fr" 
+              className="text-startupia-turquoise hover:underline font-medium flex items-center justify-center"
+            >
+              <Mail size={18} className="mr-2" />
+              startupia@gowithia.fr
+            </a>
+            <p className="mt-2 text-xs text-white/60">Nous nous engageons à vous répondre dans les 24 heures.</p>
+          </div>
+        ) : (
+          <div className="mt-6">
+            <Button
+              onClick={handleTalkToHuman}
+              variant="outline"
+              className="w-full justify-center bg-white/5 hover:bg-white/10"
+            >
+              <Mail className="mr-2" size={18} />
+              Parler à un humain
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

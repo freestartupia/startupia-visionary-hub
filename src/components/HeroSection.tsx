@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -41,7 +40,7 @@ const HeroSection = () => {
           </div>
         </div>
 
-        {/* Value Proposition Cards - Using h3 for card titles */}
+        {/* Value Proposition Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           <div className="glass-card p-4 hover-scale flex flex-col items-center">
             <div className="w-12 h-12 flex items-center justify-center rounded-full bg-startupia-turquoise/20 text-startupia-turquoise mb-3">
@@ -77,7 +76,7 @@ const HeroSection = () => {
         </div>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-16">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-4">
           <Button 
             size={isMobile ? "default" : "lg"}
             className="bg-startupia-gold hover:bg-startupia-light-gold text-black font-semibold text-lg py-6 px-8 w-full sm:w-auto"
@@ -113,13 +112,15 @@ const HeroSection = () => {
         </div>
 
         {/* Down arrow indicator */}
-        <a 
-          href="#startup-index" 
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center hover:text-startupia-gold transition-colors"
-        >
-          <span className="text-sm mb-2 opacity-80">Découvrir</span>
-          <ArrowRight size={24} className="rotate-90" />
-        </a>
+        <div className="flex flex-col items-center justify-center mt-6">
+          <a 
+            href="#startup-index" 
+            className="flex flex-col items-center hover:text-startupia-gold transition-colors"
+          >
+            <span className="text-sm mb-2 opacity-80">Découvrir</span>
+            <ArrowRight size={24} className="rotate-90" />
+          </a>
+        </div>
       </div>
     </section>
   );

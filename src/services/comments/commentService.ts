@@ -2,24 +2,17 @@
 import { supabase } from '@/integrations/supabase/client';
 import { StartupComment } from '@/types/startup';
 
-// This is a stub for now - we'll implement this functionality later
-// when we create the comments table in the database
-
 export async function fetchStartupComments(startupId: string): Promise<StartupComment[]> {
   try {
-    // This would be the real implementation when we have the table
-    // const { data, error } = await supabase
-    //   .from('startup_comments')
-    //   .select('*')
-    //   .eq('startup_id', startupId)
-    //   .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('startup_comments')
+      .select('*')
+      .eq('startup_id', startupId)
+      .order('created_at', { ascending: false });
     
-    // if (error) throw error;
+    if (error) throw error;
     
-    // return data.map(transformCommentFromDB);
-    
-    // For now, we'll just return an empty array
-    return [];
+    return data.map(transformCommentFromDB);
   } catch (error) {
     console.error(`Erreur lors de la récupération des commentaires pour la startup ${startupId}:`, error);
     return [];
@@ -28,25 +21,21 @@ export async function fetchStartupComments(startupId: string): Promise<StartupCo
 
 export async function addComment(comment: Omit<StartupComment, 'id' | 'createdAt' | 'likes'>): Promise<StartupComment | null> {
   try {
-    // This would be the real implementation when we have the table
-    // const { data, error } = await supabase
-    //   .from('startup_comments')
-    //   .insert([{
-    //     startup_id: comment.startupId,
-    //     user_id: comment.userId,
-    //     user_name: comment.userName,
-    //     user_avatar: comment.userAvatar,
-    //     content: comment.content,
-    //   }])
-    //   .select()
-    //   .single();
+    const { data, error } = await supabase
+      .from('startup_comments')
+      .insert([{
+        startup_id: comment.startupId,
+        user_id: comment.userId,
+        user_name: comment.userName,
+        user_avatar: comment.userAvatar,
+        content: comment.content,
+      }])
+      .select()
+      .single();
     
-    // if (error) throw error;
+    if (error) throw error;
     
-    // return transformCommentFromDB(data);
-    
-    // For now, we'll just return null
-    return null;
+    return transformCommentFromDB(data);
   } catch (error) {
     console.error('Erreur lors de l\'ajout du commentaire:', error);
     return null;
@@ -55,17 +44,13 @@ export async function addComment(comment: Omit<StartupComment, 'id' | 'createdAt
 
 export async function deleteComment(commentId: string): Promise<boolean> {
   try {
-    // This would be the real implementation when we have the table
-    // const { error } = await supabase
-    //   .from('startup_comments')
-    //   .delete()
-    //   .eq('id', commentId);
+    const { error } = await supabase
+      .from('startup_comments')
+      .delete()
+      .eq('id', commentId);
     
-    // if (error) throw error;
+    if (error) throw error;
     
-    // return true;
-    
-    // For now, we'll just return true
     return true;
   } catch (error) {
     console.error(`Erreur lors de la suppression du commentaire ${commentId}:`, error);

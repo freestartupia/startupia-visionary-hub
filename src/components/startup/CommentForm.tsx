@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { addComment } from '@/services/comments/commentService';
 
 interface CommentFormProps {
   startupId: string;
@@ -39,14 +40,13 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
     
     setIsSubmitting(true);
     try {
-      // In a real implementation, this would add the comment to the database
-      // await addComment({
-      //   startupId,
-      //   content,
-      //   userId: user.id,
-      //   userName: user.email || 'Utilisateur',
-      //   userAvatar: user.avatar_url
-      // });
+      await addComment({
+        startupId,
+        content,
+        userId: user.id,
+        userName: user.email || 'Utilisateur',
+        userAvatar: user.user_metadata?.avatar_url
+      });
       
       toast({
         title: "Commentaire ajouté",
@@ -81,9 +81,9 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
     <form onSubmit={handleSubmit} className="glass-card border border-white/10 p-6 rounded-lg mb-8">
       <div className="flex items-start gap-4">
         <div className="h-10 w-10 rounded-full bg-startupia-turquoise/10 flex-shrink-0 flex items-center justify-center overflow-hidden">
-          {user.avatar_url ? (
+          {user.user_metadata?.avatar_url ? (
             <img 
-              src={user.avatar_url} 
+              src={user.user_metadata?.avatar_url} 
               alt={user.email || 'Utilisateur'} 
               className="w-full h-full object-cover" 
             />

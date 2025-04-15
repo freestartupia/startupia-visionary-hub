@@ -2,6 +2,8 @@
 import React from 'react';
 import { StartupComment } from '@/types/startup';
 import { useAuth } from '@/contexts/AuthContext';
+import { deleteComment } from '@/services/comments/commentService';
+import { useToast } from '@/hooks/use-toast';
 
 interface CommentListProps {
   comments: StartupComment[];
@@ -10,6 +12,33 @@ interface CommentListProps {
 
 const CommentList: React.FC<CommentListProps> = ({ comments, onCommentDeleted }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      const success = await deleteComment(commentId);
+      if (success) {
+        toast({
+          title: "Commentaire supprimé",
+          description: "Le commentaire a été supprimé avec succès.",
+        });
+        onCommentDeleted();
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la suppression du commentaire.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors de la suppression du commentaire:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur technique est survenue.",
+        variant: "destructive"
+      });
+    }
+  };
   
   if (comments.length === 0) {
     return (
@@ -58,9 +87,7 @@ const CommentList: React.FC<CommentListProps> = ({ comments, onCommentDeleted })
                     className="text-xs text-white/40 hover:text-white/60"
                     onClick={() => {
                       if (window.confirm('Voulez-vous vraiment supprimer ce commentaire ?')) {
-                        // In a real implementation, this would delete the comment
-                        // await deleteComment(comment.id);
-                        onCommentDeleted();
+                        handleDeleteComment(comment.id);
                       }
                     }}
                   >

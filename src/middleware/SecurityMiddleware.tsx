@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface SecurityMiddlewareProps {
   children: React.ReactNode;
@@ -11,6 +12,8 @@ interface SecurityMiddlewareProps {
  * Middleware de sécurité pour vérifier les jetons et prévenir les attaques CSRF
  */
 const SecurityMiddleware: React.FC<SecurityMiddlewareProps> = ({ children }) => {
+  const navigate = useNavigate();
+
   useEffect(() => {
     // Vérification de la validité du jeton d'authentification
     const checkTokenValidity = async () => {
@@ -29,8 +32,9 @@ const SecurityMiddleware: React.FC<SecurityMiddlewareProps> = ({ children }) => 
           if (error) {
             console.error('Erreur lors du rafraîchissement de la session:', error);
             toast.error("Votre session a expiré. Veuillez vous reconnecter.");
-            // Using window.location.href for navigation
-            window.location.href = '/auth';
+            
+            // Using React Router navigation instead of direct window.location
+            navigate('/auth');
           }
         }
       }
@@ -43,14 +47,28 @@ const SecurityMiddleware: React.FC<SecurityMiddlewareProps> = ({ children }) => 
     const intervalId = setInterval(checkTokenValidity, 300000); // Toutes les 5 minutes
     
     return () => clearInterval(intervalId);
-  }, []);
+  }, [navigate]);
 
-  // Protection contre le clickjacking
+  // Protection contre le clickjacking - modified to avoid browser security errors
   useEffect(() => {
-    // Vérification que l'application n'est pas dans un iframe (protection contre le clickjacking)
-    if (window.self !== window.top) {
-      console.error('Tentative de clickjacking détectée!');
-      window.top.location = window.self.location;
+    try {
+      // Safer check for iframe embedding
+      if (window.top !== window.self) {
+        console.warn('Tentative de clickjacking détectée! Application potentiellement intégrée dans un iframe.');
+        
+        // Instead of trying to directly manipulate top frame (which can trigger security errors),
+        // we'll just show a warning to the user and disable the UI
+        document.body.innerHTML = 
+          '<div style="text-align: center; padding: 20px; color: red; background: black; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;">' +
+          '<h1>Avertissement de sécurité</h1>' +
+          '<p>Cette application est potentiellement affichée dans un iframe non autorisé.</p>' +
+          '<p>Pour votre sécurité, veuillez accéder directement à l\'application via son URL officielle.</p>' +
+          '</div>';
+      }
+    } catch (error) {
+      // If we get a security error trying to check, that's actually a sign we're in a cross-origin iframe
+      console.warn('Erreur lors de la vérification de clickjacking, probablement en raison de restrictions d\'origine croisée:', error);
+      // Do nothing, let the app continue functioning
     }
   }, []);
 

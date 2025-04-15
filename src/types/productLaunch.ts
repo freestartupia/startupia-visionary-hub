@@ -39,6 +39,7 @@ export type ProductComment = {
   userName: string;
   content: string;
   createdAt: string; // ISO date string
+  productId: string; // Référence au produit parent
   replies?: ProductComment[];
   likes: number;
 };

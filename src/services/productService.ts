@@ -40,6 +40,45 @@ export const fetchProductById = async (id: string): Promise<ProductLaunch | null
 };
 
 /**
+ * Crée un nouveau produit
+ */
+export const createProduct = async (productData: Partial<ProductLaunch>): Promise<ProductLaunch | null> => {
+  try {
+    // Pour la démo, on ajoute simplement à la liste mockée
+    const newProduct: ProductLaunch = {
+      id: uuidv4(),
+      name: productData.name || 'Nouveau Produit',
+      logoUrl: productData.logoUrl || '',
+      tagline: productData.tagline || '',
+      description: productData.description || '',
+      launchDate: productData.launchDate || new Date().toISOString(),
+      createdBy: productData.createdBy || 'Utilisateur',
+      creatorAvatarUrl: productData.creatorAvatarUrl,
+      websiteUrl: productData.websiteUrl || '',
+      demoUrl: productData.demoUrl,
+      category: productData.category || ['Autre'],
+      upvotes: 0,
+      comments: [],
+      status: productData.status || 'upcoming',
+      startupId: productData.startupId,
+      mediaUrls: productData.mediaUrls || [],
+      betaSignupUrl: productData.betaSignupUrl,
+      featuredOrder: null
+    };
+    
+    // Ajouter au tableau mock
+    mockProductLaunches.push(newProduct);
+    
+    toast.success('Produit créé avec succès!');
+    return newProduct;
+  } catch (error) {
+    console.error('Erreur lors de la création du produit:', error);
+    toast.error('Erreur lors de la création du produit');
+    return null;
+  }
+};
+
+/**
  * Ajoute un commentaire à un produit
  */
 export const addComment = async (
@@ -56,7 +95,7 @@ export const addComment = async (
     // À remplacer par un appel Supabase réel plus tard
     const comment: ProductComment = {
       id: uuidv4(),
-      productId,
+      productId: productId,
       content,
       userName,
       userAvatar: null,

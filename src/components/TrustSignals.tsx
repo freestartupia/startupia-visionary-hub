@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 const TrustSignals = () => {
@@ -10,7 +9,6 @@ const TrustSignals = () => {
         </div>
         
         <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-12 md:gap-16">
-          {/* Logos défilants des entreprises et partenaires - en version simulée */}
           <div className="h-12 w-24 bg-white/5 rounded-md flex items-center justify-center">
             <div className="text-white/40 font-semibold">BPI France</div>
           </div>
@@ -44,8 +42,8 @@ const TrustSignals = () => {
           </div>
           
           <div className="w-full sm:w-auto">
-            <div className="text-3xl font-bold text-startupia-turquoise">100% gratuit</div>
-            <p className="text-white/70">pour tous</p>
+            <div className="text-3xl font-bold text-yellow-400">100%</div>
+            <p className="text-yellow-400">gratuit pour tous</p>
           </div>
           
           <div className="w-full sm:w-auto">

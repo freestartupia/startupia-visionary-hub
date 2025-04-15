@@ -22,6 +22,8 @@ export type Database = {
           featured: boolean | null
           id: string
           reading_time: string
+          seo_description: string | null
+          seo_title: string | null
           slug: string
           status: string
           tags: string[] | null
@@ -40,6 +42,8 @@ export type Database = {
           featured?: boolean | null
           id?: string
           reading_time: string
+          seo_description?: string | null
+          seo_title?: string | null
           slug: string
           status?: string
           tags?: string[] | null
@@ -58,6 +62,8 @@ export type Database = {
           featured?: boolean | null
           id?: string
           reading_time?: string
+          seo_description?: string | null
+          seo_title?: string | null
           slug?: string
           status?: string
           tags?: string[] | null

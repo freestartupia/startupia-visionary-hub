@@ -9,10 +9,8 @@ import { HelmetProvider } from "react-helmet-async";
 import ScrollToTop from "./components/ScrollToTop";
 import Navbar from "./components/navbar/Navbar";
 import Index from "./pages/Index";
-import StartupIndex from "./pages/StartupIndex";
 import StartupDetails from "./pages/StartupDetails";
 import RadarIA from "./pages/RadarIA";
-import AIEcosystem from "./pages/AIEcosystem";
 import CoFounder from "./pages/CoFounder";
 import Community from "./pages/Community";
 import Blog from "./pages/Blog";
@@ -42,10 +40,10 @@ const App = () => (
             <div className="min-h-screen pt-16 w-full">
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/startups" element={<StartupIndex />} />
                 <Route path="/startup/:id" element={<StartupDetails />} />
                 <Route path="/radar" element={<RadarIA />} />
-                <Route path="/ecosystem" element={<AIEcosystem />} />
+                <Route path="/ecosystem" element={<NotFound />} />
+                <Route path="/startups" element={<NotFound />} />
                 <Route path="/cofounder" element={<CoFounder />} />
                 <Route path="/cofounder/create" element={<CofounderProfileEdit />} />
                 <Route path="/cofounder/edit/:id" element={<CofounderProfileEdit />} />
@@ -57,7 +55,7 @@ const App = () => (
                 <Route path="/blog/edit/:slug" element={<ProtectedRoute><BlogPostEdit /></ProtectedRoute>} />
                 <Route path="/tools" element={<Tools />} />
                 <Route path="/rankings" element={<Navigate to="/tools" replace />} />
-                <Route path="/products" element={<Navigate to="/ecosystem" replace />} />
+                <Route path="/products" element={<NotFound />} />
                 <Route path="/product/:id" element={<ProductDetails />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/profile" element={<UserProfile />} />

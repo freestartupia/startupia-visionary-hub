@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ThumbsUp, MessageCircle, Eye, Pin, ArrowUp } from 'lucide-react';
 import { ForumPost } from '@/types/community';
@@ -40,11 +41,11 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
 
   return (
     <div 
-      className="glass-card hover:bg-white/5 transition-colors cursor-pointer rounded-xl border border-white/20 shadow-lg backdrop-blur-md overflow-hidden"
+      className="bg-black rounded-xl border border-white/20 shadow-lg overflow-hidden hover:border-startupia-turquoise/50 transition-all cursor-pointer"
       onClick={() => onViewPost(post.id)}
     >
       <div className="p-5">
-        <div className="flex justify-between items-start mb-3">
+        <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="outline" className="bg-startupia-turquoise/20 text-white font-medium py-1 px-2 rounded border-startupia-turquoise/30">
               {post.category}
@@ -65,54 +66,54 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
         
         <h3 className="text-xl font-semibold mb-3 text-white">{post.title}</h3>
         
-        <p className="text-white/80 mb-5 line-clamp-2">
+        <p className="text-white/80 mb-4 line-clamp-2">
           {post.content}
         </p>
-        
-        <div className="flex justify-between items-center pt-3 border-t border-white/10 bg-startupia-turquoise/20 p-4">
-          <div className="flex items-center text-sm">
-            <Avatar className="h-8 w-8 mr-2 border border-white/20">
-              {post.authorAvatar ? (
-                <AvatarImage src={post.authorAvatar} alt={post.authorName} />
-              ) : (
-                <AvatarFallback className="bg-startupia-turquoise/30 text-white">{getInitials(post.authorName)}</AvatarFallback>
-              )}
-            </Avatar>
-            <span className="font-medium text-white/90">{post.authorName}</span>
-          </div>
-          
-          <div className="flex gap-4">
-            {onUpvotePost && (
-              <AuthRequired forActiveParticipation={true}>
-                <button 
-                  onClick={(e) => onUpvotePost(e, post.id)}
-                  className={`flex items-center gap-1 ${post.isUpvoted ? "text-startupia-turquoise" : "text-white/60 hover:text-white"} transition-colors`}
-                >
-                  <ArrowUp size={16} className={post.isUpvoted ? "stroke-startupia-turquoise" : "stroke-white/60"} />
-                  <span>{post.upvotesCount || 0}</span>
-                </button>
-              </AuthRequired>
+      </div>
+      
+      <div className="bg-startupia-turquoise px-5 py-3 flex justify-between items-center">
+        <div className="flex items-center text-sm">
+          <Avatar className="h-8 w-8 mr-2 border border-black/20">
+            {post.authorAvatar ? (
+              <AvatarImage src={post.authorAvatar} alt={post.authorName} />
+            ) : (
+              <AvatarFallback className="bg-black/70 text-white">{getInitials(post.authorName)}</AvatarFallback>
             )}
-            
+          </Avatar>
+          <span className="font-medium text-black">{post.authorName}</span>
+        </div>
+        
+        <div className="flex gap-4">
+          {onUpvotePost && (
             <AuthRequired forActiveParticipation={true}>
               <button 
-                onClick={(e) => onLikePost(e, post.id)}
-                className={`flex items-center gap-1 ${post.isLiked ? "text-startupia-turquoise" : "text-white/60 hover:text-white"} transition-colors`}
+                onClick={(e) => onUpvotePost(e, post.id)}
+                className={`flex items-center gap-1 text-black transition-colors`}
               >
-                <ThumbsUp size={16} className={post.isLiked ? "stroke-startupia-turquoise" : "stroke-white/60"} />
-                <span>{post.likes}</span>
+                <ArrowUp size={16} className="stroke-black" />
+                <span>{post.upvotesCount || 0}</span>
               </button>
             </AuthRequired>
-            
-            <div className="flex items-center gap-1 text-white/60">
-              <MessageCircle size={16} />
-              <span>{post.replies?.length || 0}</span>
-            </div>
-            
-            <div className="flex items-center gap-1 text-white/60">
-              <Eye size={16} />
-              <span>{post.views}</span>
-            </div>
+          )}
+          
+          <AuthRequired forActiveParticipation={true}>
+            <button 
+              onClick={(e) => onLikePost(e, post.id)}
+              className={`flex items-center gap-1 text-black transition-colors`}
+            >
+              <ThumbsUp size={16} className="stroke-black" />
+              <span>{post.likes}</span>
+            </button>
+          </AuthRequired>
+          
+          <div className="flex items-center gap-1 text-black">
+            <MessageCircle size={16} className="stroke-black" />
+            <span>{post.replies?.length || 0}</span>
+          </div>
+          
+          <div className="flex items-center gap-1 text-black">
+            <Eye size={16} className="stroke-black" />
+            <span>{post.views}</span>
           </div>
         </div>
       </div>

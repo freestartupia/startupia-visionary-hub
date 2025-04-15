@@ -40,11 +40,14 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
     
     setIsSubmitting(true);
     try {
+      // Utiliser le nom de l'utilisateur depuis les métadonnées ou un nom par défaut
+      const userName = user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur';
+      
       await addComment({
         startupId,
         content,
         userId: user.id,
-        userName: user.email || 'Utilisateur',
+        userName: userName,
         userAvatar: user.user_metadata?.avatar_url
       });
       
@@ -84,12 +87,12 @@ const CommentForm: React.FC<CommentFormProps> = ({ startupId, onCommentAdded }) 
           {user.user_metadata?.avatar_url ? (
             <img 
               src={user.user_metadata?.avatar_url} 
-              alt={user.email || 'Utilisateur'} 
+              alt={user.user_metadata?.full_name || user.user_metadata?.name || 'Utilisateur'} 
               className="w-full h-full object-cover" 
             />
           ) : (
             <span className="text-lg font-bold text-startupia-turquoise">
-              {(user.email || 'U')[0].toUpperCase()}
+              {((user.user_metadata?.full_name || user.user_metadata?.name || 'U')[0]).toUpperCase()}
             </span>
           )}
         </div>

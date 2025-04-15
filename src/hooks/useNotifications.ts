@@ -22,11 +22,13 @@ export const useNotifications = () => {
     
     setIsLoading(true);
     try {
+      console.log('Chargement des notifications pour:', user.id);
       const notifs = await fetchUserNotifications();
       setNotifications(notifs);
       
       const count = await getUnreadCount();
       setUnreadCount(count);
+      console.log('Nombre de notifications non lues:', count);
     } catch (error) {
       console.error('Error loading notifications:', error);
     } finally {
@@ -40,6 +42,8 @@ export const useNotifications = () => {
     
     loadNotifications();
     
+    console.log('Configuration du canal de notification pour:', user.id);
+    
     // Subscribe to changes on the notifications table
     const channel = supabase
       .channel('notifications-changes')
@@ -52,6 +56,7 @@ export const useNotifications = () => {
           filter: `recipient_id=eq.${user.id}`
         },
         (payload) => {
+          console.log('Nouvelle notification reçue:', payload);
           // Update notifications
           loadNotifications();
           
@@ -59,14 +64,17 @@ export const useNotifications = () => {
           const newNotification = payload.new as Notification;
           toast({
             title: 'Nouvelle notification',
-            description: `${newNotification.sender_name} ${newNotification.content}`,
+            description: `${newNotification.sender_name || 'Quelqu\'un'} ${newNotification.content || 'a interagi avec votre contenu'}`,
             position: 'top-right'
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Statut de l\'abonnement aux notifications:', status);
+      });
     
     return () => {
+      console.log('Nettoyage du canal de notification');
       supabase.removeChannel(channel);
     };
   }, [user, loadNotifications]);

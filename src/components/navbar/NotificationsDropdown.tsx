@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, BellRing, Check, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,15 +25,27 @@ const NotificationsDropdown = () => {
     markAllAsRead 
   } = useNotifications();
 
+  // Log pour debugging
+  useEffect(() => {
+    if (user) {
+      console.log('NotificationsDropdown - Utilisateur connecté:', user.id);
+      console.log('NotificationsDropdown - Nombre de notifications:', notifications.length);
+      console.log('NotificationsDropdown - Nombre de notifications non lues:', unreadCount);
+    }
+  }, [user, notifications, unreadCount]);
+
   // Load notifications when the dropdown is opened
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open && user) {
+      console.log('Ouverture du dropdown, chargement des notifications');
       loadNotifications();
     }
   };
 
   const handleNotificationClick = async (notification: Notification) => {
+    console.log('Notification cliquée:', notification);
+    
     // Mark as read
     await markAsRead(notification.id);
     
@@ -120,8 +132,8 @@ const NotificationsDropdown = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm">
-                    <span className="font-medium">{notification.sender_name}</span>
-                    {' '}{notification.content}
+                    <span className="font-medium">{notification.sender_name || 'Quelqu\'un'}</span>
+                    {' '}{notification.content || 'a interagi avec votre contenu'}
                   </p>
                   <p className="text-xs text-white/60 mt-1">
                     {new Date(notification.created_at).toLocaleDateString('fr-FR', {

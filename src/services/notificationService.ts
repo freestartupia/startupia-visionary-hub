@@ -18,9 +18,20 @@ export interface Notification {
 
 export const fetchUserNotifications = async (limit = 20): Promise<Notification[]> => {
   try {
+    // Récupérer l'utilisateur actuel
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.error('Aucun utilisateur connecté');
+      return [];
+    }
+    
+    console.log('Récupération des notifications pour:', user.id);
+    
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
+      .eq('recipient_id', user.id)
       .order('created_at', { ascending: false })
       .limit(limit);
       
@@ -29,6 +40,7 @@ export const fetchUserNotifications = async (limit = 20): Promise<Notification[]
       return [];
     }
     
+    console.log('Notifications récupérées:', data);
     return data || [];
   } catch (error) {
     console.error('Error in fetchUserNotifications:', error);
@@ -38,9 +50,17 @@ export const fetchUserNotifications = async (limit = 20): Promise<Notification[]
 
 export const getUnreadCount = async (): Promise<number> => {
   try {
+    // Récupérer l'utilisateur actuel
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return 0;
+    }
+    
     const { count, error } = await supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
+      .eq('recipient_id', user.id)
       .eq('is_read', false);
       
     if (error) {
@@ -76,9 +96,17 @@ export const markNotificationAsRead = async (notificationId: string): Promise<bo
 
 export const markAllNotificationsAsRead = async (): Promise<boolean> => {
   try {
+    // Récupérer l'utilisateur actuel
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return false;
+    }
+    
     const { error } = await supabase
       .from('notifications')
       .update({ is_read: true })
+      .eq('recipient_id', user.id)
       .eq('is_read', false);
       
     if (error) {

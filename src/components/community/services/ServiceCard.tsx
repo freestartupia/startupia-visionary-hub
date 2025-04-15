@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Calendar, Linkedin, Mail, Instagram, ExternalLink } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
@@ -34,17 +33,14 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   };
 
   const getContactUrl = (link: string) => {
-    // If it's an email and doesn't have mailto:, add it
     if (link.includes('@') && !link.includes('mailto:') && !link.startsWith('http')) {
       return `mailto:${link}`;
     }
     
-    // If it's an Instagram handle without URL
     if (link.startsWith('@') && !link.includes('.')) {
       return `https://instagram.com/${link.substring(1)}`;
     }
     
-    // If it's not a URL, assume it is one but missing the protocol
     if (!link.startsWith('http') && !link.includes('@')) {
       return `https://${link}`;
     }
@@ -72,8 +68,15 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       return;
     }
     
-    // Track the interaction
     console.log("Contact clicked for service:", service.title);
+  };
+
+  const getProviderAvatar = () => {
+    return service.providerAvatar || undefined;
+  };
+
+  const getProviderInitials = () => {
+    return getInitials(service.providerName || 'U');
   };
 
   return (
@@ -103,10 +106,13 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
       <CardFooter className="flex flex-col gap-4 border-t border-white/10 pt-4">
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={service.providerAvatar} alt={service.providerName} />
-            <AvatarFallback>{getInitials(service.providerName)}</AvatarFallback>
+            <AvatarImage 
+              src={getProviderAvatar()} 
+              alt={service.providerName || 'Prestataire'} 
+            />
+            <AvatarFallback>{getProviderInitials()}</AvatarFallback>
           </Avatar>
-          <span className="font-medium">{service.providerName}</span>
+          <span className="font-medium">{service.providerName || 'Utilisateur'}</span>
         </div>
         <div className="flex gap-2 w-full">
           {service.linkedinUrl && (

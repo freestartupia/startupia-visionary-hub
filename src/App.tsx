@@ -28,6 +28,7 @@ import CofounderProfileEdit from "./pages/CofounderProfileEdit";
 import CommunityAIChatbot from "./components/chatbot/CommunityAIChatbot";
 import LegalMentions from "./pages/LegalMentions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import CookieConsent from "./components/CookieConsent";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <CommunityAIChatbot />
+              <CookieConsent />
             </div>
           </TooltipProvider>
         </AuthProvider>

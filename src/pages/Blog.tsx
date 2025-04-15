@@ -1,115 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+
+import React, { useState } from 'react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
 import BlogPostCard from '@/components/blog/BlogPostCard';
 import BlogSearch from '@/components/blog/BlogSearch';
 import CategoryFilter from '@/components/blog/CategoryFilter';
-import { supabase } from '@/integrations/supabase/client';
+import { 
+  mockBlogPosts, 
+  getAllBlogCategories, 
+  getFeaturedPosts 
+} from '@/data/mockBlogPosts';
 import { BlogCategory, BlogPost } from '@/types/blog';
 import SEO from '@/components/SEO';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { PenLine } from 'lucide-react';
 
 const Blog = () => {
-  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(mockBlogPosts);
   const [selectedCategory, setSelectedCategory] = useState<BlogCategory | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [categories, setCategories] = useState<BlogCategory[]>([]);
-  const navigate = useNavigate();
-
-  const { data: posts, isLoading, error } = useQuery({
-    queryKey: ['blog-posts'],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('blog_posts')
-          .select('*')
-          .eq('status', 'published')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error("Error fetching blog posts:", error);
-          throw error;
-        }
-
-        if (!data || data.length === 0) {
-          return [];
-        }
-
-        return data.map((post: any): BlogPost => ({
-          id: post.id,
-          title: post.title,
-          slug: post.slug,
-          excerpt: post.excerpt,
-          content: post.content,
-          category: post.category as BlogCategory,
-          coverImage: post.cover_image,
-          authorId: post.author_id,
-          authorName: post.author_name,
-          authorAvatar: post.author_avatar,
-          createdAt: post.created_at,
-          updatedAt: post.updated_at,
-          tags: post.tags || [],
-          featured: post.featured,
-          readingTime: post.reading_time,
-          status: post.status
-        }));
-      } catch (err) {
-        console.error("Error in blog posts query:", err);
-        throw err;
-      }
-    },
-    meta: {
-      onError: (error: any) => {
-        console.error("Error loading blog posts:", error);
-        toast.error("Erreur lors du chargement des articles");
-      }
-    }
-  });
-
-  useEffect(() => {
-    if (posts && posts.length > 0) {
-      const uniqueCategories = [...new Set(posts.map(post => post.category))];
-      setCategories(uniqueCategories as BlogCategory[]);
-      setFilteredPosts(posts);
-    } else {
-      setFilteredPosts([]);
-    }
-  }, [posts]);
-
-  useEffect(() => {
-    if (!posts) return;
-
-    let filtered = [...posts];
-
-    if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase();
+  
+  const categories = getAllBlogCategories();
+  const featuredPosts = getFeaturedPosts();
+  
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    filterPosts(query, selectedCategory);
+  };
+  
+  const handleCategoryChange = (category: BlogCategory | null) => {
+    setSelectedCategory(category);
+    filterPosts(searchQuery, category);
+  };
+  
+  const filterPosts = (query: string, category: BlogCategory | null) => {
+    let filtered = [...mockBlogPosts];
+    
+    if (query) {
+      const lowerQuery = query.toLowerCase();
       filtered = filtered.filter(post => 
         post.title.toLowerCase().includes(lowerQuery) ||
         post.excerpt.toLowerCase().includes(lowerQuery) ||
         post.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
       );
     }
-
-    if (selectedCategory) {
-      filtered = filtered.filter(post => post.category === selectedCategory);
+    
+    if (category) {
+      filtered = filtered.filter(post => post.category === category);
     }
-
+    
     setFilteredPosts(filtered);
-  }, [searchQuery, selectedCategory, posts]);
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
   };
-
-  const handleCategoryChange = (category: BlogCategory | null) => {
-    setSelectedCategory(category);
-  };
-
-  const featuredPosts = posts?.filter(post => post.featured) || [];
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -118,6 +57,7 @@ const Blog = () => {
         description="Explorez les dernières tendances IA, les outils d'intelligence artificielle à connaître, et l'actualité des startups IA en France. Analyses, interviews et découvertes chaque semaine."
       />
       
+      {/* Background elements */}
       <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
       
       <Navbar />
@@ -137,17 +77,10 @@ const Blog = () => {
             <BlogSearch onSearch={handleSearch} />
           </div>
           
-          <div className="mt-4 md:mt-0">
-            <Button 
-              onClick={() => navigate('/admin/blog')} 
-              className="bg-startupia-turquoise hover:bg-startupia-turquoise/80"
-            >
-              <PenLine size={18} className="mr-2" />
-              Écrire un article
-            </Button>
-          </div>
+          {/* Le bouton "Soumettre un article" a été supprimé */}
         </div>
         
+        {/* Featured posts carousel */}
         {featuredPosts.length > 0 && (
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">À la une</h2>
@@ -165,35 +98,17 @@ const Blog = () => {
           onSelectCategory={handleCategoryChange}
         />
         
-        {isLoading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-startupia-turquoise"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPosts.length > 0 ? (
-              filteredPosts.map(post => (
-                <BlogPostCard key={post.id} post={post} />
-              ))
-            ) : (
-              <div className="col-span-3 text-center py-10">
-                <p className="text-white/60">Aucun article trouvé avec ces critères.</p>
-                {posts?.length === 0 && (
-                  <div className="mt-8">
-                    <p className="text-white/80 mb-4">Il n'y a aucun article publié actuellement.</p>
-                    <Button 
-                      onClick={() => navigate('/admin/blog')} 
-                      className="bg-startupia-turquoise hover:bg-startupia-turquoise/80"
-                    >
-                      <PenLine size={18} className="mr-2" />
-                      Écrire mon premier article
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredPosts.length > 0 ? (
+            filteredPosts.map(post => (
+              <BlogPostCard key={post.id} post={post} />
+            ))
+          ) : (
+            <div className="col-span-3 text-center py-10">
+              <p className="text-white/60">Aucun article trouvé avec ces critères.</p>
+            </div>
+          )}
+        </div>
       </main>
 
       <Footer />

@@ -66,6 +66,8 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({ requireAuth = false }) =>
   };
   
   const getTargetUrl = (activity: CommunityActivity) => {
+    if (!activity.targetType || !activity.targetId) return '#';
+    
     switch(activity.targetType) {
       case 'forum': return `/community?tab=forum&id=${activity.targetId}`;
       case 'service': return `/community?tab=services&id=${activity.targetId}`;
@@ -121,12 +123,12 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({ requireAuth = false }) =>
                         </div>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-xs">{activity.targetType}</Badge>
+                    <Badge variant="outline" className="text-xs">{activity.targetType || 'activity'}</Badge>
                   </div>
                   
                   <div className="mt-3">
                     <h4 className="font-semibold text-base">{activity.title}</h4>
-                    <p className="text-white/80 text-sm mt-1">{activity.summary}</p>
+                    <p className="text-white/80 text-sm mt-1">{activity.summary || activity.content}</p>
                   </div>
                   
                   <div className="mt-4">

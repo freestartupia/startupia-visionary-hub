@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { CollaborativeProject, ProjectStatus } from '@/types/community';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import ProposeProjectModal from './project/ProposeProjectModal';
 import ProjectFilters from './project/ProjectFilters';
 import ProjectList from './project/ProjectList';
+import { fetchProjects } from '@/services/projectService';
 
 // Créer un cache pour les projets
 let projectsCache = {
@@ -33,7 +35,7 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
   ];
 
   // Optimiser le chargement des projets avec mise en cache
-  const fetchProjects = useCallback(async () => {
+  const loadProjects = useCallback(async () => {
     setIsLoading(true);
     try {
       // Vérifier si le cache est valide
@@ -46,21 +48,13 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
       }
       
       console.log("Chargement des projets depuis Supabase");
-      const { data, error } = await supabase
-        .from('collaborative_projects')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const projectData = await fetchProjects();
       
-      if (error) {
-        console.error('Error fetching projects:', error);
-        throw error;
-      }
-      
-      if (data && data.length > 0) {
-        setProjects(data as CollaborativeProject[]);
+      if (projectData.length > 0) {
+        setProjects(projectData);
         
         // Mettre à jour le cache
-        projectsCache.data = data as CollaborativeProject[];
+        projectsCache.data = projectData;
         projectsCache.timestamp = now;
       } else {
         setProjects([]);
@@ -77,8 +71,8 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
   }, []);
   
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    loadProjects();
+  }, [loadProjects]);
   
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -99,7 +93,7 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
       const updatedProjects = [...projects];
       updatedProjects[projectIndex] = {
         ...updatedProjects[projectIndex],
-        likes: (updatedProjects[projectIndex].likes || 0) + 1
+        likes: ((updatedProjects[projectIndex].likes || 0) + 1)
       };
 
       setProjects(updatedProjects);
@@ -159,8 +153,8 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
     // Invalidate cache and fetch projects again
     projectsCache.data = null;
     projectsCache.timestamp = 0;
-    fetchProjects();
-  }, [fetchProjects]);
+    loadProjects();
+  }, [loadProjects]);
   
   const filteredProjects = useMemo(() => {
     return projects
@@ -208,7 +202,7 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleProjectSuccess}
-        statuses={statuses}
+        statuses={statuses.filter(status => status !== 'all') as ProjectStatus[]}
       />
     </div>
   );

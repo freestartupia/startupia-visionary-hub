@@ -1,9 +1,14 @@
+
 import { 
   ForumPost, 
   ServiceListing, 
   ResourceListing, 
   CollaborativeProject,
-  CommunityActivity 
+  CommunityActivity,
+  ForumCategory,
+  ServiceCategory,
+  ResourceFormat,
+  ProjectStatus
 } from '@/types/community';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -13,7 +18,7 @@ export const mockForumPosts: ForumPost[] = [
     id: uuidv4(),
     title: "Comment optimiser les prompts pour la génération d'images ?",
     content: "J'essaie d'améliorer mes résultats avec Midjourney et DALL-E, quelles sont vos astuces pour créer des prompts efficaces ?",
-    category: 'Prompt Engineering',
+    category: "Prompt Engineering",
     authorId: uuidv4(),
     authorName: 'Sophie Martin',
     authorAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
@@ -28,7 +33,8 @@ export const mockForumPosts: ForumPost[] = [
         authorName: 'Thomas Legrand',
         authorAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
         createdAt: '2023-10-15T15:10:00Z',
-        likes: 12
+        likes: 12,
+        parentId: ''
       }
     ],
     views: 156,
@@ -38,7 +44,7 @@ export const mockForumPosts: ForumPost[] = [
     id: uuidv4(),
     title: "Recherche développeur pour intégration API OpenAI",
     content: "Je cherche un développeur expérimenté pour intégrer l'API OpenAI dans mon application React. Budget disponible.",
-    category: 'Trouver un projet / recruter',
+    category: "Trouver un projet / recruter",
     authorId: uuidv4(),
     authorName: 'Alexandre Dubois',
     authorAvatar: 'https://randomuser.me/api/portraits/men/22.jpg',
@@ -52,7 +58,7 @@ export const mockForumPosts: ForumPost[] = [
     id: uuidv4(),
     title: "Quelle est la meilleure architecture pour un agent IA conversationnel ?",
     content: "Je développe un assistant pour le service client et j'hésite entre différentes architectures. Quelles sont vos recommandations ?",
-    category: 'Tech & Dev IA',
+    category: "Tech & Dev IA",
     authorId: uuidv4(),
     authorName: 'Marie Lefevre',
     authorAvatar: 'https://randomuser.me/api/portraits/women/18.jpg',
@@ -66,7 +72,8 @@ export const mockForumPosts: ForumPost[] = [
         authorId: uuidv4(),
         authorName: 'Lucas Bernard',
         createdAt: '2023-10-08T12:30:00Z',
-        likes: 6
+        likes: 6,
+        parentId: ''
       },
       {
         id: uuidv4(),
@@ -75,7 +82,8 @@ export const mockForumPosts: ForumPost[] = [
         authorName: 'Emma Rivière',
         authorAvatar: 'https://randomuser.me/api/portraits/women/28.jpg',
         createdAt: '2023-10-08T14:05:00Z',
-        likes: 9
+        likes: 9,
+        parentId: ''
       }
     ],
     views: 202
@@ -84,7 +92,7 @@ export const mockForumPosts: ForumPost[] = [
     id: uuidv4(),
     title: "Retour d'expérience : lancement d'une startup IA en 3 mois",
     content: "Je viens de lancer ma startup IA dans le domaine de la santé et je souhaite partager mon expérience avec la communauté.",
-    category: 'Startups IA',
+    category: "Startups IA",
     authorId: uuidv4(),
     authorName: 'Julien Moreau',
     authorAvatar: 'https://randomuser.me/api/portraits/men/52.jpg',
@@ -99,7 +107,8 @@ export const mockForumPosts: ForumPost[] = [
         authorName: 'Claire Dumas',
         authorAvatar: 'https://randomuser.me/api/portraits/women/52.jpg',
         createdAt: '2023-10-05T17:20:00Z',
-        likes: 3
+        likes: 3,
+        parentId: ''
       }
     ],
     views: 310,
@@ -113,7 +122,7 @@ export const mockServiceListings: ServiceListing[] = [
     id: uuidv4(),
     title: "Développement d'agents IA personnalisés",
     description: "Je crée des assistants IA sur mesure pour votre entreprise en utilisant les dernières avancées en LLMs. Intégration avec vos outils existants, fine-tuning sur vos données internes et déploiement cloud sécurisé.",
-    category: 'Développement',
+    category: "Développement",
     expertise: ['LangChain', 'OpenAI GPT-4', 'Claude 3', 'RAG', 'Llama 3', 'Agents autonomes'],
     price: "À partir de 2500€ / projet",
     providerId: uuidv4(),
@@ -127,7 +136,7 @@ export const mockServiceListings: ServiceListing[] = [
     id: uuidv4(),
     title: "Prompt Engineering Expert - Optimisation de prompts et workflows IA",
     description: "Maximisez le potentiel des LLMs pour votre business. Je vous aide à concevoir des prompts et workflows optimaux pour ChatGPT, Claude et Midjourney. Augmentez l'efficacité de vos équipes avec des agents IA bien conçus.",
-    category: 'Prompt Engineering',
+    category: "Prompt Engineering",
     expertise: ['ChatGPT', 'Midjourney', 'DALL-E 3', 'Stable Diffusion', 'Claude', 'Agents IA'],
     price: "850€ / jour ou 3500€ / formation complète",
     providerId: uuidv4(),
@@ -141,7 +150,7 @@ export const mockServiceListings: ServiceListing[] = [
     id: uuidv4(),
     title: "Consultation stratégique IA pour startups",
     description: "En tant qu'ancien directeur de l'innovation chez [Grande Entreprise Tech], j'accompagne les startups dans leur stratégie d'intégration de l'IA. Définition de votre proposition de valeur, choix technologiques, scalabilité et levée de fonds.",
-    category: 'Stratégie IA',
+    category: "Stratégie IA",
     expertise: ['Proposition de valeur', 'Go-to-market', 'Architecture IA', 'Levée de fonds', 'Scale-up'],
     price: "Sur devis (généralement 1500-2500€ / jour)",
     providerId: uuidv4(),
@@ -159,49 +168,70 @@ export const mockResources: ResourceListing[] = [
     id: uuidv4(),
     title: "Formation complète : Maîtriser GPT-4 et Claude 3 pour les professionnels",
     description: "Formation en 8 modules pour maîtriser les LLMs de pointe. Apprenez à créer des prompts avancés, implémenter une stratégie IA dans votre entreprise et développer vos premiers agents autonomes.",
-    format: 'Cours',
+    format: "Cours",
     target_audience: "Professionnels, entrepreneurs, marketers",
     access_link: "https://academy.startupia.fr/gpt4-claude3-mastery",
+    url: "https://academy.startupia.fr/gpt4-claude3-mastery",
     is_paid: true,
     price: "499€",
+    authorId: uuidv4(),
     author_id: uuidv4(),
+    authorName: "Laura Mendez",
     author_name: "Laura Mendez",
+    authorAvatar: "https://randomuser.me/api/portraits/women/63.jpg",
     author_avatar: "https://randomuser.me/api/portraits/women/63.jpg",
+    createdAt: '2023-10-10T09:00:00Z',
     created_at: '2023-10-10T09:00:00Z',
     community_validated: true,
-    votes: 142
+    upvotes: 142,
+    votes: 142,
+    views: 0
   },
   {
     id: uuidv4(),
     title: "Webinaire gratuit : Comment lancer sa startup IA en 2025",
     description: "Dans ce webinaire de 90 minutes, nous couvrons les étapes essentielles pour lancer votre startup IA : validation d'idée, choix technologiques, premiers clients, levée de fonds et stratégie de croissance.",
-    format: 'Webinaire',
+    format: "Webinaire",
     target_audience: "Entrepreneurs, étudiants, porteurs de projet",
     access_link: "https://events.startupia.fr/lancer-startup-ia-2025",
+    url: "https://events.startupia.fr/lancer-startup-ia-2025",
     is_paid: false,
     price: null,
+    authorId: uuidv4(),
     author_id: uuidv4(),
+    authorName: "Marc Dubois",
     author_name: "Marc Dubois",
+    authorAvatar: "https://randomuser.me/api/portraits/men/41.jpg",
     author_avatar: "https://randomuser.me/api/portraits/men/41.jpg",
+    createdAt: '2023-09-22T15:40:00Z',
     created_at: '2023-09-22T15:40:00Z',
     community_validated: true,
-    votes: 378
+    upvotes: 378,
+    votes: 378,
+    views: 0
   },
   {
     id: uuidv4(),
     title: "Guide PDF: RAG (Retrieval Augmented Generation) pour startups",
     description: "Guide pratique de 47 pages pour implémenter RAG dans vos produits. Inclut code source, architecture, benchmarks et études de cas. Améliorez vos LLMs avec vos propres données d'entreprise.",
-    format: 'E-book',
+    format: "E-book",
     target_audience: "Développeurs, CTO, fondateurs techniques",
     access_link: "https://resources.startupia.fr/rag-guide",
+    url: "https://resources.startupia.fr/rag-guide",
     is_paid: true,
     price: "39€",
+    authorId: uuidv4(),
     author_id: uuidv4(),
+    authorName: "Julien Moreau",
     author_name: "Julien Moreau",
+    authorAvatar: "https://randomuser.me/api/portraits/men/52.jpg",
     author_avatar: "https://randomuser.me/api/portraits/men/52.jpg",
+    createdAt: '2023-10-05T11:20:00Z',
     created_at: '2023-10-05T11:20:00Z',
     community_validated: true,
-    votes: 215
+    upvotes: 215,
+    votes: 215,
+    views: 0
   }
 ];
 
@@ -211,7 +241,7 @@ export const mockProjects: CollaborativeProject[] = [
     id: uuidv4(),
     title: "Assistant IA pour médecins généralistes",
     description: "Je développe un assistant IA pour aider les médecins dans leur diagnostic. Recherche développeur Python et expert médical.",
-    status: 'Recherche de collaborateurs',
+    status: "Recherche de collaborateurs",
     skills: ['Python', 'ML', 'Médecine', 'LLM'],
     initiator_id: uuidv4(),
     initiator_name: "Dr. Philippe Martin",
@@ -225,7 +255,7 @@ export const mockProjects: CollaborativeProject[] = [
     id: uuidv4(),
     title: "Plateforme no-code de création d'agents IA",
     description: "Projet open-source pour permettre aux non-développeurs de créer leurs propres agents IA. Recherche contributeurs.",
-    status: 'En cours',
+    status: "En cours",
     skills: ['React', 'Node.js', 'UX/UI', 'LangChain'],
     initiator_id: uuidv4(),
     initiator_name: "Léa Fischer",
@@ -239,7 +269,7 @@ export const mockProjects: CollaborativeProject[] = [
     id: uuidv4(),
     title: "IA de génération de business plans personnalisés",
     description: "Idée de startup : IA qui génère des business plans détaillés adaptés au secteur et au marché cible.",
-    status: 'Idée',
+    status: "Idée",
     skills: ['Business', 'ML', 'GPT', 'Finance'],
     initiator_id: uuidv4(),
     initiator_name: "Hugo Lemaitre",

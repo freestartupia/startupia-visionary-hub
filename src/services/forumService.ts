@@ -5,5 +5,4 @@ export * from './forum/replyService';
 export * from './forum/postLikeService';
 export * from './forum/replyLikeService';
 export * from './forumUpvoteService';
-export * from './forum/postViewService';
 

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -25,18 +25,45 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Optimisation: utiliser useCallback pour empêcher les recreations inutiles
+  const fetchPosts = useCallback(async (isMounted = true) => {
+    try {
+      setIsLoading(true);
+      console.time('Chargement des posts');
+      const fetchedPosts = await getForumPosts();
+      console.timeEnd('Chargement des posts');
+      
+      if (isMounted) {
+        setPosts(fetchedPosts);
+        setFilteredPosts(fetchedPosts);
+        setIsFirstLoad(false);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des posts:', error);
+      if (isMounted) {
+        toast.error('Erreur lors du chargement des discussions');
+      }
+    } finally {
+      if (isMounted) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
+    // Délai progressif réduit pour le premier chargement
     const loadTimeout = setTimeout(() => {
       fetchPosts(isMounted);
-    }, isFirstLoad ? 300 : 0); // Délai réduit au premier chargement
+    }, isFirstLoad ? 10 : 0);
     
     return () => {
       isMounted = false;
       clearTimeout(loadTimeout);
     };
-  }, []);
+  }, [fetchPosts, isFirstLoad]);
 
+  // Utiliser useMemo pour filtrer les posts seulement quand nécessaire
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredPosts(posts);
@@ -65,31 +92,8 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     setFilteredPosts(filtered);
   }, [searchQuery, posts]);
 
-  const fetchPosts = async (isMounted = true) => {
-    try {
-      setIsLoading(true);
-      console.time('Chargement des posts');
-      const fetchedPosts = await getForumPosts();
-      console.timeEnd('Chargement des posts');
-      
-      if (isMounted) {
-        setPosts(fetchedPosts);
-        setFilteredPosts(fetchedPosts);
-        setIsFirstLoad(false);
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement des posts:', error);
-      if (isMounted) {
-        toast.error('Erreur lors du chargement des discussions');
-      }
-    } finally {
-      if (isMounted) {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  const handleLikePost = async (e: React.MouseEvent, postId: string) => {
+  // Manipulation optimisée des événements avec useCallback
+  const handleLikePost = useCallback(async (e: React.MouseEvent, postId: string) => {
     e.stopPropagation();
     
     if (requireAuth && !user) {
@@ -101,20 +105,9 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     try {
       const result = await togglePostLike(postId);
       
-      // Mettre à jour l'état local
-      const updatedPosts = posts.map(post => 
-        post.id === postId ? {
-          ...post,
-          likes: result.newCount,
-          isLiked: result.liked
-        } : post
-      );
-      
-      setPosts(updatedPosts);
-      
-      // Mettre à jour aussi les posts filtrés
-      setFilteredPosts(prevFiltered => 
-        prevFiltered.map(post => 
+      // Optimiser les mises à jour d'état en utilisant un updater fonctionnel
+      setPosts(prevPosts => 
+        prevPosts.map(post => 
           post.id === postId ? {
             ...post,
             likes: result.newCount,
@@ -123,15 +116,28 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
         )
       );
       
+      // Filtrer conditionnellement pour éviter les calculs inutiles
+      if (searchQuery) {
+        setFilteredPosts(prevFiltered => 
+          prevFiltered.map(post => 
+            post.id === postId ? {
+              ...post,
+              likes: result.newCount,
+              isLiked: result.liked
+            } : post
+          )
+        );
+      }
+      
       // Invalider le cache
       invalidatePostsCache();
       
     } catch (error) {
       console.error('Erreur lors du like:', error);
     }
-  };
+  }, [requireAuth, user, navigate, searchQuery]);
   
-  const handleUpvotePost = async (e: React.MouseEvent, postId: string) => {
+  const handleUpvotePost = useCallback(async (e: React.MouseEvent, postId: string) => {
     e.stopPropagation();
     
     if (requireAuth && !user) {
@@ -143,50 +149,42 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     try {
       const result = await togglePostUpvote(postId);
       
-      // Mettre à jour l'état local
-      const updatedPosts = posts.map(post => 
-        post.id === postId ? {
-          ...post,
-          upvotesCount: result.newCount,
-          isUpvoted: result.upvoted
-        } : post
-      );
+      // Fonction pour trier les posts 
+      const sortPosts = useCallback((postsToSort: ForumPost[]) => {
+        return [...postsToSort].sort((a, b) => {
+          const upvoteDiff = (b.upvotesCount || 0) - (a.upvotesCount || 0);
+          if (upvoteDiff === 0) {
+            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          }
+          return upvoteDiff;
+        });
+      }, []);
       
-      // Trier par upvotes puis par date de création pour les égalités
-      const sortedPosts = [...updatedPosts].sort((a, b) => {
-        const upvoteDiff = (b.upvotesCount || 0) - (a.upvotesCount || 0);
-        
-        // Si les nombres de upvotes sont égaux, trier par date de création (plus ancien en premier)
-        if (upvoteDiff === 0) {
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        }
-        
-        return upvoteDiff;
+      // Mettre à jour et trier les posts
+      setPosts(prevPosts => {
+        const updated = prevPosts.map(post => 
+          post.id === postId ? {
+            ...post,
+            upvotesCount: result.newCount,
+            isUpvoted: result.upvoted
+          } : post
+        );
+        return sortPosts(updated);
       });
       
-      setPosts(sortedPosts);
-      
-      // Mettre à jour aussi les posts filtrés avec le même tri
-      const updatedFiltered = filteredPosts.map(post => 
-        post.id === postId ? {
-          ...post,
-          upvotesCount: result.newCount,
-          isUpvoted: result.upvoted
-        } : post
-      );
-      
-      const sortedFiltered = [...updatedFiltered].sort((a, b) => {
-        const upvoteDiff = (b.upvotesCount || 0) - (a.upvotesCount || 0);
-        
-        // Si les nombres de upvotes sont égaux, trier par date de création (plus ancien en premier)
-        if (upvoteDiff === 0) {
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        }
-        
-        return upvoteDiff;
-      });
-      
-      setFilteredPosts(sortedFiltered);
+      // Mettre à jour les posts filtrés si nécessaire
+      if (searchQuery) {
+        setFilteredPosts(prevFiltered => {
+          const updated = prevFiltered.map(post => 
+            post.id === postId ? {
+              ...post,
+              upvotesCount: result.newCount,
+              isUpvoted: result.upvoted
+            } : post
+          );
+          return sortPosts(updated);
+        });
+      }
       
       // Invalider le cache
       invalidatePostsCache();
@@ -194,17 +192,25 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     } catch (error) {
       console.error('Erreur lors de l\'upvote:', error);
     }
-  };
+  }, [requireAuth, user, navigate, searchQuery]);
 
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-  };
+  }, []);
 
-  const handlePostCreated = () => {
-    // Invalider le cache et recharger les posts
+  const handlePostCreated = useCallback(() => {
     invalidatePostsCache();
     fetchPosts();
-  };
+  }, [fetchPosts]);
+
+  // Memoization du resultat de la recherche pour éviter des re-rendus
+  const searchResultText = useMemo(() => {
+    if (!searchQuery) return null;
+    
+    return filteredPosts.length === 0
+      ? "Aucun résultat trouvé"
+      : `${filteredPosts.length} résultat${filteredPosts.length > 1 ? 's' : ''} trouvé${filteredPosts.length > 1 ? 's' : ''}`;
+  }, [searchQuery, filteredPosts.length]);
 
   return (
     <div className="space-y-6">
@@ -218,10 +224,7 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
 
       {searchQuery && (
         <div className="text-sm text-gray-400">
-          {filteredPosts.length === 0
-            ? "Aucun résultat trouvé"
-            : `${filteredPosts.length} résultat${filteredPosts.length > 1 ? 's' : ''} trouvé${filteredPosts.length > 1 ? 's' : ''}`
-          }
+          {searchResultText}
         </div>
       )}
 
@@ -241,4 +244,5 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
   );
 };
 
-export default ForumSection;
+// Utiliser React.memo pour éviter les rendus inutiles
+export default React.memo(ForumSection);

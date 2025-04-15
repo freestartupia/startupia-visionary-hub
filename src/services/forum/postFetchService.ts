@@ -52,22 +52,50 @@ export const getForumPosts = async (): Promise<ForumPost[]> => {
     // Mapper les posts à notre interface TypeScript
     const posts = postsData.map(mapPostFromDB);
     
-    // Utiliser Promise.all pour paralléliser les requêtes de likes et replies
-    const postsWithReplies = await Promise.all(posts.map(async (post) => {
-      // Récupérer les réponses pour ce post
-      const replies = await getRepliesForPost(post.id);
+    // Optimisation: Vérifie les likes et upvotes en batch pour meilleure performance
+    const getRepliesAndLikesForPosts = async (posts: ForumPost[]): Promise<ForumPost[]> => {
+      // Récupérer les IDs des posts pour les requêtes en batch
+      const postIds = posts.map(post => post.id);
       
-      // Vérifier si l'utilisateur a aimé le post
-      let isLiked = false;
-      let isUpvoted = false;
+      // Récupérer tous les likes en une seule requête si l'utilisateur est connecté
+      let likedPostsIds: string[] = [];
+      let upvotedPostsIds: string[] = [];
       
       if (userId) {
-        isLiked = await getPostLikeStatus(post.id, userId);
-        isUpvoted = await checkPostUpvote(post.id);
+        // Charger les likes
+        const { data: likedData } = await supabase
+          .from('forum_post_likes')
+          .select('post_id')
+          .eq('user_id', userId)
+          .in('post_id', postIds);
+          
+        likedPostsIds = likedData?.map(like => like.post_id) || [];
+        
+        // Charger les upvotes
+        const { data: upvotedData } = await supabase
+          .from('post_upvotes')
+          .select('post_id')
+          .eq('user_id', userId)
+          .in('post_id', postIds);
+          
+        upvotedPostsIds = upvotedData?.map(upvote => upvote.post_id) || [];
       }
       
-      return { ...post, replies, isLiked, isUpvoted };
-    }));
+      // Récupérer tous les replies en parallèle
+      const repliesPromises = posts.map(post => getRepliesForPost(post.id));
+      const repliesResults = await Promise.all(repliesPromises);
+      
+      // Assembler le tout
+      return posts.map((post, index) => ({
+        ...post,
+        replies: repliesResults[index],
+        isLiked: likedPostsIds.includes(post.id),
+        isUpvoted: upvotedPostsIds.includes(post.id)
+      }));
+    };
+    
+    // Traiter par batch pour éviter de surcharger le serveur
+    const postsWithReplies = await getRepliesAndLikesForPosts(posts);
     
     // Mettre à jour le cache
     postsCache.data = postsWithReplies;
@@ -123,8 +151,14 @@ export const getForumPost = async (postId: string): Promise<ForumPost> => {
     let isUpvoted = false;
     
     if (userId) {
-      isLiked = await getPostLikeStatus(postId, userId);
-      isUpvoted = await checkPostUpvote(postId);
+      // Optimisation: Charger likes et upvotes en parallèle
+      const [likeStatus, upvoteStatus] = await Promise.all([
+        getPostLikeStatus(postId, userId),
+        checkPostUpvote(postId)
+      ]);
+      
+      isLiked = likeStatus;
+      isUpvoted = upvoteStatus;
     }
     
     const completePost = { ...post, replies, isLiked, isUpvoted };

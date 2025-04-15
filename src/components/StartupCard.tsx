@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowBigUp, ExternalLink } from 'lucide-react';
 import { Startup } from '@/types/startup';
@@ -7,11 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { hasUserVotedForStartup, voteForStartup, unvoteStartup } from '@/services/startupService';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+
 interface StartupCardProps {
   startup: Startup;
   onVoteChange?: () => void;
 }
-const StartupCard: React.FC<StartupCardProps> = ({
+
+// Utilisation de memo pour éviter les rendus inutiles
+const StartupCard: React.FC<StartupCardProps> = memo(({
   startup,
   onVoteChange
 }) => {
@@ -23,15 +27,38 @@ const StartupCard: React.FC<StartupCardProps> = ({
   } = useToast();
   const [hasVoted, setHasVoted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
   useEffect(() => {
+    let mounted = true;
+    
     if (user) {
-      checkUserVote();
+      // Ajouter un délai pour éviter de surcharger l'API
+      const timeout = setTimeout(() => {
+        checkUserVote(mounted);
+      }, 100);
+      
+      return () => {
+        mounted = false;
+        clearTimeout(timeout);
+      };
     }
+    
+    return () => {
+      mounted = false;
+    };
   }, [user, startup.id]);
-  const checkUserVote = async () => {
-    const voted = await hasUserVotedForStartup(startup.id);
-    setHasVoted(voted);
+  
+  const checkUserVote = async (mounted = true) => {
+    try {
+      const voted = await hasUserVotedForStartup(startup.id);
+      if (mounted) {
+        setHasVoted(voted);
+      }
+    } catch (err) {
+      console.error("Erreur lors de la vérification du vote:", err);
+    }
   };
+
   const handleVote = async () => {
     if (!user) {
       toast({
@@ -41,18 +68,21 @@ const StartupCard: React.FC<StartupCardProps> = ({
       });
       return;
     }
+    
+    // Optimistic UI update
+    const previousVoteState = hasVoted;
+    setHasVoted(!hasVoted);
     setIsLoading(true);
+    
     try {
-      if (hasVoted) {
+      if (previousVoteState) {
         await unvoteStartup(startup.id);
-        setHasVoted(false);
         toast({
           title: "Vote retiré",
           description: `Vous avez retiré votre vote pour ${startup.name}`
         });
       } else {
         await voteForStartup(startup.id);
-        setHasVoted(true);
         toast({
           title: "Vote enregistré",
           description: `Vous avez voté pour ${startup.name}`
@@ -60,6 +90,8 @@ const StartupCard: React.FC<StartupCardProps> = ({
       }
       if (onVoteChange) onVoteChange();
     } catch (error: any) {
+      // Rollback UI state on error
+      setHasVoted(previousVoteState);
       toast({
         title: "Erreur",
         description: error.message || "Une erreur est survenue lors du vote",
@@ -69,29 +101,35 @@ const StartupCard: React.FC<StartupCardProps> = ({
       setIsLoading(false);
     }
   };
-  const formatDate = (dateString?: string) => {
+
+  // Mise en cache du format de date pour éviter les calculs répétés
+  const formatDate = React.useCallback((dateString?: string) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
-  };
+  }, []);
+
+  // Optimisation du rendu conditionnel du logo
+  const logoElement = startup.logoUrl 
+    ? <img src={startup.logoUrl} alt={`${startup.name} logo`} className="w-full h-full object-cover" loading="lazy" /> 
+    : <span className="text-lg font-bold text-startupia-turquoise">{startup.name[0]}</span>;
+
   return <div className="glass-card border border-white/10 p-5 rounded-lg hover:border-startupia-turquoise/30 transition-colors">
       <div className="flex items-start gap-4">
         <div className="flex flex-col items-center">
           <Button size="sm" variant={hasVoted ? "default" : "outline"} className={`w-14 h-14 rounded-lg flex flex-col gap-1 ${hasVoted ? 'bg-startupia-turquoise text-black' : 'border-startupia-turquoise/30 hover:bg-startupia-turquoise/10'}`} onClick={handleVote} disabled={isLoading}>
             <ArrowBigUp className="h-5 w-5" />
-            <span className="text-xs font-bold text-rose-500">{startup.upvotes}</span>
+            <span className="text-xs font-bold">{startup.upvotes}</span>
           </Button>
         </div>
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center mb-2">
             <div className="h-10 w-10 rounded-md bg-startupia-turquoise/10 flex items-center justify-center overflow-hidden mr-3">
-              {startup.logoUrl ? <img src={startup.logoUrl} alt={`${startup.name} logo`} className="w-full h-full object-cover" /> : <span className="text-lg font-bold text-startupia-turquoise">
-                  {startup.name[0]}
-                </span>}
+              {logoElement}
             </div>
             
             <div>
@@ -126,5 +164,6 @@ const StartupCard: React.FC<StartupCardProps> = ({
         </div>
       </div>
     </div>;
-};
+});
+
 export default StartupCard;

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { CollaborativeProject, ProjectStatus } from '@/types/community';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -8,6 +8,13 @@ import { supabase } from '@/integrations/supabase/client';
 import ProposeProjectModal from './project/ProposeProjectModal';
 import ProjectFilters from './project/ProjectFilters';
 import ProjectList from './project/ProjectList';
+
+// Créer un cache pour les projets
+let projectsCache = {
+  data: null as CollaborativeProject[] | null,
+  timestamp: 0,
+  ttl: 5 * 60 * 1000 // 5 minutes
+};
 
 interface CollaborativeProjectsProps {
   requireAuth?: boolean;
@@ -26,13 +33,20 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
     'all', 'Idée', 'En cours', 'Recherche de collaborateurs', 'MVP', 'Lancé'
   ];
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
-  const fetchProjects = async () => {
+  // Optimiser le chargement des projets avec mise en cache
+  const fetchProjects = useCallback(async () => {
     setIsLoading(true);
     try {
+      // Vérifier si le cache est valide
+      const now = Date.now();
+      if (projectsCache.data && (now - projectsCache.timestamp < projectsCache.ttl)) {
+        console.log("Utilisation des données en cache pour les projets");
+        setProjects(projectsCache.data);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log("Chargement des projets depuis Supabase");
       const { data, error } = await supabase
         .from('collaborative_projects')
         .select('*')
@@ -45,6 +59,10 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
       
       if (data && data.length > 0) {
         setProjects(data as CollaborativeProject[]);
+        
+        // Mettre à jour le cache
+        projectsCache.data = data as CollaborativeProject[];
+        projectsCache.timestamp = now;
       } else {
         setProjects([]);
         console.log('No projects found in the database');
@@ -53,15 +71,21 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
       console.error('Error fetching projects:', err);
       setProjects([]);
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 100);
     }
-  };
+  }, []);
   
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+  
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-  };
+  }, []);
 
-  const handleLike = async (projectId: string) => {
+  const handleLike = useCallback(async (projectId: string) => {
     if (requireAuth && !user) {
       toast.error("Vous devez être connecté pour aimer un projet");
       navigate('/auth');
@@ -69,6 +93,7 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
     }
 
     try {
+      // Mise à jour optimiste de l'interface
       const projectIndex = projects.findIndex(p => p.id === projectId);
       if (projectIndex === -1) return;
 
@@ -79,6 +104,10 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
       };
 
       setProjects(updatedProjects);
+      
+      // Invalider le cache
+      projectsCache.data = null;
+      projectsCache.timestamp = 0;
       
       try {
         const { error } = await supabase
@@ -96,9 +125,9 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
       console.error('Error liking project:', err);
       toast.error("Une erreur est survenue");
     }
-  };
+  }, [projects, requireAuth, user, navigate]);
 
-  const handleContact = (projectId: string) => {
+  const handleContact = useCallback((projectId: string) => {
     if (requireAuth && !user) {
       toast.error("Vous devez être connecté pour contacter l'initiateur du projet");
       navigate('/auth');
@@ -106,9 +135,9 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
     }
     
     toast.success("Fonctionnalité en développement - Contact initiateur");
-  };
+  }, [requireAuth, user, navigate]);
   
-  const handleProposeProject = () => {
+  const handleProposeProject = useCallback(() => {
     if (requireAuth && !user) {
       toast.error("Vous devez être connecté pour proposer un projet");
       navigate('/auth');
@@ -116,21 +145,32 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
     }
     
     setIsModalOpen(true);
-  };
+  }, [requireAuth, user, navigate]);
 
-  const handleProjectSuccess = (newProject: CollaborativeProject) => {
-    setProjects([newProject, ...projects]);
-  };
+  const handleProjectSuccess = useCallback((newProject: CollaborativeProject) => {
+    // Mise à jour optimiste
+    setProjects(prev => [newProject, ...prev]);
+    
+    // Invalider le cache
+    projectsCache.data = null;
+    projectsCache.timestamp = 0;
+  }, []);
   
-  const filteredProjects = projects
-    .filter(project => selectedStatus === 'all' || project.status === selectedStatus)
-    .filter(project => 
-      searchTerm === '' || 
-      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+  // Optimiser le filtrage avec useMemo
+  const filteredProjects = useMemo(() => {
+    return projects
+      .filter(project => selectedStatus === 'all' || project.status === selectedStatus)
+      .filter(project => {
+        if (searchTerm === '') return true;
+        
+        const query = searchTerm.toLowerCase();
+        return project.title.toLowerCase().includes(query) ||
+          project.description.toLowerCase().includes(query) ||
+          project.skills?.some(skill => skill.toLowerCase().includes(query));
+      });
+  }, [projects, selectedStatus, searchTerm]);
   
+  // Contenu de chargement optimisé
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -169,4 +209,5 @@ const CollaborativeProjects: React.FC<CollaborativeProjectsProps> = ({ requireAu
   );
 };
 
-export default CollaborativeProjects;
+// Utiliser React.memo pour éviter les rendus inutiles
+export default React.memo(CollaborativeProjects);

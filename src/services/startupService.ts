@@ -1,10 +1,24 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Startup } from '@/types/startup';
 import { useToast } from '@/hooks/use-toast';
 
+// Cache pour éviter des requêtes répétées
+let startupsCache = {
+  data: null as Startup[] | null,
+  timestamp: 0,
+  ttl: 5 * 60 * 1000 // 5 minutes de TTL
+};
+
 // Récupérer toutes les startups triées par nombre de votes
 export async function fetchStartups() {
   try {
+    // Utiliser le cache si disponible et valide
+    const now = Date.now();
+    if (startupsCache.data && (now - startupsCache.timestamp < startupsCache.ttl)) {
+      return startupsCache.data;
+    }
+
     const { data, error } = await supabase
       .from('startups')
       .select('*')
@@ -13,16 +27,32 @@ export async function fetchStartups() {
       
     if (error) throw error;
     
-    return data.map(transformStartupFromDB);
+    const startups = data.map(transformStartupFromDB);
+    
+    // Mettre à jour le cache
+    startupsCache.data = startups;
+    startupsCache.timestamp = now;
+    
+    return startups;
   } catch (error) {
     console.error('Erreur lors de la récupération des startups:', error);
     return [];
   }
 }
 
+// Cache pour les startups individuelles
+const startupDetailCache = new Map<string, { data: Startup, timestamp: number }>();
+
 // Récupérer une startup par son ID
 export async function fetchStartupById(id: string) {
   try {
+    // Vérifier le cache
+    const now = Date.now();
+    const cached = startupDetailCache.get(id);
+    if (cached && (now - cached.timestamp < startupsCache.ttl)) {
+      return cached.data;
+    }
+    
     const { data, error } = await supabase
       .from('startups')
       .select('*')
@@ -31,7 +61,12 @@ export async function fetchStartupById(id: string) {
       
     if (error) throw error;
     
-    return transformStartupFromDB(data);
+    const startup = transformStartupFromDB(data);
+    
+    // Mettre à jour le cache
+    startupDetailCache.set(id, { data: startup, timestamp: now });
+    
+    return startup;
   } catch (error) {
     console.error(`Erreur lors de la récupération de la startup ${id}:`, error);
     return null;
@@ -88,6 +123,10 @@ export async function createStartup(startup: Omit<Startup, 'id' | 'createdAt' | 
       
     if (error) throw error;
     
+    // Invalider le cache après création
+    startupsCache.data = null;
+    startupsCache.timestamp = 0;
+    
     return transformStartupFromDB(data);
   } catch (error) {
     console.error('Erreur lors de la création de la startup:', error);
@@ -112,6 +151,11 @@ export async function voteForStartup(startupId: string) {
       throw error;
     }
     
+    // Invalider le cache après un vote
+    startupsCache.data = null;
+    startupsCache.timestamp = 0;
+    startupDetailCache.delete(startupId);
+    
     return true;
   } catch (error) {
     console.error(`Erreur lors du vote pour la startup ${startupId}:`, error);
@@ -132,6 +176,11 @@ export async function unvoteStartup(startupId: string) {
       .eq('user_id', user.id);
       
     if (error) throw error;
+    
+    // Invalider le cache après un unvote
+    startupsCache.data = null;
+    startupsCache.timestamp = 0;
+    startupDetailCache.delete(startupId);
     
     return true;
   } catch (error) {

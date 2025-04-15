@@ -86,12 +86,12 @@ const StartupCard: React.FC<StartupCardProps> = ({ startup, onVoteChange }) => {
           <Button 
             size="sm"
             variant={hasVoted ? "default" : "outline"}
-            className={`w-14 h-14 rounded-lg flex flex-col gap-1 ${hasVoted ? 'bg-startupia-turquoise text-white' : 'border-startupia-turquoise/30 hover:bg-startupia-turquoise/10'}`}
+            className={`w-14 h-14 rounded-lg flex flex-col gap-1 ${hasVoted ? 'bg-startupia-turquoise text-black' : 'border-startupia-turquoise/30 hover:bg-startupia-turquoise/10'}`}
             onClick={handleVote}
             disabled={isLoading}
           >
             <ArrowBigUp className="h-5 w-5" />
-            <span className="text-xs font-bold">{startup.upvotes}</span>
+            <span className="text-xs font-bold text-black">{startup.upvotes}</span>
           </Button>
         </div>
         

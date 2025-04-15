@@ -144,8 +144,8 @@ const ChatContent = ({ onClose, isMobile = false }: { onClose: () => void, isMob
               className={cn(
                 "max-w-[80%] rounded-xl p-3",
                 message.sender === 'user'
-                  ? "bg-startupia-turquoise/90 text-white"
-                  : "bg-white/10 text-white"
+                  ? "bg-startupia-turquoise/90 text-white" // User message stays white text
+                  : "bg-startupia-turquoise text-black" // Bot message now has black text on yellow background
               )}
             >
               {message.sender === 'bot' 
@@ -200,3 +200,5 @@ const ChatContent = ({ onClose, isMobile = false }: { onClose: () => void, isMob
     </div>
   );
 };
+
+export default ChatbotButton;

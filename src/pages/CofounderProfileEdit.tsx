@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,7 +7,7 @@ import { getCofounderProfile, updateCofounderProfile, createCofounderProfile, de
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
-import { CofounderProfile, ProfileType, Role, Sector, Objective, Availability, Region, AITool, ProjectStage } from '@/types/cofounders';
+import { CofounderProfile, ProfileType, Role, Sector, Objective, Availability, Region, AITool, ProjectStage, ContactMethodType } from '@/types/cofounders';
 import { 
   Form,
   FormControl,
@@ -14,6 +15,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,6 +55,8 @@ const formSchema = z.object({
   projectName: z.string().optional().default(""),
   projectStage: z.string().optional().default(""),
   hasAIBadge: z.boolean().default(false),
+  contactMethod: z.string().min(3, "Veuillez indiquer comment vous souhaitez être contacté"),
+  contactMethodType: z.enum(['email', 'linkedin', 'phone', 'other']).default('email'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -141,7 +145,9 @@ const CofounderProfileEdit = () => {
       websiteUrl: '',
       projectName: '',
       projectStage: '',
-      hasAIBadge: false
+      hasAIBadge: false,
+      contactMethod: '',
+      contactMethodType: 'email' as ContactMethodType,
     }
   });
 
@@ -164,7 +170,9 @@ const CofounderProfileEdit = () => {
         websiteUrl: profile.websiteUrl || '',
         projectName: profile.projectName || '',
         projectStage: profile.projectStage || '',
-        hasAIBadge: profile.hasAIBadge || false
+        hasAIBadge: profile.hasAIBadge || false,
+        contactMethod: profile.contactMethod || '',
+        contactMethodType: profile.contactMethodType || 'email',
       });
     }
   }, [profile, form, isNewProfile]);
@@ -181,7 +189,9 @@ const CofounderProfileEdit = () => {
       seekingRoles: data.seekingRoles as Role[],
       aiTools: data.aiTools as AITool[],
       projectStage: data.projectStage as ProjectStage | undefined,
-      photoUrl: avatarUrl || data.photoUrl
+      photoUrl: avatarUrl || data.photoUrl,
+      contactMethod: data.contactMethod,
+      contactMethodType: data.contactMethodType as ContactMethodType,
     };
 
     saveMutation.mutate(profileData);
@@ -202,6 +212,7 @@ const CofounderProfileEdit = () => {
   }
 
   const profileType = form.watch('profileType');
+  const contactMethodType = form.watch('contactMethodType');
 
   return (
     <ProtectedRoute>
@@ -324,6 +335,68 @@ const CofounderProfileEdit = () => {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                {/* Contact Method section */}
+                <div className="border border-white/10 p-4 rounded-md bg-white/5">
+                  <h3 className="text-lg font-medium mb-3">Comment souhaitez-vous être contacté ?</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                    <FormField
+                      control={form.control}
+                      name="contactMethodType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Type de contact</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="bg-black/20 border-white/20">
+                                <SelectValue placeholder="Choisir un type de contact" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="email">Email</SelectItem>
+                              <SelectItem value="linkedin">LinkedIn</SelectItem>
+                              <SelectItem value="phone">Téléphone</SelectItem>
+                              <SelectItem value="other">Autre</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="contactMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {contactMethodType === 'email' ? 'Adresse email' : 
+                             contactMethodType === 'phone' ? 'Numéro de téléphone' : 
+                             contactMethodType === 'linkedin' ? 'Utilisateur LinkedIn (ou lien complet)' : 
+                             'Moyen de contact'}
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder={
+                                contactMethodType === 'email' ? 'votre.email@exemple.com' : 
+                                contactMethodType === 'phone' ? '+33612345678' : 
+                                contactMethodType === 'linkedin' ? 'votre-nom-linkedin' : 
+                                'Précisez votre moyen de contact'
+                              } 
+                              {...field} 
+                              className="bg-black/20 border-white/20" 
+                            />
+                          </FormControl>
+                          <FormDescription className="text-white/60 text-xs">
+                            Cette information sera utilisée pour vous contacter directement quand quelqu'un clique sur le bouton "Contact".
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 {profileType === 'project-owner' && (

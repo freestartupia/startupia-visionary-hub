@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, MessageCircle, Award } from 'lucide-react';
+import { ExternalLink, MessageCircle, Award, Mail, Linkedin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CofounderProfile } from '@/types/cofounders';
 import { toast } from 'sonner';
@@ -57,8 +57,46 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
       navigate('/auth');
       return;
     }
+    
+    // Check if the profile has a preferred contact method
+    if (!profile.contactMethod) {
+      toast.error("Ce profil n'a pas spécifié de méthode de contact");
+      return;
+    }
+    
+    // Handle contact based on the preferred method
+    handleContact();
     onMatch();
-    toast.success("Demande de contact envoyée !");
+  };
+  
+  // Handle contact based on preferred method
+  const handleContact = () => {
+    if (!profile.contactMethod) return;
+    
+    switch (profile.contactMethodType) {
+      case 'linkedin':
+        if (profile.linkedinUrl) {
+          window.open(profile.linkedinUrl, '_blank');
+          toast.success("Redirection vers LinkedIn");
+        } else {
+          toast.error("Lien LinkedIn non disponible");
+        }
+        break;
+      case 'email':
+        if (profile.contactMethod.includes('@')) {
+          window.open(`mailto:${profile.contactMethod}`, '_blank');
+          toast.success("Ouverture de votre client mail");
+        } else {
+          toast.error("Adresse email non valide");
+        }
+        break;
+      default:
+        // For other methods (phone, social media, etc.)
+        toast.success(`Méthode de contact: ${profile.contactMethod}`);
+        navigator.clipboard.writeText(profile.contactMethod)
+          .then(() => toast.success("Coordonnées copiées dans le presse-papier"))
+          .catch(() => toast.error("Impossible de copier les coordonnées"));
+    }
   };
 
   // Get initials for avatar fallback
@@ -82,6 +120,20 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
   const cardBorderColor = isProjectOwner
     ? 'hover:border-startupia-gold/50'
     : 'hover:border-startupia-turquoise/50';
+
+  // Determine contact icon based on preferred method
+  const getContactIcon = () => {
+    if (!profile.contactMethodType) return <MessageCircle size={isMobile ? 12 : 14} className="mr-1" />;
+    
+    switch (profile.contactMethodType) {
+      case 'linkedin':
+        return <Linkedin size={isMobile ? 12 : 14} className="mr-1" />;
+      case 'email':
+        return <Mail size={isMobile ? 12 : 14} className="mr-1" />;
+      default:
+        return <MessageCircle size={isMobile ? 12 : 14} className="mr-1" />;
+    }
+  };
 
   return (
     <>
@@ -198,7 +250,7 @@ const ProfileCard = ({ profile, onMatch }: ProfileCardProps) => {
             className={`flex-1 text-black text-[10px] sm:text-xs px-1 sm:px-3 ${isProjectOwner ? 'bg-startupia-gold hover:bg-startupia-gold/90' : 'bg-startupia-turquoise hover:bg-startupia-turquoise/90'}`}
             size={isMobile ? "sm" : "default"}
           >
-            <MessageCircle size={isMobile ? 12 : 14} className="mr-1" />
+            {getContactIcon()}
             Contact
           </Button>
           

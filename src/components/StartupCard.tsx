@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowBigUp, ExternalLink, MessageSquare } from 'lucide-react';
@@ -15,7 +14,6 @@ interface StartupCardProps {
   index?: number;
 }
 
-// Utilisation de memo pour éviter les rendus inutiles
 const StartupCard: React.FC<StartupCardProps> = memo(({
   startup,
   onVoteChange,
@@ -34,7 +32,6 @@ const StartupCard: React.FC<StartupCardProps> = memo(({
     let mounted = true;
     
     if (user) {
-      // Ajouter un délai pour éviter de surcharger l'API
       const timeout = setTimeout(() => {
         checkUserVote(mounted);
       }, 100);
@@ -71,7 +68,6 @@ const StartupCard: React.FC<StartupCardProps> = memo(({
       return;
     }
     
-    // Optimistic UI update
     const previousVoteState = hasVoted;
     setHasVoted(!hasVoted);
     setIsLoading(true);
@@ -92,7 +88,6 @@ const StartupCard: React.FC<StartupCardProps> = memo(({
       }
       if (onVoteChange) onVoteChange();
     } catch (error: any) {
-      // Rollback UI state on error
       setHasVoted(previousVoteState);
       toast({
         title: "Erreur",
@@ -104,7 +99,6 @@ const StartupCard: React.FC<StartupCardProps> = memo(({
     }
   };
 
-  // Mise en cache du format de date pour éviter les calculs répétés
   const formatDate = React.useCallback((dateString?: string) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -146,7 +140,11 @@ const StartupCard: React.FC<StartupCardProps> = memo(({
             <Button 
               variant="ghost" 
               size="sm" 
-              className={`rounded-full flex items-center gap-1 px-3 py-1 ${hasVoted ? 'bg-startupia-turquoise/20 text-startupia-turquoise' : 'bg-white/10'}`}
+              className={`rounded-full flex items-center gap-1 px-3 py-1 ${
+                hasVoted 
+                  ? 'bg-startupia-turquoise/20 text-startupia-turquoise text-black' 
+                  : 'bg-white/10'
+              }`}
               onClick={handleVote}
               disabled={isLoading}
             >

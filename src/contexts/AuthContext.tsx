@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logAuditEvent } from '@/services/auditService';
 
 interface AuthContextType {
   user: User | null;
@@ -40,10 +41,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             title: "Connecté avec succès",
             description: "Bienvenue sur Startupia.fr",
           });
+          
+          // Log successful login to audit
+          logAuditEvent({
+            event_type: 'auth.login',
+            user_id: newSession?.user?.id,
+            details: { method: 'password' }
+          });
         } else if (event === 'SIGNED_OUT') {
           toast({
             title: "Déconnecté",
             description: "À bientôt !",
+          });
+          
+          // Log logout to audit
+          logAuditEvent({
+            event_type: 'auth.logout',
+            user_id: user?.id // Using the previous user before logout
+          });
+        } else if (event === 'PASSWORD_RECOVERY') {
+          logAuditEvent({
+            event_type: 'auth.password_reset',
+            user_id: newSession?.user?.id
+          });
+        } else if (event === 'USER_UPDATED') {
+          logAuditEvent({
+            event_type: 'auth.password_change',
+            user_id: newSession?.user?.id
           });
         }
       }
@@ -62,9 +86,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, [toast, user?.id]);
 
   const handleSignOut = async () => {
+    // Log before sign out while we still have the user ID
+    if (user) {
+      logAuditEvent({
+        event_type: 'auth.logout',
+        user_id: user.id
+      });
+    }
+    
     await supabase.auth.signOut();
   };
 

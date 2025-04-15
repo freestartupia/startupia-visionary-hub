@@ -41,7 +41,7 @@ const ProfileBasicInfo: React.FC<ProfileBasicInfoProps> = ({ form }) => {
                   <SelectValue placeholder="Sélectionner un type" />
                 </SelectTrigger>
               </FormControl>
-              <SelectContent>
+              <SelectContent className="bg-zinc-900 border-white/20">
                 <SelectItem value="collaborator">Collaborateur</SelectItem>
                 <SelectItem value="project-owner">Porteur de projet</SelectItem>
               </SelectContent>
@@ -83,7 +83,7 @@ const ProfileBasicInfo: React.FC<ProfileBasicInfoProps> = ({ form }) => {
                   <SelectValue placeholder="Sélectionner un secteur" />
                 </SelectTrigger>
               </FormControl>
-              <SelectContent>
+              <SelectContent className="bg-zinc-900 border-white/20">
                 <SelectItem value="Santé">Santé</SelectItem>
                 <SelectItem value="Education">Education</SelectItem>
                 <SelectItem value="Finance">Finance</SelectItem>

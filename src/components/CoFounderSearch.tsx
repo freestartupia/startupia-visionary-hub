@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useMediaQuery } from '@/hooks/use-mobile';
 
 interface CoFounderSearchProps {
   profiles: CofounderProfile[];
@@ -40,6 +42,7 @@ const CoFounderSearch = ({ profiles, requireAuth = false, onMatchRequest }: CoFo
   const [showFilters, setShowFilters] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   
   // Filter states
   const [profileType, setProfileType] = useState<ProfileType | 'all'>('all');
@@ -168,7 +171,7 @@ const CoFounderSearch = ({ profiles, requireAuth = false, onMatchRequest }: CoFo
                   <SelectTrigger className="bg-black/20 border-startupia-turquoise/30">
                     <SelectValue placeholder="Tous les profils" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-zinc-900 border-startupia-turquoise/30">
                     <SelectItem value="all">Tous les profils</SelectItem>
                     <SelectItem value="project-owner">Porteurs de projets</SelectItem>
                     <SelectItem value="collaborator">Collaborateurs</SelectItem>
@@ -182,7 +185,7 @@ const CoFounderSearch = ({ profiles, requireAuth = false, onMatchRequest }: CoFo
                   <SelectTrigger className="bg-black/20 border-startupia-turquoise/30">
                     <SelectValue placeholder="Tous les secteurs" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-zinc-900 border-startupia-turquoise/30">
                     <SelectItem value="all">Tous les secteurs</SelectItem>
                     {sectors.map((sector) => (
                       <SelectItem key={sector} value={sector}>
@@ -199,7 +202,7 @@ const CoFounderSearch = ({ profiles, requireAuth = false, onMatchRequest }: CoFo
                   <SelectTrigger className="bg-black/20 border-startupia-turquoise/30">
                     <SelectValue placeholder="Tous les rôles" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-zinc-900 border-startupia-turquoise/30">
                     <SelectItem value="all">Tous les rôles</SelectItem>
                     {roles.map((role) => (
                       <SelectItem key={role} value={role}>
@@ -216,7 +219,7 @@ const CoFounderSearch = ({ profiles, requireAuth = false, onMatchRequest }: CoFo
                   <SelectTrigger className="bg-black/20 border-startupia-turquoise/30">
                     <SelectValue placeholder="Toutes les régions" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-zinc-900 border-startupia-turquoise/30">
                     <SelectItem value="all">Toutes les régions</SelectItem>
                     {regions.map((region) => (
                       <SelectItem key={region} value={region}>
@@ -233,7 +236,7 @@ const CoFounderSearch = ({ profiles, requireAuth = false, onMatchRequest }: CoFo
                   <SelectTrigger className="bg-black/20 border-startupia-turquoise/30">
                     <SelectValue placeholder="Tous les objectifs" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-zinc-900 border-startupia-turquoise/30">
                     <SelectItem value="all">Tous les objectifs</SelectItem>
                     {objectives.map((objective) => (
                       <SelectItem key={objective} value={objective}>
@@ -287,7 +290,7 @@ const CoFounderSearch = ({ profiles, requireAuth = false, onMatchRequest }: CoFo
 
       {/* Profile cards */}
       {filteredProfiles.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {filteredProfiles.map((profile) => (
             <ProfileCard 
               key={profile.id} 

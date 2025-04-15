@@ -28,6 +28,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ form }) => {
           id="projectName"
           {...form.register('projectName')}
           placeholder="Nom de votre projet ou startup"
+          className="bg-black/20 border-white/20"
         />
       </div>
 
@@ -37,10 +38,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ form }) => {
           value={form.watch('projectStage')}
           onValueChange={(value) => form.setValue('projectStage', value as ProjectStage)}
         >
-          <SelectTrigger id="projectStage">
+          <SelectTrigger id="projectStage" className="bg-black/20 border-white/20">
             <SelectValue placeholder="Sélectionner un stade" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-zinc-900 border-white/20">
             <SelectItem value="non_specifie">Sélectionner un stade</SelectItem>
             <SelectItem value="Idée">Idée</SelectItem>
             <SelectItem value="MVP">MVP</SelectItem>
@@ -57,6 +58,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ form }) => {
           {...form.register('vision')}
           placeholder="Décrivez votre vision à long terme pour ce projet"
           rows={3}
+          className="bg-black/20 border-white/20 min-h-[100px]"
         />
       </div>
     </div>

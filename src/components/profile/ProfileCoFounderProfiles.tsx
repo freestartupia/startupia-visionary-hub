@@ -64,10 +64,10 @@ const ProfileCoFounderProfiles = () => {
   };
 
   return (
-    <div className="glass-card p-6 rounded-lg">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Vos profils cofondateur</h2>
-        <Button onClick={() => navigate('/cofounder/create')} className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black">
+    <div className="glass-card p-4 md:p-6 rounded-lg">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <h2 className="text-xl font-semibold mb-4 md:mb-0">Vos profils cofondateur</h2>
+        <Button onClick={() => navigate('/cofounder/create')} className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black w-full md:w-auto">
           <Plus size={16} className="mr-2" />
           Créer un profil
         </Button>
@@ -147,7 +147,7 @@ const ProfileCoFounderProfiles = () => {
 
       {/* Confirmation dialog for deleting a profile */}
       <AlertDialog open={!!profileToDelete} onOpenChange={(open) => !open && setProfileToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-zinc-900 border-white/10">
           <AlertDialogHeader>
             <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer ce profil?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -155,7 +155,7 @@ const ProfileCoFounderProfiles = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel className="bg-transparent border-white/20 text-white hover:bg-white/10">Annuler</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteConfirm}
               className="bg-red-500 hover:bg-red-600"

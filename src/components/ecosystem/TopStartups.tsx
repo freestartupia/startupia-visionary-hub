@@ -20,6 +20,7 @@ const TopStartups = () => {
         .slice(0, 4);
       
       console.log('Top startups:', topMockStartups.map(s => `${s.name}: ${s.upvotes} upvotes`));
+      console.log('IDs des startups récupérées:', topMockStartups.map(s => s.id));
       setStartups(topMockStartups);
     } catch (error) {
       console.error('Exception fetching top startups:', error);

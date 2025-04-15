@@ -4,16 +4,20 @@ import { mockStartups } from '@/data/mockStartups';
 import { toast } from 'sonner';
 
 /**
- * Fonction simplifiée pour upvoter une startup
+ * Fonction pour upvoter une startup
  * Utilise des données mockées pour la démonstration
  */
 export const upvoteStartup = async (startupId: string): Promise<boolean> => {
   try {
+    console.log('Tentative d\'upvote pour la startup:', startupId);
+    
     // Trouver la startup dans les données mockées
     const startupIndex = mockStartups.findIndex(s => s.id === startupId);
     
     if (startupIndex === -1) {
       console.error('Startup non trouvée:', startupId);
+      console.log('IDs disponibles:', mockStartups.map(s => s.id));
+      toast.error("Startup non trouvée");
       return false;
     }
     
@@ -32,15 +36,19 @@ export const upvoteStartup = async (startupId: string): Promise<boolean> => {
 };
 
 /**
- * Fonction simplifiée pour enlever un upvote
+ * Fonction pour enlever un upvote
  */
 export const removeStartupUpvote = async (startupId: string): Promise<boolean> => {
   try {
+    console.log('Tentative de retrait d\'upvote pour la startup:', startupId);
+    
     // Trouver la startup dans les données mockées
     const startupIndex = mockStartups.findIndex(s => s.id === startupId);
     
     if (startupIndex === -1) {
       console.error('Startup non trouvée:', startupId);
+      console.log('IDs disponibles:', mockStartups.map(s => s.id));
+      toast.error("Startup non trouvée");
       return false;
     }
     

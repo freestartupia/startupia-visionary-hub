@@ -25,6 +25,7 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Mettre à jour le compteur si la valeur change
     setUpvoteCount(startup.upvotes || 0);
     
     const checkUpvoteStatus = async () => {
@@ -46,6 +47,8 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
     setIsUpvoting(true);
     
     try {
+      console.log('Tentative de vote pour startup:', startup.id, startup.name);
+      
       if (upvoted) {
         const success = await removeStartupUpvote(startup.id);
         if (success) {
@@ -57,7 +60,6 @@ const StartupCard = ({ startup, refetchStartups }: StartupCardProps) => {
           }
         }
       } else {
-        console.log('Upvoting startup:', startup.id);
         const success = await upvoteStartup(startup.id);
         if (success) {
           setUpvoted(true);

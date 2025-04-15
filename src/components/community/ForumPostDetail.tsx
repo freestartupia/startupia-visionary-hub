@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -98,13 +97,15 @@ const ForumPostDetail = () => {
           if (post && post.replies) {
             // On vérifie si la réponse likée appartient à ce post
             const replyId = payload.new?.reply_id || payload.old?.reply_id;
-            const replyExists = post.replies.some(reply => 
-              reply.id === replyId || 
-              (reply.nestedReplies && reply.nestedReplies.some(nested => nested.id === replyId))
-            );
-            
-            if (replyExists) {
-              fetchPost();
+            if (post.replies && Array.isArray(post.replies)) {
+              const replyExists = post.replies.some(reply => 
+                reply.id === replyId || 
+                (reply.nestedReplies && reply.nestedReplies.some(nested => nested.id === replyId))
+              );
+              
+              if (replyExists) {
+                fetchPost();
+              }
             }
           }
         }
@@ -126,7 +127,7 @@ const ForumPostDetail = () => {
           console.log('Nouvelle réponse imbriquée détectée:', payload);
           
           // Vérifier si la réponse imbriquée appartient à ce post
-          if (post && post.replies) {
+          if (post && post.replies && Array.isArray(post.replies)) {
             const replyParentId = payload.new.reply_parent_id;
             const belongsToPost = post.replies.some(reply => reply.id === replyParentId);
             
@@ -217,7 +218,7 @@ const ForumPostDetail = () => {
       const result = await toggleReplyLike(replyId);
       
       // Mise à jour des likes dans la UI
-      if (post && post.replies) {
+      if (post && post.replies && Array.isArray(post.replies)) {
         setPost(prev => {
           if (!prev) return null;
           

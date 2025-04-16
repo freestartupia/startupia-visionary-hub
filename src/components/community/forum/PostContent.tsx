@@ -5,15 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ThumbsUp, Eye, MessageCircle, Pin, ArrowUp } from 'lucide-react';
+import { Eye, MessageCircle, Pin, ArrowUp } from 'lucide-react';
 
 interface PostContentProps {
   post: ForumPost;
-  onLike: () => void;
   onUpvote?: () => void;
 }
 
-const PostContent: React.FC<PostContentProps> = ({ post, onLike, onUpvote }) => {
+const PostContent: React.FC<PostContentProps> = ({ post, onUpvote }) => {
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'dd MMMM yyyy à HH:mm', { locale: fr });
@@ -67,14 +66,6 @@ const PostContent: React.FC<PostContentProps> = ({ post, onLike, onUpvote }) => 
         </div>
         
         <div className="flex flex-wrap gap-6 pt-4 border-t border-white/20">
-          <button 
-            onClick={onLike}
-            className={`flex items-center gap-2 px-3 py-2 rounded-full ${post.isLiked ? "bg-startupia-turquoise/20 text-white border border-startupia-turquoise/30" : "bg-white/5 text-white/70 hover:bg-white/10 border border-white/10 hover:text-white"} transition-all`}
-          >
-            <ThumbsUp size={18} className={post.isLiked ? "text-startupia-turquoise" : ""} />
-            <span>{post.likes} j'aime{post.likes > 1 ? 's' : ''}</span>
-          </button>
-
           {onUpvote && (
             <button 
               onClick={onUpvote}

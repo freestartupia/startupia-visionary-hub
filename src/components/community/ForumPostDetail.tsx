@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { ForumPost, ForumReply } from '@/types/community';
 import { useForumPost } from '@/hooks/use-forum-query';
-import { togglePostLike } from '@/services/forum/postLikeService';
 import { toggleReplyLike } from '@/services/forum/replyLikeService';
 import { togglePostUpvote } from '@/services/forumUpvoteService';
 import { incrementPostViews } from '@/services/forum/postViewService';
@@ -236,21 +235,6 @@ const ForumPostDetail = () => {
     document.getElementById('reply-form')?.scrollIntoView({ behavior: 'smooth' });
   };
   
-  const handleLikePost = async () => {
-    if (!user || !post) {
-      toast.error('Vous devez être connecté pour liker');
-      navigate('/auth');
-      return;
-    }
-    
-    try {
-      await togglePostLike(post.id);
-    } catch (error) {
-      console.error('Erreur lors du like:', error);
-      toast.error('Impossible de liker le post');
-    }
-  };
-  
   const handleUpvotePost = async () => {
     if (!user || !post) {
       toast.error('Vous devez être connecté pour upvoter');
@@ -312,7 +296,6 @@ const ForumPostDetail = () => {
       
       <PostContent 
         post={post} 
-        onLike={handleLikePost} 
         onUpvote={handleUpvotePost}
       />
       

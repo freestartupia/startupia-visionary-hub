@@ -24,7 +24,7 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
   const [sortBy, setSortBy] = useState<PostSortOption>('recent');
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { handleLikePost, handleUpvotePost } = useForumActions(requireAuth);
+  const { handleUpvotePost } = useForumActions(requireAuth);
 
   // Optimisation: utiliser useCallback pour empêcher les recreations inutiles
   const fetchPosts = useCallback(async (isMounted = true) => {
@@ -107,10 +107,6 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
     fetchPosts();
   }, [fetchPosts]);
 
-  const handleLikePostWrapper = useCallback((e: React.MouseEvent, postId: string) => {
-    handleLikePost(e, postId, user, posts, setPosts, setFilteredPosts, searchQuery);
-  }, [handleLikePost, user, posts, searchQuery]);
-
   const handleUpvotePostWrapper = useCallback((e: React.MouseEvent, postId: string) => {
     handleUpvotePost(e, postId, user, posts, setPosts, setFilteredPosts, searchQuery);
   }, [handleUpvotePost, user, posts, searchQuery]);
@@ -135,7 +131,6 @@ const ForumSection: React.FC<ForumSectionProps> = ({ requireAuth = false }) => {
         <ForumPostList
           posts={filteredPosts}
           isLoading={false}
-          onLikePost={handleLikePostWrapper}
           onUpvotePost={handleUpvotePostWrapper}
           onPostCreated={handlePostCreated}
           requireAuth={requireAuth}

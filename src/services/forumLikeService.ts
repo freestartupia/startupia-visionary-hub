@@ -1,5 +1,4 @@
 
-// Re-export all like-related services for backward compatibility
+// Re-export reply like service for backward compatibility
 export type { LikeResponse } from '@/types/community';
-export { getPostLikeStatus, togglePostLike } from './forum/postLikeService';
 export { getReplyLikeStatus, toggleReplyLike } from './forum/replyLikeService';

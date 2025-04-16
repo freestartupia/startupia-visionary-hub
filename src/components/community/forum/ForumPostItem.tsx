@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ThumbsUp, MessageCircle, Eye, Pin, ArrowUp } from 'lucide-react';
+import { MessageCircle, Eye, Pin, ArrowUp } from 'lucide-react';
 import { ForumPost } from '@/types/community';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -11,7 +11,6 @@ import AuthRequired from '@/components/AuthRequired';
 interface ForumPostItemProps {
   post: ForumPost;
   onViewPost: (postId: string) => void;
-  onLikePost: (e: React.MouseEvent, postId: string) => void;
   onUpvotePost?: (e: React.MouseEvent, postId: string) => void;
   requireAuth?: boolean;
 }
@@ -19,7 +18,6 @@ interface ForumPostItemProps {
 const ForumPostItem: React.FC<ForumPostItemProps> = ({ 
   post, 
   onViewPost, 
-  onLikePost,
   onUpvotePost,
   requireAuth = false 
 }) => {
@@ -95,16 +93,6 @@ const ForumPostItem: React.FC<ForumPostItemProps> = ({
               </button>
             </AuthRequired>
           )}
-          
-          <AuthRequired forActiveParticipation={true}>
-            <button 
-              onClick={(e) => onLikePost(e, post.id)}
-              className={`flex items-center gap-1 text-black transition-colors`}
-            >
-              <ThumbsUp size={16} className="stroke-black" />
-              <span>{post.likes}</span>
-            </button>
-          </AuthRequired>
           
           <div className="flex items-center gap-1 text-black">
             <MessageCircle size={16} className="stroke-black" />

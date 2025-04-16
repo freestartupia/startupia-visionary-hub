@@ -8,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 interface ForumPostListProps {
   posts: ForumPost[];
   isLoading: boolean;
-  onLikePost: (e: React.MouseEvent, postId: string) => void;
   onUpvotePost?: (e: React.MouseEvent, postId: string) => void;
   onPostCreated: () => void;
   requireAuth?: boolean;
@@ -17,7 +16,6 @@ interface ForumPostListProps {
 const ForumPostList: React.FC<ForumPostListProps> = ({ 
   posts, 
   isLoading, 
-  onLikePost,
   onUpvotePost,
   onPostCreated,
   requireAuth = false 
@@ -40,7 +38,6 @@ const ForumPostList: React.FC<ForumPostListProps> = ({
           key={post.id}
           post={post}
           onViewPost={handleViewPost}
-          onLikePost={onLikePost}
           onUpvotePost={onUpvotePost}
           requireAuth={requireAuth}
         />

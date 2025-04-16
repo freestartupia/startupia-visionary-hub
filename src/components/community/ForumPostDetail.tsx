@@ -10,7 +10,7 @@ import { togglePostLike } from '@/services/forum/postLikeService';
 import { toggleReplyLike } from '@/services/forum/replyLikeService';
 import { togglePostUpvote } from '@/services/forumUpvoteService';
 import { incrementPostViews } from '@/services/forum/postViewService';
-import { getPostReplies } from '@/services/forum/replyService';
+import { getPostReplies, addReplyToPost } from '@/services/forum/replyService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import PostContent from './forum/PostContent';
@@ -186,7 +186,28 @@ const ForumPostDetail = () => {
     navigate('/community?tab=forum');
   };
   
-  const handleReplyAdded = () => {
+  const handleReplyAdded = async (newReply: ForumReply) => {
+    // Immediately update UI with the new reply
+    if (newReply.replyParentId) {
+      // This is a nested reply, add it to its parent
+      setReplies(prevReplies => {
+        return prevReplies.map(reply => {
+          if (reply.id === newReply.replyParentId) {
+            // Add to the parent's nested replies
+            const updatedNestedReplies = [...(reply.nestedReplies || []), newReply];
+            return {
+              ...reply,
+              nestedReplies: updatedNestedReplies
+            };
+          }
+          return reply;
+        });
+      });
+    } else {
+      // This is a direct reply to the post
+      setReplies(prevReplies => [...prevReplies, { ...newReply, nestedReplies: [] }]);
+    }
+    
     // Reset the replying state
     setReplyingTo(null);
     setReplyingToName('');

@@ -4,17 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Send, X } from 'lucide-react';
-import { addReplyToPost } from '@/services/forumReplyService';
+import { addReplyToPost } from '@/services/forum/replyService';
 import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { ForumReply } from '@/types/community';
 
 interface ReplyFormProps {
   postId: string;
   user: User | null;
   replyingTo: string | null;
   replyingToName?: string;
-  onReplyAdded: () => void;
+  onReplyAdded: (reply: ForumReply) => void;
   onCancelReply: () => void;
 }
 
@@ -49,7 +50,7 @@ const ReplyForm: React.FC<ReplyFormProps> = ({
       const userName = `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || user.email || 'Utilisateur';
       const avatarUrl = user.user_metadata?.avatar_url;
       
-      await addReplyToPost(
+      const newReply = await addReplyToPost(
         postId,
         replyContent,
         userName,
@@ -57,10 +58,28 @@ const ReplyForm: React.FC<ReplyFormProps> = ({
         replyingTo
       );
       
+      // Create an optimistic reply to immediately update UI
+      const optimisticReply: ForumReply = {
+        id: newReply.id,
+        content: replyContent,
+        authorId: user.id,
+        authorName: userName,
+        authorAvatar: avatarUrl,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        likes: 0,
+        parentId: postId,
+        replyParentId: replyingTo || undefined,
+        isLiked: false,
+        nestedReplies: []
+      };
+      
       // Reset the form
       setReplyContent('');
       toast.success(replyingTo ? "Réponse au commentaire envoyée" : "Réponse envoyée");
-      onReplyAdded();
+      
+      // Pass the optimistic reply to the parent component for immediate UI update
+      onReplyAdded(optimisticReply);
       
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la réponse:', error);

@@ -9,7 +9,7 @@ import {
   markAllNotificationsAsRead,
   Notification 
 } from '@/services/notificationService';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -66,6 +66,7 @@ export const useNotifications = () => {
             toast({
               title: 'Nouvelle notification',
               description: `${newNotification.sender_name || 'Quelqu\'un'} ${newNotification.content || 'a interagi avec votre contenu'}`,
+              position: 'top-right'
             });
           }
         }
@@ -83,7 +84,6 @@ export const useNotifications = () => {
   const markAsRead = useCallback(async (notificationId: string) => {
     const success = await markNotificationAsRead(notificationId);
     if (success) {
-      // Update local state immediately to prevent UI inconsistency
       setNotifications(prev => 
         prev.map(notification => 
           notification.id === notificationId 
@@ -91,10 +91,7 @@ export const useNotifications = () => {
             : notification
         )
       );
-      
-      // Refresh the unread count to ensure it matches the backend
-      const updatedCount = await getUnreadCount();
-      setUnreadCount(updatedCount);
+      setUnreadCount(prev => Math.max(0, prev - 1));
     }
     return success;
   }, []);
@@ -102,12 +99,9 @@ export const useNotifications = () => {
   const markAllAsRead = useCallback(async () => {
     const success = await markAllNotificationsAsRead();
     if (success) {
-      // Update local state immediately - IMPORTANT: set is_read to true for all notifications
       setNotifications(prev => 
         prev.map(notification => ({ ...notification, is_read: true }))
       );
-      
-      // Set unread count to 0 immediately
       setUnreadCount(0);
       console.log('Toutes les notifications ont été marquées comme lues');
     }

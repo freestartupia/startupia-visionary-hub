@@ -45,20 +45,19 @@ const NotificationsDropdown = () => {
 
   const handleMarkAllAsRead = async () => {
     console.log('Marquage de toutes les notifications comme lues');
-    await markAllAsRead();
-    // Forcer un rechargement des notifications pour s'assurer que l'UI est à jour
-    await loadNotifications();
+    const success = await markAllAsRead();
+    if (success) {
+      console.log('Toutes les notifications ont été marquées comme lues avec succès');
+    } else {
+      console.error('Erreur lors du marquage des notifications comme lues');
+    }
   };
 
   const handleNotificationClick = async (notification: Notification) => {
     console.log('Notification cliquée:', notification);
     
-    // Mark as read if it's not already read
-    if (!notification.is_read) {
-      await markAsRead(notification.id);
-      // Recharger les notifications après avoir marqué comme lu
-      await loadNotifications();
-    }
+    // Mark as read
+    await markAsRead(notification.id);
     
     // Navigate to the relevant page
     if (notification.entity_type === 'forum_post') {

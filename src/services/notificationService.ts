@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 export interface Notification {
   id: string;
@@ -84,6 +84,11 @@ export const markNotificationAsRead = async (notificationId: string): Promise<bo
       
     if (error) {
       console.error('Error marking notification as read:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de marquer la notification comme lue",
+        variant: "destructive"
+      });
       return false;
     }
     
@@ -104,8 +109,11 @@ export const markAllNotificationsAsRead = async (): Promise<boolean> => {
     }
     
     // Notifier l'utilisateur que le processus a commencé
-    toast.loading('Marquage des notifications comme lues...', { id: 'mark-all-read' });
+    toast({
+      title: "Marquage des notifications comme lues...",
+    });
     
+    // Mise à jour de toutes les notifications non lues
     const { error, data } = await supabase
       .from('notifications')
       .update({ is_read: true })
@@ -115,7 +123,11 @@ export const markAllNotificationsAsRead = async (): Promise<boolean> => {
       
     if (error) {
       console.error('Error marking all notifications as read:', error);
-      toast.error('Erreur lors du marquage des notifications', { id: 'mark-all-read' });
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du marquage des notifications",
+        variant: "destructive"
+      });
       return false;
     }
     
@@ -123,15 +135,23 @@ export const markAllNotificationsAsRead = async (): Promise<boolean> => {
     const updatedCount = data?.length || 0;
     
     if (updatedCount > 0) {
-      toast.success(`${updatedCount} notification${updatedCount > 1 ? 's' : ''} marquée${updatedCount > 1 ? 's' : ''} comme lue${updatedCount > 1 ? 's' : ''}`, { id: 'mark-all-read' });
+      toast({
+        title: `${updatedCount} notification${updatedCount > 1 ? 's' : ''} marquée${updatedCount > 1 ? 's' : ''} comme lue${updatedCount > 1 ? 's' : ''}`,
+      });
     } else {
-      toast.success('Aucune nouvelle notification à marquer', { id: 'mark-all-read' });
+      toast({
+        title: "Aucune nouvelle notification à marquer",
+      });
     }
     
     return true;
   } catch (error) {
     console.error('Error in markAllNotificationsAsRead:', error);
-    toast.error('Erreur lors du marquage des notifications', { id: 'mark-all-read' });
+    toast({
+      title: "Erreur",
+      description: "Erreur lors du marquage des notifications",
+      variant: "destructive"
+    });
     return false;
   }
 };

@@ -56,8 +56,10 @@ const NotificationsDropdown = () => {
   const handleNotificationClick = async (notification: Notification) => {
     console.log('Notification cliquée:', notification);
     
-    // Mark as read
-    await markAsRead(notification.id);
+    // Mark as read if it's not already read
+    if (!notification.is_read) {
+      await markAsRead(notification.id);
+    }
     
     // Navigate to the relevant page
     if (notification.entity_type === 'forum_post') {

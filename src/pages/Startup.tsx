@@ -42,7 +42,7 @@ const StartupPage = () => {
 
   useEffect(() => {
     loadStartups();
-  }, [currentPage, sortBy]); // Re-load when page or sort changes
+  }, [currentPage, sortBy]);
 
   const loadStartups = async () => {
     setIsLoading(true);
@@ -59,7 +59,7 @@ const StartupPage = () => {
 
   const handleSubmitSuccess = () => {
     setIsDialogOpen(false);
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1);
     loadStartups();
   };
 
@@ -98,22 +98,17 @@ const StartupPage = () => {
   const totalPages = Math.ceil(totalStartups / STARTUPS_PER_PAGE);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white">
       <SEO 
         title="Startups IA - Découvrez et votez pour les startups françaises les plus innovantes"
         description="Explorez les startups IA françaises les plus prometteuses. Votez pour vos préférées et soumettez votre propre projet dans l'écosystème IA français."
       />
       
-      {/* Background elements */}
-      <div className="absolute inset-0 grid-bg opacity-10 z-0"></div>
-      <div className="absolute top-1/4 -left-40 w-96 h-96 bg-startupia-turquoise/30 rounded-full blur-3xl animate-pulse-slow"></div>
-      <div className="absolute bottom-1/3 -right-40 w-96 h-96 bg-startupia-turquoise/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
-      
       <Navbar />
       
-      <main className="container mx-auto px-4 pt-24 pb-16 relative z-10">
+      <main className="container mx-auto px-4 pt-24 pb-16 relative z-10 max-w-4xl">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Top Startups IA Françaises</h1>
+          <h1 className="text-2xl font-bold">Top Startups IA Françaises</h1>
           
           <Button
             onClick={() => setIsDialogOpen(true)}
@@ -125,27 +120,27 @@ const StartupPage = () => {
           </Button>
         </div>
         
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <Tabs 
             defaultValue="all" 
             className="w-auto"
             onValueChange={(value) => setCurrentTab(value)}
           >
-            <TabsList className="grid grid-cols-3 w-auto">
-              <TabsTrigger value="all" className="px-4">Tous</TabsTrigger>
-              <TabsTrigger value="week" className="px-4">Cette semaine</TabsTrigger>
-              <TabsTrigger value="month" className="px-4">Ce mois</TabsTrigger>
+            <TabsList className="grid grid-cols-3 w-auto bg-slate-100 dark:bg-slate-800 p-1 rounded-md">
+              <TabsTrigger value="all" className="px-4 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Tous</TabsTrigger>
+              <TabsTrigger value="week" className="px-4 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Cette semaine</TabsTrigger>
+              <TabsTrigger value="month" className="px-4 rounded-md data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Ce mois</TabsTrigger>
             </TabsList>
           </Tabs>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 self-end sm:self-auto">
             <Button
               variant="outline"
               size="sm"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 border-slate-200 dark:border-slate-700"
               onClick={() => {
                 setSortBy(sortBy === 'upvotes' ? 'recent' : 'upvotes');
-                setCurrentPage(1); // Reset to first page when changing sort
+                setCurrentPage(1);
               }}
             >
               <ArrowUpDown className="h-4 w-4" />
@@ -157,7 +152,7 @@ const StartupPage = () => {
             <Button
               variant="outline"
               size="sm"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 border-slate-200 dark:border-slate-700"
               onClick={handleRefresh}
               disabled={isLoading}
             >
@@ -169,19 +164,20 @@ const StartupPage = () => {
         
         {isLoading ? (
           <div className="py-20 text-center">
-            <div className="w-10 h-10 border-4 border-white/20 border-t-startupia-turquoise rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white/60">Chargement des startups...</p>
+            <div className="w-10 h-10 border-4 border-slate-200 dark:border-slate-700 border-t-startupia-turquoise rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-500 dark:text-slate-400">Chargement des startups...</p>
           </div>
         ) : displayedStartups.length > 0 ? (
           <>
-            <div className="space-y-6">
+            <div className="divide-y divide-slate-200 dark:divide-slate-800">
               {displayedStartups.map((startup, index) => (
-                <StartupCard 
-                  key={startup.id} 
-                  startup={startup} 
-                  index={index + 1}
-                  onVoteChange={handleVoteChange}
-                />
+                <div key={startup.id} className="py-4 first:pt-0">
+                  <StartupCard 
+                    startup={startup} 
+                    index={index + 1}
+                    onVoteChange={handleVoteChange}
+                  />
+                </div>
               ))}
             </div>
             
@@ -197,7 +193,6 @@ const StartupPage = () => {
                     </PaginationItem>
                     
                     {Array.from({ length: Math.min(totalPages, 5) }).map((_, index) => {
-                      // Show pages around current page
                       let pageToShow = currentPage;
                       if (totalPages <= 5) {
                         pageToShow = index + 1;
@@ -234,9 +229,9 @@ const StartupPage = () => {
             )}
           </>
         ) : (
-          <div className="glass-card border border-white/10 rounded-lg p-10 text-center">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-10 text-center">
             <h3 className="text-xl font-bold mb-2">Aucune startup trouvée</h3>
-            <p className="text-white/60 mb-6">
+            <p className="text-slate-500 dark:text-slate-400 mb-6">
               {currentTab === 'all' 
                 ? 'Soyez le premier à soumettre votre startup !' 
                 : 'Aucune startup n\'a été soumise dans cette période.'}
@@ -260,7 +255,7 @@ const StartupPage = () => {
           
           {!user ? (
             <div className="py-6 text-center">
-              <p className="text-white/80 mb-4">Vous devez être connecté pour soumettre une startup.</p>
+              <p className="text-slate-500 dark:text-slate-400 mb-4">Vous devez être connecté pour soumettre une startup.</p>
               <Button asChild className="bg-startupia-turquoise hover:bg-startupia-turquoise/90">
                 <a href="/auth">Se connecter</a>
               </Button>

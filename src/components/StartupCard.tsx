@@ -110,65 +110,96 @@ const StartupCard: React.FC<StartupCardProps> = memo(({
   }, []);
 
   return (
-    <div className="flex items-start gap-4 pb-6 border-b border-white/10 last:border-0">
-      <div className="flex flex-col items-center">
-        {index !== undefined && (
-          <div className="text-xl font-bold text-white/60 mb-2">{index}.</div>
-        )}
-        <div className="h-14 w-14 rounded-md bg-white/5 overflow-hidden flex items-center justify-center">
-          {startup.logoUrl ? (
-            <img src={startup.logoUrl} alt={`${startup.name} logo`} className="w-full h-full object-cover" loading="lazy" />
-          ) : (
-            <span className="text-lg font-bold text-startupia-turquoise">{startup.name[0]}</span>
-          )}
-        </div>
-      </div>
+    <div 
+      className="group relative rounded-2xl border border-white/10 shadow-lg 
+                 hover:border-startupia-turquoise/30 
+                 hover:shadow-startupia-turquoise/20 
+                 transition-all duration-300 
+                 bg-gradient-to-br from-black/50 to-black/20 
+                 overflow-hidden 
+                 transform hover:-translate-y-2 
+                 hover:scale-[1.02]"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-startupia-turquoise/10 to-startupia-purple/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></div>
       
-      <div className="flex-1">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-          <div>
-            <Link to={`/startup/${startup.id}`} className="text-xl font-bold hover:text-startupia-turquoise transition-colors">
-              {startup.name}
-            </Link>
-            <p className="text-base text-white/70">{startup.shortDescription}</p>
+      <div className="relative z-10 p-6">
+        <div className="flex items-start gap-4 mb-4">
+          <div className="flex flex-col items-center">
+            {index !== undefined && (
+              <div className="text-xl font-bold text-white/60 mb-2">{index}.</div>
+            )}
+            <div className="h-16 w-16 rounded-xl bg-white/5 overflow-hidden flex items-center justify-center border border-white/10 shadow-md">
+              {startup.logoUrl ? (
+                <img 
+                  src={startup.logoUrl} 
+                  alt={`${startup.name} logo`} 
+                  className="w-full h-full object-cover" 
+                  loading="lazy" 
+                />
+              ) : (
+                <span className="text-2xl font-bold text-startupia-turquoise">{startup.name[0]}</span>
+              )}
+            </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-white/10 rounded-full px-3 py-1">
-              <MessageSquare size={14} />
-              <span className="text-sm">{startup.commentCount || 0}</span>
+          <div className="flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+              <div>
+                <Link 
+                  to={`/startup/${startup.id}`} 
+                  className="text-xl font-bold hover:text-startupia-turquoise transition-colors group-hover:text-startupia-turquoise"
+                >
+                  {startup.name}
+                </Link>
+                <p className="text-base text-white/70">{startup.shortDescription}</p>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-white/10 rounded-full px-3 py-1">
+                  <MessageSquare size={14} />
+                  <span className="text-sm">{startup.commentCount || 0}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`rounded-full flex items-center gap-1 px-3 py-1 
+                    ${hasVoted 
+                      ? 'bg-startupia-turquoise/20 text-startupia-turquoise text-black' 
+                      : 'bg-white/10 hover:bg-startupia-turquoise/10'}`}
+                  onClick={handleVote}
+                  disabled={isLoading}
+                >
+                  <ArrowBigUp size={14} />
+                  <span className="text-sm">{startup.upvotes}</span>
+                </Button>
+              </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className={`rounded-full flex items-center gap-1 px-3 py-1 ${
-                hasVoted 
-                  ? 'bg-startupia-turquoise/20 text-startupia-turquoise text-black' 
-                  : 'bg-white/10'
-              }`}
-              onClick={handleVote}
-              disabled={isLoading}
-            >
-              <ArrowBigUp size={14} />
-              <span className="text-sm">{startup.upvotes}</span>
-            </Button>
+            
+            <div className="flex flex-wrap gap-2 mt-2">
+              <Badge 
+                variant="outline" 
+                className="text-xs border-startupia-turquoise/40 bg-startupia-turquoise/5 group-hover:border-startupia-turquoise/60"
+              >
+                {startup.category}
+              </Badge>
+              {startup.aiTechnology && (
+                <Badge 
+                  variant="outline" 
+                  className="text-xs border-white/20 group-hover:border-white/40"
+                >
+                  {startup.aiTechnology}
+                </Badge>
+              )}
+              {startup.businessModel && (
+                <Badge 
+                  variant="outline" 
+                  className="text-xs border-white/20 group-hover:border-white/40"
+                >
+                  {startup.businessModel}
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
-        
-        <div className="flex flex-wrap gap-2 mt-2">
-          <Badge variant="outline" className="text-xs border-startupia-turquoise/40 bg-startupia-turquoise/5">
-            {startup.category}
-          </Badge>
-          {startup.aiTechnology && (
-            <Badge variant="outline" className="text-xs border-white/20">
-              {startup.aiTechnology}
-            </Badge>
-          )}
-          {startup.businessModel && (
-            <Badge variant="outline" className="text-xs border-white/20">
-              {startup.businessModel}
-            </Badge>
-          )}
         </div>
       </div>
     </div>

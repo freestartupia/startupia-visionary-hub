@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { checkAuthentication } from "./likeUtils";
@@ -83,25 +84,42 @@ export const toggleReplyLike = async (replyId: string): Promise<LikeResponse> =>
       isLiked = true;
     }
     
-    // Update the likes count on the reply
-    const { data: replyData, error: updateError } = await supabase.rpc(
-      'toggle_reply_like',
-      { reply_id: replyId, is_liked: isLiked }
-    );
+    // Get the current likes count for the reply
+    const { data: replyData, error: replyError } = await supabase
+      .from('forum_replies')
+      .select('likes')
+      .eq('id', replyId)
+      .single();
+      
+    if (replyError) {
+      console.error("Error getting reply likes count:", replyError);
+      throw replyError;
+    }
     
+    // Update the likes count
+    const newLikeCount = isLiked 
+      ? (replyData?.likes || 0) + 1 
+      : Math.max(0, (replyData?.likes || 0) - 1);
+      
+    const { error: updateError } = await supabase
+      .from('forum_replies')
+      .update({ likes: newLikeCount })
+      .eq('id', replyId);
+      
     if (updateError) {
-      console.error("Error updating likes count:", updateError);
+      console.error("Error updating reply likes count:", updateError);
       throw updateError;
     }
     
     return {
       success: true,
-      likes: replyData.new_count,
+      likes: newLikeCount,
       isLiked: isLiked
     };
     
   } catch (error) {
     console.error("Error in toggleReplyLike:", error);
+    toast.error("Erreur lors du like de la réponse");
     throw error;
   }
 };

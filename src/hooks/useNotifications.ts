@@ -102,14 +102,12 @@ export const useNotifications = () => {
   const markAllAsRead = useCallback(async () => {
     const success = await markAllNotificationsAsRead();
     if (success) {
-      // Update local state immediately - IMPORTANT: set is_read to true for all notifications
-      setNotifications(prev => 
-        prev.map(notification => ({ ...notification, is_read: true }))
-      );
+      // Quand toutes les notifications sont supprimées, vider l'état local
+      setNotifications([]);
       
-      // Set unread count to 0 immediately
+      // Mettre le compteur de non-lues à 0
       setUnreadCount(0);
-      console.log('Toutes les notifications ont été marquées comme lues');
+      console.log('Toutes les notifications ont été supprimées');
     }
     return success;
   }, []);

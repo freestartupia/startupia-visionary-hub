@@ -110,37 +110,36 @@ export const markAllNotificationsAsRead = async (): Promise<boolean> => {
     
     // Notifier l'utilisateur que le processus a commencé
     toast({
-      title: "Marquage des notifications comme lues...",
+      title: "Suppression des notifications...",
     });
     
-    // Mise à jour de toutes les notifications non lues
-    const { error, data } = await supabase
+    // Suppression de toutes les notifications de l'utilisateur
+    const { error, count } = await supabase
       .from('notifications')
-      .update({ is_read: true })
+      .delete()
       .eq('recipient_id', user.id)
-      .eq('is_read', false)
-      .select('id');
+      .select('id', { count: 'exact' });
       
     if (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error('Error deleting all notifications:', error);
       toast({
         title: "Erreur",
-        description: "Erreur lors du marquage des notifications",
+        description: "Erreur lors de la suppression des notifications",
         variant: "destructive"
       });
       return false;
     }
     
-    // Vérifier que la mise à jour s'est correctement effectuée
-    const updatedCount = data?.length || 0;
+    // Vérifier que la suppression s'est correctement effectuée
+    const updatedCount = count || 0;
     
     if (updatedCount > 0) {
       toast({
-        title: `${updatedCount} notification${updatedCount > 1 ? 's' : ''} marquée${updatedCount > 1 ? 's' : ''} comme lue${updatedCount > 1 ? 's' : ''}`,
+        title: `${updatedCount} notification${updatedCount > 1 ? 's' : ''} supprimée${updatedCount > 1 ? 's' : ''}`,
       });
     } else {
       toast({
-        title: "Aucune nouvelle notification à marquer",
+        title: "Aucune notification à supprimer",
       });
     }
     
@@ -149,7 +148,7 @@ export const markAllNotificationsAsRead = async (): Promise<boolean> => {
     console.error('Error in markAllNotificationsAsRead:', error);
     toast({
       title: "Erreur",
-      description: "Erreur lors du marquage des notifications",
+      description: "Erreur lors de la suppression des notifications",
       variant: "destructive"
     });
     return false;

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,18 +9,21 @@ import { fr } from 'date-fns/locale';
 import NestedReply from './NestedReply';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-
 interface ReplyItemProps {
   reply: ForumReply;
   onLike: (replyId: string) => void;
   onReplyToComment: (replyId: string) => void;
 }
-
-const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }) => {
-  const { user } = useAuth();
+const ReplyItem: React.FC<ReplyItemProps> = ({
+  reply,
+  onLike,
+  onReplyToComment
+}) => {
+  const {
+    user
+  } = useAuth();
   const navigate = useNavigate();
   const [showReplies, setShowReplies] = useState(false);
-  
   const formatDate = (dateString: string) => {
     try {
       return formatDistanceToNow(new Date(dateString), {
@@ -32,28 +34,18 @@ const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }
       return 'date inconnue';
     }
   };
-
   const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase();
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
-  
   const handleLikeClick = () => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    
     onLike(reply.id);
   };
-
   const hasNestedReplies = reply.nestedReplies && reply.nestedReplies.length > 0;
-
-  return (
-    <Card className="glass-card border-white/20 shadow-md backdrop-blur-md">
+  return <Card className="glass-card border-white/20 shadow-md backdrop-blur-md">
       <CardHeader className="pb-2">
         <div className="flex items-center space-x-4">
           <Avatar className="h-9 w-9 border border-white/20">
@@ -75,63 +67,32 @@ const ReplyItem: React.FC<ReplyItemProps> = ({ reply, onLike, onReplyToComment }
       
       <CardFooter className="flex justify-between pt-2 border-t border-white/10">
         <div className="flex gap-4">
-          <button 
-            onClick={handleLikeClick}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full ${reply.isLiked ? "bg-startupia-turquoise/20 text-white" : "text-white/70 hover:text-white hover:bg-white/5"} transition-colors`}
-          >
-            <ThumbsUp size={16} className={reply.isLiked ? "text-startupia-turquoise" : ""} />
-            <span>{reply.likes}</span>
-          </button>
           
-          <button 
-            onClick={() => {
-              if (!user) {
-                navigate('/auth');
-                return;
-              }
-              onReplyToComment(reply.id);
-            }}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-full text-white/70 hover:text-white hover:bg-white/5 transition-colors"
-          >
+          
+          <button onClick={() => {
+          if (!user) {
+            navigate('/auth');
+            return;
+          }
+          onReplyToComment(reply.id);
+        }} className="flex items-center gap-1.5 px-2 py-1 rounded-full text-white/70 hover:text-white hover:bg-white/5 transition-colors">
             <Reply size={16} />
             <span>Répondre</span>
           </button>
         </div>
         
-        {hasNestedReplies && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setShowReplies(!showReplies)}
-            className="text-white/70 hover:text-white hover:bg-white/10"
-          >
-            {showReplies ? (
-              <>
+        {hasNestedReplies && <Button variant="ghost" size="sm" onClick={() => setShowReplies(!showReplies)} className="text-white/70 hover:text-white hover:bg-white/10">
+            {showReplies ? <>
                 <ChevronUp size={16} className="mr-1" /> Masquer les réponses
-              </>
-            ) : (
-              <>
+              </> : <>
                 <ChevronDown size={16} className="mr-1" /> Voir {reply.nestedReplies?.length} réponse{reply.nestedReplies?.length > 1 ? 's' : ''}
-              </>
-            )}
-          </Button>
-        )}
+              </>}
+          </Button>}
       </CardFooter>
       
-      {hasNestedReplies && showReplies && (
-        <div className="ml-8 pl-4 border-l border-white/20 mt-2 mb-4 mx-4 space-y-3">
-          {reply.nestedReplies?.map((nestedReply) => (
-            <NestedReply 
-              key={nestedReply.id} 
-              reply={nestedReply} 
-              onLike={onLike}
-              onReplyToComment={onReplyToComment}
-            />
-          ))}
-        </div>
-      )}
-    </Card>
-  );
+      {hasNestedReplies && showReplies && <div className="ml-8 pl-4 border-l border-white/20 mt-2 mb-4 mx-4 space-y-3">
+          {reply.nestedReplies?.map(nestedReply => <NestedReply key={nestedReply.id} reply={nestedReply} onLike={onLike} onReplyToComment={onReplyToComment} />)}
+        </div>}
+    </Card>;
 };
-
 export default ReplyItem;

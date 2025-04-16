@@ -114,11 +114,10 @@ export const markAllNotificationsAsRead = async (): Promise<boolean> => {
     });
     
     // Suppression de toutes les notifications de l'utilisateur
-    const { error, count } = await supabase
+    const { error } = await supabase
       .from('notifications')
       .delete()
-      .eq('recipient_id', user.id)
-      .select('id', { count: 'exact' });
+      .eq('recipient_id', user.id);
       
     if (error) {
       console.error('Error deleting all notifications:', error);
@@ -130,18 +129,9 @@ export const markAllNotificationsAsRead = async (): Promise<boolean> => {
       return false;
     }
     
-    // Vérifier que la suppression s'est correctement effectuée
-    const updatedCount = count || 0;
-    
-    if (updatedCount > 0) {
-      toast({
-        title: `${updatedCount} notification${updatedCount > 1 ? 's' : ''} supprimée${updatedCount > 1 ? 's' : ''}`,
-      });
-    } else {
-      toast({
-        title: "Aucune notification à supprimer",
-      });
-    }
+    toast({
+      title: "Notifications supprimées avec succès",
+    });
     
     return true;
   } catch (error) {

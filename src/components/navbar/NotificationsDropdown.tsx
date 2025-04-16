@@ -46,8 +46,8 @@ const NotificationsDropdown = () => {
   const handleMarkAllAsRead = async () => {
     console.log('Marquage de toutes les notifications comme lues');
     await markAllAsRead();
-    // Forcer un rechargement des notifications pour s'assurer que l'UI est à jour
-    await loadNotifications();
+    // Forcer la fermeture du dropdown après suppression
+    setIsOpen(false);
   };
 
   const handleNotificationClick = async (notification: Notification) => {

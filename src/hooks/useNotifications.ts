@@ -7,6 +7,7 @@ import {
   getUnreadCount, 
   markNotificationAsRead, 
   markAllNotificationsAsRead,
+  deleteNotification,
   Notification 
 } from '@/services/notificationService';
 import { toast } from '@/hooks/use-toast';
@@ -108,9 +109,12 @@ export const useNotifications = () => {
       // Mettre le compteur de non-lues à 0
       setUnreadCount(0);
       console.log('Toutes les notifications ont été supprimées');
+      
+      // Forcer un rechargement complet des notifications après la suppression
+      await loadNotifications();
     }
     return success;
-  }, []);
+  }, [loadNotifications]);
 
   return {
     notifications,

@@ -8,6 +8,7 @@ import { CofounderProfile } from '@/types/cofounders';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface ProfileDetailProps {
   profile: CofounderProfile | null;
@@ -34,6 +35,16 @@ const ProfileDetail = ({ profile, isOpen, onClose, onMatch }: ProfileDetailProps
     onClose();
   };
 
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-3xl bg-gradient-to-b from-black to-gray-900 border-startupia-purple/20 overflow-y-auto max-h-[90vh]">
@@ -50,17 +61,19 @@ const ProfileDetail = ({ profile, isOpen, onClose, onMatch }: ProfileDetailProps
           {/* Left column - Photo and basic info */}
           <div className="space-y-4">
             <div className="flex flex-col items-center">
-              {profile.photoUrl ? (
-                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-startupia-turquoise/30">
-                  <img 
+              <Avatar className="w-32 h-32 flex-shrink-0 rounded-full overflow-hidden border-4 border-startupia-turquoise/30">
+                {profile.photoUrl ? (
+                  <AvatarImage 
                     src={profile.photoUrl} 
                     alt={profile.name} 
                     className="w-full h-full object-cover"
                   />
-                </div>
-              ) : (
-                <div className="w-32 h-32 bg-gradient-to-br from-startupia-light-purple to-startupia-turquoise rounded-full border-4 border-startupia-turquoise/30"></div>
-              )}
+                ) : (
+                  <AvatarFallback className="w-full h-full text-3xl bg-gradient-to-br from-startupia-light-purple to-startupia-turquoise">
+                    {getInitials(profile.name)}
+                  </AvatarFallback>
+                )}
+              </Avatar>
               
               <h2 className="text-xl font-bold mt-3">{profile.name}</h2>
               <p className="text-white/70">{profile.role}</p>

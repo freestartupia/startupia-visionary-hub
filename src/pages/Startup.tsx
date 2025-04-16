@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, ArrowUpDown, RefreshCw, MessageSquare, ArrowBigUp } from 'lucide-react';
+import { PlusCircle, ArrowUpDown, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,7 +10,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/Footer';
-import { Badge } from '@/components/ui/badge';
 import SubmitStartupForm from '@/components/SubmitStartupForm';
 import { Startup } from '@/types/startup';
 import { fetchStartupsPaginated } from '@/services/startupService';
@@ -25,7 +23,6 @@ import {
   PaginationPrevious,
   PaginationLink
 } from "@/components/ui/pagination";
-import { Link } from 'react-router-dom';
 import StartupCard from '@/components/StartupCard';
 
 const STARTUPS_PER_PAGE = 10;
@@ -117,7 +114,7 @@ const StartupPage = () => {
           
           <Button
             onClick={() => setIsDialogOpen(true)}
-            className="bg-startupia-turquoise hover:bg-startupia-turquoise/90"
+            className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black"
             size="sm"
           >
             <PlusCircle className="h-4 w-4 mr-2" />
@@ -125,45 +122,47 @@ const StartupPage = () => {
           </Button>
         </div>
         
-        <div className="flex items-center justify-between mb-4">
-          <Tabs 
-            defaultValue="all" 
-            className="w-auto"
-            onValueChange={(value) => setCurrentTab(value)}
-          >
-            <TabsList className="grid grid-cols-3 w-auto">
-              <TabsTrigger value="all" className="px-4">Tous</TabsTrigger>
-              <TabsTrigger value="week" className="px-4">Cette semaine</TabsTrigger>
-              <TabsTrigger value="month" className="px-4">Ce mois</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={() => {
-                setSortBy(sortBy === 'upvotes' ? 'recent' : 'upvotes');
-                setCurrentPage(1); // Reset to first page when changing sort
-              }}
+        <div className="bg-black/40 border border-white/10 rounded-lg p-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <Tabs 
+              defaultValue="all" 
+              className="w-auto"
+              onValueChange={(value) => setCurrentTab(value)}
             >
-              <ArrowUpDown className="h-4 w-4" />
-              <span className="font-medium">
-                {sortBy === 'upvotes' ? 'Votes' : 'Récents'}
-              </span>
-            </Button>
+              <TabsList className="grid grid-cols-3 w-auto bg-black/40">
+                <TabsTrigger value="all" className="px-4 data-[state=active]:bg-startupia-turquoise/20">Tous</TabsTrigger>
+                <TabsTrigger value="week" className="px-4 data-[state=active]:bg-startupia-turquoise/20">Cette semaine</TabsTrigger>
+                <TabsTrigger value="month" className="px-4 data-[state=active]:bg-startupia-turquoise/20">Ce mois</TabsTrigger>
+              </TabsList>
+            </Tabs>
             
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={handleRefresh}
-              disabled={isLoading}
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Rafraîchir</span>
-            </Button>
+            <div className="flex items-center gap-3 ml-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 bg-black/40 border-white/20"
+                onClick={() => {
+                  setSortBy(sortBy === 'upvotes' ? 'recent' : 'upvotes');
+                  setCurrentPage(1); // Reset to first page when changing sort
+                }}
+              >
+                <ArrowUpDown className="h-4 w-4" />
+                <span className="font-medium">
+                  {sortBy === 'upvotes' ? 'Votes' : 'Récents'}
+                </span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 bg-black/40 border-white/20"
+                onClick={handleRefresh}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Rafraîchir</span>
+              </Button>
+            </div>
           </div>
         </div>
         
@@ -174,19 +173,20 @@ const StartupPage = () => {
           </div>
         ) : displayedStartups.length > 0 ? (
           <>
-            <div className="space-y-6">
+            <div className="bg-black/40 border border-white/10 rounded-lg overflow-hidden">
               {displayedStartups.map((startup, index) => (
-                <StartupCard 
-                  key={startup.id} 
-                  startup={startup} 
-                  index={index + 1}
-                  onVoteChange={handleVoteChange}
-                />
+                <div key={startup.id} className="border-b border-white/10 last:border-b-0">
+                  <StartupCard 
+                    startup={startup} 
+                    index={(currentPage - 1) * STARTUPS_PER_PAGE + index + 1}
+                    onVoteChange={handleVoteChange}
+                  />
+                </div>
               ))}
             </div>
             
             {totalPages > 1 && (
-              <div className="mt-10">
+              <div className="mt-10 flex justify-center">
                 <Pagination>
                   <PaginationContent>
                     <PaginationItem>
@@ -243,7 +243,7 @@ const StartupPage = () => {
             </p>
             <Button 
               onClick={() => setIsDialogOpen(true)}
-              className="bg-startupia-turquoise hover:bg-startupia-turquoise/90"
+              className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black"
             >
               <PlusCircle className="h-4 w-4 mr-2" />
               Soumettre une startup
@@ -261,7 +261,7 @@ const StartupPage = () => {
           {!user ? (
             <div className="py-6 text-center">
               <p className="text-white/80 mb-4">Vous devez être connecté pour soumettre une startup.</p>
-              <Button asChild className="bg-startupia-turquoise hover:bg-startupia-turquoise/90">
+              <Button asChild className="bg-startupia-turquoise hover:bg-startupia-turquoise/90 text-black">
                 <a href="/auth">Se connecter</a>
               </Button>
             </div>

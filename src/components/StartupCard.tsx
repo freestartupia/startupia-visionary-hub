@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowBigUp, ExternalLink, MessageSquare } from 'lucide-react';
@@ -20,12 +19,8 @@ const StartupCard: React.FC<StartupCardProps> = memo(({
   onVoteChange,
   index
 }) => {
-  const {
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [hasVoted, setHasVoted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -110,83 +105,63 @@ const StartupCard: React.FC<StartupCardProps> = memo(({
   }, []);
 
   return (
-    <div 
-      className="group relative rounded-2xl border-2 border-startupia-turquoise/30 
-                 shadow-lg shadow-startupia-turquoise/10
-                 hover:border-startupia-turquoise/50 
-                 hover:shadow-xl hover:shadow-startupia-turquoise/20 
-                 transition-all duration-300 
-                 bg-gradient-to-br from-black/70 to-black/40 
-                 overflow-hidden 
-                 transform hover:-translate-y-2 
-                 hover:scale-[1.02]"
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-startupia-turquoise/10 to-startupia-turquoise/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></div>
-      
-      <div className="relative z-10 p-6">
-        <div className="flex items-start gap-4 mb-4">
-          <div className="flex flex-col items-center">
-            {index !== undefined && (
-              <div className="text-xl font-bold text-startupia-turquoise mb-2">{index}.</div>
+    <div className="group relative bg-black/70 hover:bg-black/80 rounded-lg border border-startupia-turquoise/20 hover:border-startupia-turquoise/40 transition-all duration-300 p-4 mb-4">
+      <div className="flex items-start gap-5">
+        <div className="flex flex-col items-center">
+          {index !== undefined && (
+            <div className="text-lg font-bold text-startupia-turquoise mb-2">{index}.</div>
+          )}
+          <div className="h-16 w-16 flex-shrink-0 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center">
+            {startup.logoUrl ? (
+              <img 
+                src={startup.logoUrl} 
+                alt={`${startup.name} logo`} 
+                className="w-full h-full object-contain" 
+                loading="lazy" 
+              />
+            ) : (
+              <span className="text-2xl font-bold text-startupia-turquoise">{startup.name[0]}</span>
             )}
-            <div className="h-16 w-16 rounded-xl bg-white/5 overflow-hidden flex items-center justify-center border-2 border-white/20 shadow-md">
-              {startup.logoUrl ? (
-                <img 
-                  src={startup.logoUrl} 
-                  alt={`${startup.name} logo`} 
-                  className="w-full h-full object-cover" 
-                  loading="lazy" 
-                />
-              ) : (
-                <span className="text-2xl font-bold text-startupia-turquoise">{startup.name[0]}</span>
-              )}
-            </div>
           </div>
-          
-          <div className="flex-1">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-start justify-between">
               <div>
                 <Link 
                   to={`/startup/${startup.id}`} 
-                  className="text-xl font-bold hover:text-startupia-turquoise transition-colors"
+                  className="text-xl font-bold text-white hover:text-startupia-turquoise transition-colors truncate block"
                 >
                   {startup.name}
                 </Link>
-                <p className="text-base text-white/70">{startup.shortDescription}</p>
+                <p className="text-white/70 text-sm line-clamp-2">{startup.shortDescription}</p>
               </div>
               
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-white/10 hover:bg-white/15 transition-colors rounded-full px-3 py-1">
-                  <MessageSquare size={14} className="text-startupia-turquoise" />
-                  <span className="text-sm">{startup.commentCount || 0}</span>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={`rounded-full flex items-center gap-1 px-3 py-1 
-                    ${hasVoted 
-                      ? 'bg-startupia-turquoise/20 text-startupia-turquoise border border-startupia-turquoise/30' 
-                      : 'bg-white/10 hover:bg-startupia-turquoise/10 border border-transparent hover:border-startupia-turquoise/30'}`}
-                  onClick={handleVote}
-                  disabled={isLoading}
+              {startup.websiteUrl && (
+                <a 
+                  href={startup.websiteUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-white/50 hover:text-startupia-turquoise flex items-center gap-1 text-sm ml-2"
                 >
-                  <ArrowBigUp size={14} />
-                  <span className="text-sm font-bold">{startup.upvotes}</span>
-                </Button>
-              </div>
+                  <ExternalLink size={14} />
+                  <span className="hidden sm:inline">Visiter</span>
+                </a>
+              )}
             </div>
             
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-2 mt-1">
               <Badge 
                 variant="outline" 
-                className="text-xs border-startupia-turquoise/40 bg-startupia-turquoise/5 group-hover:border-startupia-turquoise/70"
+                className="text-xs border-startupia-turquoise/40 bg-startupia-turquoise/5"
               >
                 {startup.category}
               </Badge>
               {startup.aiTechnology && (
                 <Badge 
                   variant="outline" 
-                  className="text-xs border-white/20 bg-white/5 group-hover:border-white/40"
+                  className="text-xs border-white/20 bg-white/5"
                 >
                   {startup.aiTechnology}
                 </Badge>
@@ -194,13 +169,37 @@ const StartupCard: React.FC<StartupCardProps> = memo(({
               {startup.businessModel && (
                 <Badge 
                   variant="outline" 
-                  className="text-xs border-white/20 bg-white/5 group-hover:border-white/40"
+                  className="text-xs border-white/20 bg-white/5"
                 >
                   {startup.businessModel}
                 </Badge>
               )}
             </div>
           </div>
+        </div>
+        
+        <div className="flex flex-col gap-2 items-end">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={`rounded-full flex items-center gap-1 px-3 py-1 
+              ${hasVoted 
+                ? 'bg-startupia-turquoise/20 text-startupia-turquoise border border-startupia-turquoise/30' 
+                : 'bg-white/10 hover:bg-startupia-turquoise/10 border border-transparent hover:border-startupia-turquoise/30'}`}
+            onClick={handleVote}
+            disabled={isLoading}
+          >
+            <ArrowBigUp size={16} />
+            <span className="font-medium">{startup.upvotes}</span>
+          </Button>
+          
+          <Link 
+            to={`/startup/${startup.id}`}
+            className="flex items-center gap-1 text-white/60 hover:text-white transition-colors text-sm"
+          >
+            <MessageSquare size={14} />
+            <span>{startup.commentCount || 0}</span>
+          </Link>
         </div>
       </div>
     </div>

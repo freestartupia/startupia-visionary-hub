@@ -113,6 +113,7 @@ export const markAllNotificationsAsRead = async (): Promise<boolean> => {
       title: "Marquage des notifications comme lues...",
     });
     
+    // Mise à jour de toutes les notifications non lues
     const { error, data } = await supabase
       .from('notifications')
       .update({ is_read: true })
